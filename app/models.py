@@ -4,14 +4,17 @@ from datetime import datetime
 
 class Rider(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64))
     address1 = db.Column(db.String(64))
     address2 = db.Column(db.String(64))
     town = db.Column(db.String(64))
+    county = db.Column(db.String(64))
+    country = db.Column(db.String(64))
     postcode = db.Column(db.String(7))
     dob = db.Column(db.Date)
     status = db.Column(db.String(64))
-    assignedVehicle = db.Column(db.Integer)
+    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
     patch = db.Column(db.String(64))
 
     def __repr__(self):
@@ -33,6 +36,7 @@ class Task(db.Model):
     priority = db.Column(db.Integer)
     finalDuration = db.Column(db.Time)
     miles = db.Column(db.Integer)
+    session = db.Column(db.Integer, db.ForeignKey('session.id'))
 
     def __repr__(self):
         return '<Task ID {} taken at {} with priority {}>'.format(str(self.id), str(self.timestamp), str(self.priority))
@@ -40,6 +44,7 @@ class Task(db.Model):
 
 class Vehicle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     manufacturer = db.Column(db.String(64))
     model = db.Column(db.String(64))
     dateOfManufacture = db.Column(db.Date)
@@ -52,9 +57,20 @@ class Vehicle(db.Model):
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(120), index=True, unique=True)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    username = db.Column(db.String(64), unique=True)
+    email = db.Column(db.String(120))
     passwordHash = db.Column(db.String(128))
+    sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
+
+class Session(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    tasks = db.relationship('Task', backref='sess', lazy='dynamic')
+
+    def __repr__(self):
+        return '<Session {} {}>'.format(self.id, self.timestamp)

@@ -1,42 +1,79 @@
 from flask import Blueprint, render_template
-
+from flask import jsonify
+from app import models
 from app import db
 
-mod = Blueprint('rider', __name__, url_prefix='/api/v1/rider')
+mod = Blueprint('rider', __name__, url_prefix='/api/v1/rider/')
 
-@mod.route('<int:id>', methods=['GET'])
+@mod.route('<int:id>/', methods=['GET'])
 def getRider(id):
-    return "The rider for ID {}".format(id)
+    rider = getRiderObject(id)
+
+    if (rider):
+        return jsonify(id=rider.id, name=rider.name, patch=rider.patch,
+                       dob=rider.dob, vehicle=rider.assignedVehicle, status=rider.status,
+                       address1=rider.address1, address2=rider.address2,
+                       town=rider.town, county=rider.county,
+                       postcode=rider.postcode, country=rider.country)
+    else:
+        return notFound()
 
 
 @mod.route('<int:id>/name', methods=['GET'])
 def getRiderName(id):
-    return "The name of the rider for ID {}".format(id)
+    rider = getRiderObject(id)
+
+    if (rider):
+        return jsonify(id=rider.id, name=rider.name)
+    else:
+        return notFound()
 
 
 @mod.route('<int:id>/address', methods=['GET'])
 def getRiderAddress(id):
-    return "The address of the rider for ID {}".format(id)
+    rider = getRiderObject(id)
+
+    if (rider):
+        return jsonify(id=rider.id, address1=rider.address1, address2=rider.address2,
+        town=rider.town, county=rider.county,
+        postcode=rider.postcode, country=rider.country)
+    else:
+        return notFound()
 
 
 @mod.route('<int:id>/status', methods=['GET'])
 def getRiderStatus(id):
-    return "The status of the rider for ID {}".format(id)
+    rider = getRiderObject(id)
+
+    if (rider):
+        return jsonify(id=rider.id, status=rider.status)
+    else:
+        return notFound()
 
 
 @mod.route('<int:id>/vehicle', methods=['GET'])
 def getRiderVehicle(id):
-    return "The vehicle of the rider for ID {}".format(id)
+    rider = getRiderObject(id)
+
+    if (rider):
+        return jsonify(id=rider.id, status=rider.assignedVehicle)
+    else:
+        return notFound()
 
 
 @mod.route('<int:id>/availability', methods=['GET'])
 def getRiderAvailability(id):
-    return "The availability of the rider for ID {}".format(id)
+    return "WHAT IS THIS I DUNNO LOL {}".format(id)
 
 
 @mod.route('<int:id>/patch', methods=['GET'])
 def getRiderPatch(id):
-    return "The patch of the rider for ID {}".format(id)
+    rider = getRiderObject(id)
+
+    if (rider):
+        return jsonify(id=rider.id, status=rider.patch)
+    else:
+        return notFound()
 
 
 @mod.route('submit', methods=['PUT'])
@@ -48,3 +85,8 @@ def saveRider():
 def editRider():
     return "edited... lol not realllly"
 
+def getRiderObject(id):
+    return models.Rider.query.filter_by(id=id).first()
+
+def notFound():
+    return jsonify(id=0)
