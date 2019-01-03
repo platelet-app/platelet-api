@@ -1,6 +1,7 @@
 import os
 from flask_login import LoginManager
 from flask import Flask
+from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 import logging
@@ -20,13 +21,16 @@ app.config.from_object(Config)
 
 db = SQLAlchemy(app)
 
+api = Api(app)
+
+
 app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
 from app.views import task, rider, views, site
 
-app.register_blueprint(task.mod)
+#app.register_blueprint(task.mod)
 app.register_blueprint(rider.mod)
 app.register_blueprint(site.mod)
 #app.register_blueprint(decoder.mod)

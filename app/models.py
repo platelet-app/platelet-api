@@ -1,24 +1,13 @@
 from app import db
 from datetime import datetime
 
-
-class Rider(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    name = db.Column(db.String(64))
+class Address(object):
     address1 = db.Column(db.String(64))
     address2 = db.Column(db.String(64))
     town = db.Column(db.String(64))
     county = db.Column(db.String(64))
     country = db.Column(db.String(64))
     postcode = db.Column(db.String(7))
-    dob = db.Column(db.Date)
-    status = db.Column(db.String(64))
-    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
-    patch = db.Column(db.String(64))
-
-    def __repr__(self):
-        return '<Rider {} in patch {} with vehicle {}>'.format(self.name, self.patch, self.assignedVehicle)
 
 
 class Task(db.Model):
@@ -55,16 +44,32 @@ class Vehicle(db.Model):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)
 
 
-class User(db.Model):
+class User(Address, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     username = db.Column(db.String(64), unique=True)
     email = db.Column(db.String(120))
     passwordHash = db.Column(db.String(128))
-    sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
+    name = db.Column(db.String(64))
+    dob = db.Column(db.Date)
+    status = db.Column(db.String(64))
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
+
+
+class Rider(User):
+   # id = db.Column(db.Integer, primary_key=True)
+   # timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
+    patch = db.Column(db.String(64))
+
+    def __repr__(self):
+        return '<Rider {} in patch {} with vehicle {}>'.format(self.name, self.patch, self.assignedVehicle)
+
+class Coordinator(User):
+    sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
+
 
 class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
