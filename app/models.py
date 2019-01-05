@@ -52,23 +52,27 @@ class User(Address, db.Model):
     passwordHash = db.Column(db.String(128))
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
+    sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
+    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
+    patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
+    
+    def dict(self):
+        return [{'id': self.id, 'username': self.username, 'name': self.name, 'patch': self.patch,
+                 'dob': datetime.strftime(self.dob, '%d/%m/%Y'), 'vehicle': self.assignedVehicle, 'status': self.status,
+                 'address1': self.address1, 'address2': self.address2,
+                 'town': self.town, 'county': self.county,
+                 'postcode': self.postcode, 'country': self.country}]
+
+    def dictAddress(self):
+        return [{'address1': self.address1, 'address2': self.address2,
+                 'town': self.town, 'county': self.county,
+                 'postcode': self.postcode, 'country': self.country}]
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
 
-class Rider(User):
-   # id = db.Column(db.Integer, primary_key=True)
-   # timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
-    patch = db.Column(db.String(64))
-
-    def __repr__(self):
-        return '<Rider {} in patch {} with vehicle {}>'.format(self.name, self.patch, self.assignedVehicle)
-
-class Coordinator(User):
-    sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
 
 
 class Session(db.Model):

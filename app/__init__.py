@@ -28,10 +28,10 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.views import task, rider, views, site
+from app.views import task, user, views, site
 
 #app.register_blueprint(task.mod)
-app.register_blueprint(rider.mod)
+app.register_blueprint(user.mod)
 app.register_blueprint(site.mod)
 #app.register_blueprint(decoder.mod)
 #app.register_blueprint(encoder.mod)
