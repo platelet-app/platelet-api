@@ -34,10 +34,7 @@ sessionSchema = schemas.SessionSchema()
 
 deleteTime = 60 * 60
 
-mod = Blueprint('user', __name__, url_prefix='/api/v1/user/')
-
 class User(Resource):
-
 
     def get(self, _id):
         user = getUserObject(_id)
@@ -137,8 +134,6 @@ class AddressField(Resource):
         if user:
             args = parser.parse_args()
             try:
-
-
                 db.session.add(saveValues(user, args))
                 db.session.commit()
 
@@ -168,76 +163,6 @@ api.add_resource(AddressField,
                  '/username/address/<_id>',
                  '/id/address/<_id>')
 
-
-@mod.route('<int:id>/name', methods=['GET'])
-def getUserName(id):
-    user = getUserObject(id)
-
-    if (user):
-        return jsonify(id=user.id, name=user.name)
-    else:
-        return notFound()
-
-
-@mod.route('<int:id>/address', methods=['GET'])
-def getUserAddress(id):
-    user = getUserObject(id)
-
-    if (user):
-        return jsonify(id=user.id, address1=user.address1, address2=user.address2,
-        town=user.town, county=user.county,
-        postcode=user.postcode, country=user.country)
-    else:
-        return notFound()
-
-
-@mod.route('<int:id>/status', methods=['GET'])
-def getUserStatus(id):
-    user = getUserObject(id)
-
-    if (user):
-        return jsonify(id=user.id, status=user.status)
-    else:
-        return notFound(id)
-
-
-@mod.route('<int:id>/vehicle', methods=['GET'])
-def getUserVehicle(id):
-    user = getUserObject(id)
-
-    if (user):
-        return jsonify(id=user.id, status=user.assignedVehicle)
-    else:
-        return notFound()
-
-
-@mod.route('<int:id>/availability', methods=['GET'])
-def getUserAvailability(id):
-    return "WHAT IS THIS I DUNNO LOL {}".format(id)
-
-
-@mod.route('<int:id>/patch', methods=['GET'])
-def getUserPatch(id):
-    user = getUserObject(id)
-
-    if (user):
-        return jsonify(id=user.id, status=user.patch)
-    else:
-        return notFound()
-
-
-@mod.route('submit', methods=['POST'])
-def saveUser():
-
-    for i in request.form:
-        print(i)
-
-    return "saved... lol not really"
-
-
-@mod.route('edit', methods=['POST'])
-def editUser():
-    return "edited... lol not realllly"
 
 def getUserObject(_id):
 
