@@ -1,5 +1,12 @@
 from app import db
 from datetime import datetime
+from enum import Enum, auto
+
+class Objects(Enum):
+    USER = auto()
+    SESSION = auto()
+    TASK = auto()
+    VEHICLE = auto()
 
 class Address(object):
     address1 = db.Column(db.String(64))
@@ -56,7 +63,10 @@ class User(Address, db.Model):
     assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
     patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
-    
+    flaggedForDeletion = db.Column(db.Boolean)
+
+
+    # marshmallow probably makes this redundant
     def dict(self):
         return [{'id': self.id, 'username': self.username, 'name': self.name, 'patch': self.patch,
                  'dob': datetime.strftime(self.dob, '%d/%m/%Y'), 'vehicle': self.assignedVehicle, 'status': self.status,
@@ -73,8 +83,6 @@ class User(Address, db.Model):
         return '<User {}>'.format(self.username)
 
 
-
-
 class Session(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -83,3 +91,13 @@ class Session(db.Model):
 
     def __repr__(self):
         return '<Session {} {}>'.format(self.id, self.timestamp)
+    
+
+class deleteFlags(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    objectId = db.Column(db.Integer)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    timeToDelete = db.Column(db.Integer)
+    objectType = db.Column(db.Integer)
+
+

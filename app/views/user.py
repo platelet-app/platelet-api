@@ -29,6 +29,8 @@ parser.add_argument('country')
 userSchema = schemas.UserSchema()
 sessionSchema = schemas.SessionSchema()
 
+deleteTime = 60 * 60
+
 mod = Blueprint('user', __name__, url_prefix='/api/v1/user/')
 
 class User(Resource):
@@ -53,7 +55,7 @@ class User(Resource):
         user = models.User(name=args['name'], username=args['username'], passwordHash=password, email=args['email'], dob=datetime.strptime(args['dob'], '%d/%m/%Y'), \
                            status=args['status'], assignedVehicle=int(args['vehicle']), \
                            patch=args['patch'], address1=args['address1'], address2=args['address2'], town=args['town'], county=args['county'], \
-                           postcode=args['postcode'].upper(), country=args['country'])
+                           postcode=args['postcode'].upper(), country=args['country'], flaggedForDeletion=False)
 
         try:
             db.session.add(user)
@@ -62,6 +64,20 @@ class User(Resource):
             return notUniqueError("username")
 
         return user.id, 201
+
+    def delete(self, _id):
+
+        user = getUserObject(_id)
+        user.flaggedForDeletion = True
+
+        delete = models.deleteFlags(objectId=10, objectType=10, timeToDelete=10)
+
+        db.session.add(user)
+        db.session.add(delete)
+
+        db.session.commit()
+
+        return {'id': _id}, 204
 
 class Users(Resource):
 
@@ -110,13 +126,14 @@ class UserNameField(Resource):
 api.add_resource(User,
                  '/user/<_id>',
                  '/user/username/<_id>',
-                 '/user/id/<_id>',
-                 '/user')
+                 '/user/id/<_id>')
 api.add_resource(UserNameField,
                  '/user/username/<_id>',
                  '/user/username/username/<_id>')
 api.add_resource(Users,
-                 '/users')
+                 '/users',
+                 '/user')
+
 
 @mod.route('<int:id>/name', methods=['GET'])
 def getUserName(id):
