@@ -100,4 +100,3 @@ class deleteFlags(db.Model):
     timeToDelete = db.Column(db.Integer)
     objectType = db.Column(db.Integer)
 
-

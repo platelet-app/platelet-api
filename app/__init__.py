@@ -23,7 +23,7 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
-api = Api(app, prefix='/api/v0.1')
+userApi = Api(app, prefix='/api/v0.1/user')
 
 
 app.debug = True
