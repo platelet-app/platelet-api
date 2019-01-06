@@ -3,6 +3,7 @@ from flask_login import LoginManager
 from flask import Flask
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 import logging
 from config import Config
@@ -20,8 +21,9 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 db = SQLAlchemy(app)
+ma = Marshmallow(app)
 
-api = Api(app)
+api = Api(app, prefix='/api/v0.1')
 
 
 app.debug = True

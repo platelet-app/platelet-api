@@ -2,6 +2,8 @@ from flask import Blueprint, request
 from flask import jsonify
 from sqlalchemy import exc as sqlexc
 from app import models
+from app import ma
+from app import schemas
 from flask_restful import reqparse, abort, Api, Resource
 from app import db
 from app import api
@@ -9,7 +11,6 @@ from app import api
 from datetime import datetime
 
 parser = reqparse.RequestParser()
-#parser.add_argument('name', 'username', 'email', 'dob', 'status', 'assignedVehicle', 'patch')
 parser.add_argument('name')
 parser.add_argument('username')
 parser.add_argument('password')
@@ -25,19 +26,21 @@ parser.add_argument('county')
 parser.add_argument('postcode')
 parser.add_argument('country')
 
+userSchema = schemas.UserSchema()
+sessionSchema = schemas.SessionSchema()
+
 mod = Blueprint('user', __name__, url_prefix='/api/v1/user/')
 
 class User(Resource):
 
 
-    def get(self, id):
-        user = getUserObject(id)
-
+    def get(self, _id):
+        user = getUserObject(_id)
 
         if (user):
-            return jsonify(user.dict())
+            return jsonify(userSchema.dump(user).data)
         else:
-            return notFound()
+            return notFound(_id)
 
     def post(self):
 
@@ -56,23 +59,38 @@ class User(Resource):
             db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError as e:
-            return notUniqueError("username", user.id)
+            return notUniqueError("username")
 
         return user.id, 201
 
+class Users(Resource):
+
+
+    def get(self):
+        users = getAllUsers()
+
+        usersList = {}
+
+        for i in users:
+            usersList.update({i.id: i.username})
+
+        if (users):
+            return jsonify({'users': usersList})
+        else:
+            return notFound()
 
 class UserNameField(Resource):
     
-    def get(self, id):
-        user = getUserObject(id)
+    def get(self, _id):
+        user = getUserObject(_id)
         
         if (user):
             return {'id': user.id, 'name': user.name}
         else:
-            return notFound()
+            return notFound(_id)
 
-    def put(self, id):
-        user = getUserObject(id)
+    def put(self, _id):
+        user = getUserObject(_id)
 
         if (user):
             args = parser.parse_args()
@@ -87,13 +105,18 @@ class UserNameField(Resource):
 
 
         else:
-            return notFound()
+            return notFound(_id)
 
 api.add_resource(User,
-                 '/user/<id>',
+                 '/user/<_id>',
+                 '/user/username/<_id>',
+                 '/user/id/<_id>',
                  '/user')
 api.add_resource(UserNameField,
-                 '/user/address/<id>')
+                 '/user/username/<_id>',
+                 '/user/username/username/<_id>')
+api.add_resource(Users,
+                 '/users')
 
 @mod.route('<int:id>/name', methods=['GET'])
 def getUserName(id):
@@ -124,7 +147,7 @@ def getUserStatus(id):
     if (user):
         return jsonify(id=user.id, status=user.status)
     else:
-        return notFound()
+        return notFound(id)
 
 
 @mod.route('<int:id>/vehicle', methods=['GET'])
@@ -165,13 +188,27 @@ def saveUser():
 def editUser():
     return "edited... lol not realllly"
 
-def getUserObject(id):
-    return models.User.query.filter_by(id=id).first()
+def getUserObject(_id):
 
-def notFound():
-    return 0, 404
+    splitNum = len(api.prefix.split('/')) + 1
+    
+    if (request.path.split('/')[splitNum] == 'username'):
+        return models.User.query.filter_by(username=_id).first()
+    else:
+        return models.User.query.filter_by(id=_id).first()
+
+
+def getAllUsers():
+    return models.User.query.all()
+
+
+def notFound(id = "null"):
+    return {'id': id, 'message': "The user was not found"}, 404
+
 
 def databaseError(id = "null"):
     return {'id': id, 'message': "A database error has occurred"}, 500
+
+
 def notUniqueError(field, id = "null"):
     return {'id': id, 'message': "{} not unique".format(field)}, 403
