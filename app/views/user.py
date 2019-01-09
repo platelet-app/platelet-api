@@ -37,12 +37,47 @@ deleteTime = 60 * 60
 class User(Resource):
 
     def get(self, _id):
+
+        if not _id:
+            return notFound()
+
         user = getUserObject(_id)
 
         if (user):
             return jsonify(userSchema.dump(user).data)
         else:
             return notFound(_id)
+
+
+    def delete(self, _id):
+
+        user = getUserObject(_id)
+        user.flaggedForDeletion = True
+
+        delete = models.deleteFlags(objectId=10, objectType=10, timeToDelete=10)
+
+        db.session.add(user)
+        db.session.add(delete)
+
+        db.session.commit()
+
+        return {'id': _id, 'message': "User {} deleted".format(user.username)}, 204
+
+
+class Users(Resource):
+
+    def get(self):
+        users = getAllUsers()
+
+        usersList = {}
+
+        for i in users:
+            usersList.update({i.id: i.username})
+
+        if (users):
+            return jsonify({'users': usersList})
+        else:
+            return notFound()
 
     def post(self):
 
@@ -58,37 +93,7 @@ class User(Resource):
         except sqlexc.IntegrityError as e:
             return notUniqueError("username")
 
-        return user.id, 201
-
-    def delete(self, _id):
-
-        user = getUserObject(_id)
-        user.flaggedForDeletion = True
-
-        delete = models.deleteFlags(objectId=10, objectType=10, timeToDelete=10)
-
-        db.session.add(user)
-        db.session.add(delete)
-
-        db.session.commit()
-
-        return {'id': _id}, 204
-
-class Users(Resource):
-
-
-    def get(self):
-        users = getAllUsers()
-
-        usersList = {}
-
-        for i in users:
-            usersList.update({i.id: i.username})
-
-        if (users):
-            return jsonify({'users': usersList})
-        else:
-            return notFound()
+        return {'id': user.id, 'message': 'User {} created'.format('asdf')}, 201
 
 class UserNameField(Resource):
     
@@ -153,7 +158,7 @@ api.add_resource(User,
                  '/username/<_id>',
                  '/id/<_id>')
 api.add_resource(Users,
-                 's' )
+                 's')
 api.add_resource(UserNameField,
                  '/username/<_id>',
                  '/username/username/<_id>',
