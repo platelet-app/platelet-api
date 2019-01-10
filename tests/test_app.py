@@ -4,6 +4,7 @@ from app import db, models
 
 user_id = -1
 
+
 import requests
 
 url = 'http://localhost:5000/api/v0.1/user'
@@ -38,6 +39,13 @@ def test_addUser():
 def test_deleteUser():
     if user_id > 0:
         r = requests.delete('{}/{}'.format(url, user_id), data=payload)
-        assert(r.status_code == 204)
+        assert(r.status_code == 202)
+        assert(is_json(r.content))
 
-    print("no id to delete")
+
+        user = models.User.query.filter_by(id=user_id).first()
+        assert (user.flaggedForDeletion == True)
+
+        queue = models.DeleteFlags.query.filter_by(objectId=user_id).first()
+
+        assert queue.objectType == models.Objects.USER

@@ -1,0 +1,14 @@
+Flask>=1.0
+pyjwt
+pendulum>=2.0
+passlib
+flask-buzz>=0.1.7
+
+[dev]
+flake8
+flask-cors
+flask-sqlalchemy
+freezegun
+pytest
+pytest-flask
+sphinx

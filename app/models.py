@@ -1,8 +1,8 @@
 from app import db
 from datetime import datetime
-from enum import Enum, auto
+from enum import IntEnum, auto
 
-class Objects(Enum):
+class Objects(IntEnum):
     USER = auto()
     SESSION = auto()
     TASK = auto()
@@ -29,6 +29,8 @@ class Task(db.Model):
     destinationTown = db.Column(db.String(64))
     destinationPostcode = db.Column(db.String(7))
     patch = db.Column(db.String(64))
+    contactName = db.Column(db.String(64))
+    contactNumber = db.Column(db.Integer)
     priority = db.Column(db.Integer)
     finalDuration = db.Column(db.Time)
     miles = db.Column(db.Integer)
@@ -93,10 +95,18 @@ class Session(db.Model):
         return '<Session {} {}>'.format(self.id, self.timestamp)
     
 
-class deleteFlags(db.Model):
+class DeleteFlags(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     objectId = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     timeToDelete = db.Column(db.Integer)
     objectType = db.Column(db.Integer)
+
+class SavedLocations(Address, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    name = db.Column(db.String(64))
+    notes = db.Column(db.String(10000))
+    contact = db.Column(db.String(64))
+    phoneNumber = db.Column(db.Integer())
 
