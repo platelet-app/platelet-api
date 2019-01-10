@@ -52,16 +52,17 @@ class User(Resource):
     def delete(self, _id):
 
         user = getUserObject(_id)
+
         user.flaggedForDeletion = True
 
-        delete = models.deleteFlags(objectId=10, objectType=10, timeToDelete=10)
+        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.USER, timeToDelete=10)
 
         db.session.add(user)
         db.session.add(delete)
 
         db.session.commit()
 
-        return {'id': _id, 'message': "User {} deleted".format(user.username)}, 204
+        return {'id': _id, 'message': "User {} queued for deletion".format(user.username)}, 202
 
 
 class Users(Resource):
@@ -93,7 +94,7 @@ class Users(Resource):
         except sqlexc.IntegrityError as e:
             return notUniqueError("username")
 
-        return {'id': user.id, 'message': 'User {} created'.format('asdf')}, 201
+        return {'id': user.id, 'message': 'User {} created'.format(user.username)}, 201
 
 class UserNameField(Resource):
     

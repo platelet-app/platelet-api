@@ -1,0 +1,6 @@
+
+[dev]
+flake8
+pytest
+sphinx
+nox
