@@ -5,6 +5,7 @@ from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
+import flask_praetorian
 import logging
 from config import Config
 
@@ -22,16 +23,20 @@ app.config.from_object(Config)
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+guard = flask_praetorian.Praetorian()
 
 userApi = Api(app, prefix='/api/v0.1/user')
+loginApi = Api(app, prefix='/api/v0.1/login')
 
 
 app.debug = True
 migrate = Migrate(app, db)
 
-from app import models
-from app.views import task, user, views, site
 
+from app import models
+from app.views import task, user, views, site, login
+
+guard.init_app(app, models.User)
 #app.register_blueprint(task.mod)
 app.register_blueprint(site.mod)
 #app.register_blueprint(decoder.mod)

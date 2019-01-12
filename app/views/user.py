@@ -1,12 +1,14 @@
-from flask import Blueprint, request
+from flask import request
 from flask import jsonify
 from sqlalchemy import exc as sqlexc
 from app import models
 from app import ma
 from app import schemas
 from flask_restful import reqparse, abort, Api, Resource
+import flask_praetorian
 from app import db
 from app import userApi as api
+from app import guard
 import sys
 import traceback
 
@@ -27,6 +29,8 @@ parser.add_argument('town')
 parser.add_argument('county')
 parser.add_argument('postcode')
 parser.add_argument('country')
+parser.add_argument('roles')
+parser.add_argument('active')
 
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
@@ -36,6 +40,7 @@ deleteTime = 60 * 60
 
 class User(Resource):
 
+    @flask_praetorian.auth_required
     def get(self, _id):
 
         if not _id:
@@ -49,6 +54,7 @@ class User(Resource):
             return notFound(_id)
 
 
+    @flask_praetorian.roles_required('admin')
     def delete(self, _id):
 
         user = getUserObject(_id)
@@ -67,6 +73,7 @@ class User(Resource):
 
 class Users(Resource):
 
+    @flask_praetorian.auth_required
     def get(self):
         users = getAllUsers()
 
@@ -84,7 +91,6 @@ class Users(Resource):
 
         args = parser.parse_args()
 
-        password = args['password']
 
         user = models.User()
 
@@ -165,9 +171,9 @@ api.add_resource(UserNameField,
                  '/username/username/<_id>',
                  '/id/username/<_id>')
 api.add_resource(AddressField,
-                 '/address/<_id>',
-                 '/username/address/<_id>',
-                 '/id/address/<_id>')
+                 '<_id>/address',
+                 '/username/<_id>/address',
+                 '/id/<_id>/address')
 
 
 def getUserObject(_id):
@@ -201,7 +207,7 @@ def saveValues(user, args):
     if args['name']: user.name = args['name']
     if args['username']: user.username = args['username']
     if args['email']: user.email = args['email']
-    if args['patch']: user.email = args['email']
+    if args['patch']: user.patch = args['patch']
     if args['dob']: user.dob = datetime.strptime(args['dob'], '%d/%m/%Y')
     if args['status']: user.status = args['status']
     if args['address1']: user.address1 = args['address1']
@@ -210,5 +216,8 @@ def saveValues(user, args):
     if args['county']: user.county = args['county']
     if args['country']: user.country = args['country']
     if args['postcode']: user.postcode = args['postcode'].upper()
+    if args['password']: user.password = guard.encrypt_password(args['password'])
+    if args['roles']: user.roles = args['roles'].lower()
+    if args['active']: user.is_active = True if args['roles'].lower() == 'yes' else False
 
     return user

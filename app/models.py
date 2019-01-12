@@ -58,7 +58,7 @@ class User(Address, db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     username = db.Column(db.String(64), unique=True)
     email = db.Column(db.String(120))
-    passwordHash = db.Column(db.String(128))
+    password = db.Column(db.String(128))
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
@@ -66,6 +66,28 @@ class User(Address, db.Model):
     patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
     flaggedForDeletion = db.Column(db.Boolean)
+    roles = db.Column(db.String())
+    is_active = db.Column(db.Boolean, default=True, server_default='true')
+
+
+    @classmethod
+    def lookup(cls, username):
+        return cls.query.filter_by(username=username).one_or_none()
+    @classmethod
+    def identify(cls, id):
+        return cls.query.get(id)
+    @property
+    def identity(self):
+        return self.id
+
+    @property
+    def rolenames(self):
+        try:
+            return self.roles.split(',')
+        except Exception:
+            return []
+
+
 
 
     # marshmallow probably makes this redundant
