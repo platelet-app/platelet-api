@@ -19,14 +19,6 @@ payload = {"name": "Someone Person the 2nd",
            "country": "uk"}
 
 
-def test_getUsers():
-    r = requests.get('{}s'.format(url))
-    assert(r.status_code == 200)
-    assert(is_json(r.content))
-    users = models.User.query.all()
-    assert(len(json.loads(r.content)['users']) == len(users))
-
-
 def test_addUser():
     r = requests.post('{}s'.format(url), data=payload)
     assert(r.status_code == 201)
@@ -34,6 +26,14 @@ def test_addUser():
     assert(int(json.loads(r.content)['id']))
     global user_id
     user_id = int(json.loads(r.content)['id'])
+
+
+def test_getUsers():
+    r = requests.get('{}s'.format(url))
+    assert(r.status_code == 200)
+    assert(is_json(r.content))
+    users = models.User.query.all()
+    assert(len(json.loads(r.content)['users']) == len(users))
 
 
 def test_deleteUser():
