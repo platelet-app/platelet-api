@@ -1,5 +1,8 @@
+import json
+
 from flask import Blueprint, request
 from flask import jsonify
+from marshmallow import ValidationError
 from sqlalchemy import exc as sqlexc
 from app import models
 from app import ma
@@ -44,7 +47,7 @@ class User(Resource):
         user = getUserObject(_id)
 
         if (user):
-            return jsonify(userSchema.dump(user).data)
+            return userSchema.dumps(user)
         else:
             return notFound(_id)
 
@@ -81,15 +84,19 @@ class Users(Resource):
             return notFound()
 
     def post(self):
+        json_data = request.get_json()
+        if not json_data:
+            return {'message': "No json input data provided"}, 400
 
-        args = parser.parse_args()
+        parsedSchema = userSchema.load(json_data)
 
-        password = args['password']
+        if (parsedSchema.errors):
+            return json.dumps(parsedSchema.errors), 400  # TODO better error formatting
 
         user = models.User()
 
         try:
-            db.session.add(saveValues(user, args))
+            db.session.add(saveValues(user, parsedSchema.data))
             db.session.commit()
         except sqlexc.IntegrityError as e:
             return notUniqueError("username")
@@ -129,7 +136,7 @@ class AddressField(Resource):
         user = getUserObject(_id)
 
         if (user):
-            return jsonify(userAddressSchema.dump(user).data)
+            return userAddressSchema.dumps(user)
         else:
             return notFound(_id)
 
@@ -143,7 +150,7 @@ class AddressField(Resource):
                 db.session.add(saveValues(user, args))
                 db.session.commit()
 
-                return jsonify(userAddressSchema.dump(user).data)
+                return userAddressSchema.dumps(user)
 
             except Exception as e:
                 print(e)
@@ -198,17 +205,16 @@ def notUniqueError(field, id = "null"):
 
 def saveValues(user, args):
 
-    if args['name']: user.name = args['name']
-    if args['username']: user.username = args['username']
-    if args['email']: user.email = args['email']
-    if args['patch']: user.email = args['email']
-    if args['dob']: user.dob = datetime.strptime(args['dob'], '%d/%m/%Y')
-    if args['status']: user.status = args['status']
-    if args['address1']: user.address1 = args['address1']
-    if args['address2']: user.address2 = args['address2']
-    if args['town']: user.town = args['town']
-    if args['county']: user.county = args['county']
-    if args['country']: user.country = args['country']
-    if args['postcode']: user.postcode = args['postcode'].upper()
+    if 'name' in args: user.name = args['name']
+    if 'username' in args: user.username = args['username']
+    if 'email' in args: user.email = args['email']
+    if 'patch' in args: user.email = args['email']
+    if 'dob' in args: user.dob = datetime.strptime(args['dob'], '%d/%m/%Y')
+    if 'address1' in args: user.address1 = args['address1']
+    if 'address2' in args: user.address2 = args['address2']
+    if 'town' in args: user.town = args['town']
+    if 'county' in args: user.county = args['county']
+    if 'country' in args: user.country = args['country']
+    if 'postcode' in args: user.postcode = args['postcode'].upper()
 
     return user
