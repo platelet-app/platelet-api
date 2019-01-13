@@ -3,11 +3,13 @@ from tests.testfunctions import random_string, is_json
 from app import db, models
 
 user_id = -1
-
+jwtKey = ""
+authString = {}
 
 import requests
 
 url = 'http://localhost:5000/api/v0.1/user'
+loginUrl = 'http://localhost:5000/api/v0.1/login'
 
 payload = {"name": "Someone Person the 2nd",
            "username": "{}".format(random_string()),
@@ -16,11 +18,27 @@ payload = {"name": "Someone Person the 2nd",
            "vehicle": "1", "patch": "north",
            "address1": "123 fake street", "address2": "woopity complex",
            "town": "bristol", "county": "bristol", "postcode": "bs11 3ey",
-           "country": "uk"}
+           "country": "uk", "roles": "admin"}
+
+
+
+def test_login():
+    loginDetails = {"username": "admin", "password": "yepyepyep"}
+    r = requests.post(loginUrl, data=loginDetails)
+    assert(r.status_code == 200)
+    global authString
+    authString = {"Authorization": "Bearer {}".format(json.loads(r.content)['access_token']) }
+
+def test_getUsers():
+    r = requests.get('{}s'.format(url),  headers=authString)
+    assert(r.status_code == 200)
+    assert(is_json(r.content))
+    users = models.User.query.all()
+    assert(len(json.loads(r.content)['users']) == len(users))
 
 
 def test_addUser():
-    r = requests.post('{}s'.format(url), data=payload)
+    r = requests.post('{}s'.format(url), data=payload, headers=authString)
     assert(r.status_code == 201)
     assert(is_json(r.content))
     assert(int(json.loads(r.content)['id']))
@@ -28,17 +46,9 @@ def test_addUser():
     user_id = int(json.loads(r.content)['id'])
 
 
-def test_getUsers():
-    r = requests.get('{}s'.format(url))
-    assert(r.status_code == 200)
-    assert(is_json(r.content))
-    users = models.User.query.all()
-    assert(len(json.loads(r.content)['users']) == len(users))
-
-
 def test_deleteUser():
     if user_id > 0:
-        r = requests.delete('{}/{}'.format(url, user_id), data=payload)
+        r = requests.delete('{}/{}'.format(url, user_id), data=payload, headers=authString)
         assert(r.status_code == 202)
         assert(is_json(r.content))
 
