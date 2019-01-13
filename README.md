@@ -9,6 +9,8 @@ Install requirements:
 `pip install -r requirements.txt`
 
 Set up database:  
+`flask db init`
+`flask db migrate -m "db setup"`
 `flask db upgrade`
 
 ### Run
