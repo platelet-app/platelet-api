@@ -27,6 +27,7 @@ guard = flask_praetorian.Praetorian()
 
 userApi = Api(app, prefix='/api/v0.1/user')
 loginApi = Api(app, prefix='/api/v0.1/login')
+sessionApi = Api(app, prefix='/api/v0.1/session')
 
 
 app.debug = True

@@ -6,11 +6,13 @@ from app import ma
 from app import schemas
 from flask_restful import reqparse, abort, Api, Resource
 import flask_praetorian
+from flask_praetorian import utilities
 from app import db
 from app import userApi as api
 from app import guard
-import sys
-import traceback
+from .viewfunctions import *
+import functools
+import inspect
 
 from datetime import datetime
 
@@ -38,10 +40,14 @@ sessionSchema = schemas.SessionSchema()
 
 deleteTime = 60 * 60
 
-class User(Resource):
 
+
+
+class User(Resource):
     @flask_praetorian.auth_required
+    @userIdMatch
     def get(self, _id):
+
 
         if not _id:
             return notFound()
@@ -87,11 +93,10 @@ class Users(Resource):
         else:
             return notFound()
 
+    @flask_praetorian.roles_required('admin')
     def post(self):
 
         args = parser.parse_args()
-
-
         user = models.User()
 
         try:
@@ -103,7 +108,8 @@ class Users(Resource):
         return {'id': user.id, 'message': 'User {} created'.format(user.username)}, 201
 
 class UserNameField(Resource):
-    
+
+    @flask_praetorian.auth_required
     def get(self, _id):
         user = getUserObject(_id)
         
@@ -112,6 +118,7 @@ class UserNameField(Resource):
         else:
             return notFound(_id)
 
+    @flask_praetorian.auth_required
     def put(self, _id):
         user = getUserObject(_id)
 
@@ -131,6 +138,7 @@ class UserNameField(Resource):
 
 
 class AddressField(Resource):
+    @flask_praetorian.auth_required
     def get(self, _id):
         user = getUserObject(_id)
 
@@ -139,6 +147,7 @@ class AddressField(Resource):
         else:
             return notFound(_id)
 
+    @flask_praetorian.auth_required
     def put(self, _id):
 
         user = getUserObject(_id)
@@ -190,17 +199,6 @@ def getAllUsers():
     return models.User.query.all()
 
 
-def notFound(id = "null"):
-    return {'id': id, 'message': "The user was not found"}, 404
-
-
-def databaseError(id = "null"):
-    traceback.print_exception(*sys.exc_info())
-    return {'id': id, 'message': "A database error has occurred"}, 500
-
-
-def notUniqueError(field, id = "null"):
-    return {'id': id, 'message': "{} not unique".format(field)}, 403
 
 def saveValues(user, args):
 
