@@ -15,7 +15,7 @@ def databaseError(id = "null"):
 def notUniqueError(field, id = "null"):
     return {'id': id, 'message': "{} not unique".format(field)}, 403
 
-def userIdMatch(func):
+def userIdMatchOrAdmin(func):
     @functools.wraps(func)
     def wrapper(self, _id):
         if 'admin' in utilities.current_rolenames():

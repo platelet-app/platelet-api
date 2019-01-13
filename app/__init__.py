@@ -28,6 +28,7 @@ guard = flask_praetorian.Praetorian()
 userApi = Api(app, prefix='/api/v0.1/user')
 loginApi = Api(app, prefix='/api/v0.1/login')
 sessionApi = Api(app, prefix='/api/v0.1/session')
+taskApi = Api(app, prefix='/api/v0.1/task')
 
 
 app.debug = True
@@ -35,7 +36,7 @@ migrate = Migrate(app, db)
 
 
 from app import models
-from app.views import task, user, views, site, login
+from app.views import task, user, views, site, login, session
 
 guard.init_app(app, models.User)
 #app.register_blueprint(task.mod)

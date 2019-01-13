@@ -2,17 +2,13 @@ from flask import request
 from flask import jsonify
 from sqlalchemy import exc as sqlexc
 from app import models
-from app import ma
 from app import schemas
 from flask_restful import reqparse, abort, Api, Resource
 import flask_praetorian
-from flask_praetorian import utilities
 from app import db
 from app import userApi as api
 from app import guard
 from .viewfunctions import *
-import functools
-import inspect
 
 from datetime import datetime
 
@@ -36,19 +32,13 @@ parser.add_argument('active')
 
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
-sessionSchema = schemas.SessionSchema()
 
 deleteTime = 60 * 60
 
-
-
-
 class User(Resource):
     @flask_praetorian.auth_required
-    @userIdMatch
+    @userIdMatchOrAdmin
     def get(self, _id):
-
-
         if not _id:
             return notFound()
 
