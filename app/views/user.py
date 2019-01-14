@@ -1,4 +1,5 @@
 from flask import request
+import json
 from flask import jsonify
 from sqlalchemy import exc as sqlexc
 from app import models
@@ -74,6 +75,7 @@ class Users(Resource):
     def post(self):
         user = models.User()
         error = loadRequestIntoObject(userSchema, user)
+
         if error:
             return error['errorMessage'], error['httpCode']
 
