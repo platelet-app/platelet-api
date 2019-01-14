@@ -89,19 +89,8 @@ class User(Address, db.Model):
 
 
 
-
-    # marshmallow probably makes this redundant
-    def dict(self):
-        return [{'id': self.id, 'username': self.username, 'name': self.name, 'patch': self.patch,
-                 'dob': datetime.strftime(self.dob, '%d/%m/%Y'), 'vehicle': self.assignedVehicle, 'status': self.status,
-                 'address1': self.address1, 'address2': self.address2,
-                 'town': self.town, 'county': self.county,
-                 'postcode': self.postcode, 'country': self.country}]
-
-    def dictAddress(self):
-        return [{'address1': self.address1, 'address2': self.address2,
-                 'town': self.town, 'county': self.county,
-                 'postcode': self.postcode, 'country': self.country}]
+    def updateFromDict(self, **entries):
+        self.__dict__.update(entries)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)

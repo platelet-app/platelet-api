@@ -20,6 +20,14 @@ payload = {"name": "Someone Person the 2nd",
            "town": "bristol", "county": "bristol", "postcode": "bs11 3ey",
            "country": "uk", "roles": "admin"}
 
+invalid_payload = {"name": "Someone Person the 2nd",
+           "password": "yepyepyep", "email": "invalidEmail",
+           "dob": "24/11 no date", "status": "active",
+           "vehicle": "1", "patch": "north",
+           "address1": "123 fake street", "address2": "woopity complex",
+           "town": "bristol", "county": "bristol", "postcode": "bs11 3ey",
+           "country": "uk"}
+
 
 
 def test_login():
@@ -28,6 +36,15 @@ def test_login():
     assert(r.status_code == 200)
     global authString
     authString = {"Authorization": "Bearer {}".format(json.loads(r.content)['access_token']) }
+
+def test_addUser():
+    r = requests.post('{}s'.format(url), data=json.dumps(payload), headers={'content-type': 'application/json'})
+    print(r.content)
+    assert(r.status_code == 201)
+    assert(is_json(r.content))
+    assert(int(json.loads(r.content)['id']))
+    global user_id
+    user_id = int(json.loads(r.content)['id'])
 
 def test_getUsers():
     r = requests.get('{}s'.format(url),  headers=authString)
@@ -59,3 +76,8 @@ def test_deleteUser():
         queue = models.DeleteFlags.query.filter_by(objectId=user_id).first()
 
         assert queue.objectType == models.Objects.USER
+
+def test_addInvalidUser():
+    r = requests.post('{}s'.format(url), data=json.dumps(invalid_payload), headers={'content-type': 'application/json'})
+    assert(r.status_code == 400)
+
