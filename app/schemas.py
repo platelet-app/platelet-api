@@ -11,7 +11,7 @@ class UserSchema(ma.Schema):
     username = ma.Str(required=True)
     email = ma.Email()
     postcode = ma.Function(lambda obj: obj.postcode.upper())
-
+    dob = ma.DateTime(format='%d/%m/%Y')
 
 class UserAddressSchema(ma.ModelSchema):
     class Meta:

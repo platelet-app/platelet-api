@@ -67,7 +67,6 @@ class User(Resource):
 
         return {'id': _id, 'message': "User {} queued for deletion".format(user.username)}, 202
 
-
 class Users(Resource):
 
     def get(self):
@@ -84,19 +83,14 @@ class Users(Resource):
             return notFound()
 
     def post(self):
-        json_data = request.get_json()
-        if not json_data:
-            return {'message': "No json input data provided"}, 400
-
-        parsedSchema = userSchema.load(json_data)
-
-        if (parsedSchema.errors):
-            return json.dumps(parsedSchema.errors), 400  # TODO better error formatting
+        loadedSchema = loadRequestIntoSchema(request.get_json(), userSchema)
+        if loadedSchema['error']:
+            return loadedSchema['error']['errorMessage'], loadedSchema['error']['httpCode']
 
         user = models.User()
 
         try:
-            db.session.add(saveValues(user, parsedSchema.data))
+            db.session.add(saveValues(user, loadedSchema['schemaData']))
             db.session.commit()
         except sqlexc.IntegrityError as e:
             return notUniqueError("username")
@@ -114,12 +108,15 @@ class UserNameField(Resource):
             return notFound(_id)
 
     def put(self, _id):
+        loadedSchema = loadRequestIntoSchema(request.get_json(), userSchema)
+        if loadedSchema['error']:
+            return loadedSchema['error']['errorMessage'], loadedSchema['error']['httpCode']
+
         user = getUserObject(_id)
 
         if (user):
-            args = parser.parse_args()
             try:
-                db.session.add(saveValues(user, args))
+                db.session.add(saveValues(user, loadedSchema['schemaData']))
                 db.session.commit()
             except sqlexc.IntegrityError as e:
                 return notUniqueError("username", user.id)
@@ -141,13 +138,15 @@ class AddressField(Resource):
             return notFound(_id)
 
     def put(self, _id):
+        loadedSchema = loadRequestIntoSchema(request.get_json(), userAddressSchema)
+        if loadedSchema['error']:
+            return loadedSchema['error']['errorMessage'], loadedSchema['error']['httpCode']
 
         user = getUserObject(_id)
 
         if user:
-            args = parser.parse_args()
             try:
-                db.session.add(saveValues(user, args))
+                db.session.add(saveValues(user, loadedSchema['schemaData']))
                 db.session.commit()
 
                 return userAddressSchema.dumps(user)
@@ -155,7 +154,6 @@ class AddressField(Resource):
             except Exception as e:
                 print(e)
                 return databaseError(_id)
-
 
         else:
             return notFound(_id)
@@ -176,6 +174,16 @@ api.add_resource(AddressField,
                  '/username/address/<_id>',
                  '/id/address/<_id>')
 
+
+def loadRequestIntoSchema(requestJson, schema):
+    if not requestJson:
+        return {'schemaData': None, 'error': {'errorMessage' : {'message': "No json input data provided"}, 'httpCode': 400}}
+
+    parsedSchema = schema.load(requestJson)
+    if parsedSchema.errors:
+        return {'schemaData': None, 'error': {'errorMessage' : json.dumps(parsedSchema.errors), 'httpCode': 400}}  # TODO better error formatting
+
+    return {'schemaData': parsedSchema.data, 'error': None}
 
 def getUserObject(_id):
 
@@ -209,12 +217,12 @@ def saveValues(user, args):
     if 'username' in args: user.username = args['username']
     if 'email' in args: user.email = args['email']
     if 'patch' in args: user.email = args['email']
-    if 'dob' in args: user.dob = datetime.strptime(args['dob'], '%d/%m/%Y')
+    if 'dob' in args: user.dob = args['dob']
     if 'address1' in args: user.address1 = args['address1']
     if 'address2' in args: user.address2 = args['address2']
     if 'town' in args: user.town = args['town']
     if 'county' in args: user.county = args['county']
     if 'country' in args: user.country = args['country']
-    if 'postcode' in args: user.postcode = args['postcode'].upper()
+    if 'postcode' in args: user.postcode = args['postcode']
 
     return user

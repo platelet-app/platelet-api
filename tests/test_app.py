@@ -29,6 +29,7 @@ invalid_payload = {"name": "Someone Person the 2nd",
 
 def test_addUser():
     r = requests.post('{}s'.format(url), data=json.dumps(payload), headers={'content-type': 'application/json'})
+    print(r.content)
     assert(r.status_code == 201)
     assert(is_json(r.content))
     assert(int(json.loads(r.content)['id']))
