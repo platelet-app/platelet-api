@@ -10,7 +10,6 @@ from app import db
 from app import userApi as api
 from app import guard
 from .viewfunctions import *
-
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
 
@@ -30,7 +29,8 @@ class User(Resource):
         return userSchema.dumps(user)
 
 
-    @flask_praetorian.roles_required('admin')
+    @flask_praetorian.auth_required
+    @userIdMatchOrAdmin
     def delete(self, _id):
         if not _id:
             return notFound()
@@ -71,7 +71,6 @@ class Users(Resource):
 
         return jsonify({'users': usersList})
 
-    @flask_praetorian.roles_required('admin')
     def post(self):
         user = models.User()
         error = loadRequestIntoObject(userSchema, user)
@@ -160,21 +159,6 @@ api.add_resource(AddressField,
                  '<_id>/address',
                  '/username/<_id>/address',
                  '/id/<_id>/address')
-
-
-def loadRequestIntoObject(schema, objectToLoadInto):
-    requestJson = request.get_json()
-    if not requestJson:
-        return {'errorMessage' : {'message': "No json input data provided"}, 'httpCode': 400}
-
-    parsedSchema = schema.load(requestJson)
-    if parsedSchema.errors:
-        return {'errorMessage' : json.dumps(parsedSchema.errors), 'httpCode': 400}  # TODO better error formatting
-
-    objectToLoadInto.updateFromDict(**parsedSchema.data)
-
-    return None
-
 
 def getUserObject(_id):
 

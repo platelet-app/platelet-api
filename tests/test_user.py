@@ -1,14 +1,13 @@
 import json
 from tests.testfunctions import random_string, is_json
 from app import db, models
+import requests
 
 user_id = -1
 jwtKey = ""
 authHeader = {}
 authJsonHeader = {}
 jsonHeader = {'content-type': 'application/json'}
-
-import requests
 
 url = 'http://localhost:5000/api/v0.1/user'
 loginUrl = 'http://localhost:5000/api/v0.1/login'
@@ -64,14 +63,13 @@ def test_deleteUser():
 
 
         user = models.User.query.filter_by(id=user_id).first()
-        assert (user.flaggedForDeletion == True)
+        assert user.flaggedForDeletion
 
         queue = models.DeleteFlags.query.filter_by(objectId=user_id).first()
 
-        assert queue.objectType == models.Objects.USER
+        assert int(queue.objectType) == int(models.Objects.USER)
 
 def test_addInvalidUser():
     r = requests.post('{}s'.format(url), data=json.dumps(invalid_payload), headers=authJsonHeader)
     assert(r.status_code == 400)
-    pass
 

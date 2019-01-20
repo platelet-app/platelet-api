@@ -58,10 +58,14 @@ class Task(Resource):
 class Tasks(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
-        args = parser.parse_args()
-        task = models.Task()
 
-        db.session.add(saveValues(task, args))
+        task = models.Task()
+        error = loadRequestIntoObject(taskSchema, task)
+
+        if error:
+            return error['errorMessage'], error['httpCode']
+
+        db.session.add(task)
         db.session.commit()
 
         return {'id': task.id, 'message': 'Task {} created'.format(task.id)}, 201
@@ -73,20 +77,3 @@ api.add_resource(Tasks,
 def getTaskObject(_id):
     return models.Task.query.filter_by(id=_id).first()
 
-def saveValues(task, args):
-
-    if args['pickupAddressOne']: task.pickupAddress1 = args['pickupAddressOne']
-    if args['pickupAddressTwo']: task.pickupAddress2 = args['pickupAddressTwo']
-    if args['pickupTown']: task.pickupAddressTown = args['pickupTown']
-    if args['pickupPostcode']: task.pickupPostCode = args['pickupPostCode']
-    if args['destinationAddressOne']: task.destinationAdress1 = args['destinationAddressOne']
-    if args['destinationAddressTwo']: task.destinationAddress2 = args['destinationAddressTwo']
-    if args['destinationTown']: task.destinationTown = args['destinationTown']
-    if args['destinationPostcode']: task.destinationPostcode = args['destinationPostcode']
-    if args['patch']: task.patch = args['patch']
-    if args['contactName']: task.contactName = args['contactName']
-    if args['contactNumber']: task.contactNumber = args['contactNumber']
-    if args['priority']: task.priority = args['priorty']
-    if args['session']: task.session = int(args['session'])
-
-    return task

@@ -8,6 +8,6 @@ class Config(object):
         'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    JWT_ACCESS_LIFESPAN = {'hours': 24}
+    JWT_ACCESS_LIFESPAN = {'days': 24}
 
     JWT_REFRESH_LIFESPAN = {'days': 30}

@@ -1,6 +1,7 @@
 from app import db
 from datetime import datetime
 from enum import IntEnum, auto
+from sqlalchemy_utils import EmailType, ChoiceType
 
 class Objects(IntEnum):
     USER = auto()
@@ -36,6 +37,10 @@ class Task(db.Model):
     miles = db.Column(db.Integer)
     session = db.Column(db.Integer, db.ForeignKey('session.id'))
 
+
+    def updateFromDict(self, **entries):
+        self.__dict__.update(entries)
+
     def __repr__(self):
         return '<Task ID {} taken at {} with priority {}>'.format(str(self.id), str(self.timestamp), str(self.priority))
 
@@ -57,7 +62,7 @@ class User(Address, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     username = db.Column(db.String(64), unique=True)
-    email = db.Column(db.String(120))
+    email = db.Column(EmailType)
     password = db.Column(db.String(128))
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
@@ -112,6 +117,7 @@ class DeleteFlags(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     timeToDelete = db.Column(db.Integer)
     objectType = db.Column(db.Integer)
+    #objectType = db.Column(ChoiceType(Objects, impl=db.Integer()))
 
 class SavedLocations(Address, db.Model):
     id = db.Column(db.Integer, primary_key=True)
