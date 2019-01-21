@@ -1,15 +1,10 @@
-from flask import request
-import json
 from flask import jsonify
 from sqlalchemy import exc as sqlexc
-from app import models
 from app import schemas
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import Resource
 import flask_praetorian
-from app import db
-from app import userApi as api
-from app import guard
-from .viewfunctions import *
+from app.views.functions.userfunctions import *
+from app.views.functions.viewfunctions import *
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
 
@@ -20,11 +15,11 @@ class User(Resource):
     @userIdMatchOrAdmin
     def get(self, _id):
         if not _id:
-            return notFound()
+            return notFound("user")
 
         user = getUserObject(_id)
         if not user:
-            return notFound(_id)
+            return notFound("user", _id)
 
         return userSchema.dumps(user)
 
@@ -33,11 +28,14 @@ class User(Resource):
     @userIdMatchOrAdmin
     def delete(self, _id):
         if not _id:
-            return notFound()
+            return notFound("user")
 
         user = getUserObject(_id)
         if not user:
-            return notFound(_id)
+            return notFound("user", _id)
+
+        if user.flaggedForDeletion:
+            return forbiddenError("this user is already flagged for deletion")
 
         user.flaggedForDeletion = True
 
@@ -63,7 +61,7 @@ class Users(Resource):
     def get(self):
         users = getAllUsers()
         if not users:
-            return notFound()
+            return notFound("user")
 
         usersList = {}
         for i in users:
@@ -95,11 +93,11 @@ class UserNameField(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         if not _id:
-            return notFound()
+            return notFound("user")
 
         user = getUserObject(_id)
         if not user:
-            return notFound(_id)
+            return notFound("user", _id)
 
         return {'id': user.id, 'name': user.name}
 
@@ -107,7 +105,7 @@ class UserNameField(Resource):
     def put(self, _id):
         user = getUserObject(_id)
         if not user:
-            return notFound(_id)
+            return notFound("user", _id)
 
         error = loadRequestIntoObject(userSchema, user)
         if error:
@@ -134,14 +132,14 @@ class AddressField(Resource):
     def get(self, _id):
         user = getUserObject(_id)
         if not user:
-            return notFound(_id)
+            return notFound("user", _id)
         return userAddressSchema.dumps(user)
 
     @flask_praetorian.auth_required
     def put(self, _id):
         user = getUserObject(_id)
         if not user:
-            return notFound(_id)
+            return notFound("user", _id)
 
         error = loadRequestIntoObject(userAddressSchema, user)
         if error:
@@ -160,27 +158,3 @@ api.add_resource(AddressField,
                  '/username/<_id>/address',
                  '/id/<_id>/address')
 
-def getUserObject(_id):
-
-    splitNum = len(api.prefix.split('/'))
-    
-    if (request.path.split('/')[splitNum] == 'username'):
-        return models.User.query.filter_by(username=_id).first()
-    else:
-        return models.User.query.filter_by(id=_id).first()
-
-
-def getAllUsers():
-    return models.User.query.all()
-
-def notFound(id = "null"):
-    return {'id': id, 'message': "The user was not found"}, 404
-
-
-def databaseError(id = "null"):
-    traceback.print_exception(*sys.exc_info())
-    return {'id': id, 'message': "A database error has occurred"}, 500
-
-
-def notUniqueError(field, id = "null"):
-    return {'id': id, 'message': "{} not unique".format(field)}, 403

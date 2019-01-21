@@ -106,6 +106,7 @@ class Session(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
+    flaggedForDeletion = db.Column(db.Boolean)
 
     def __repr__(self):
         return '<Session {} {}>'.format(self.id, self.timestamp)

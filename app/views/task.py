@@ -1,21 +1,11 @@
-from flask import Blueprint, render_template
-from flask import request
+from flask import Blueprint
 from flask import jsonify
-from sqlalchemy import exc as sqlexc
-from app import models
-from app import ma
 from app import schemas
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import reqparse, Resource
 import flask_praetorian
-from flask_praetorian import utilities
-from app import db
 from app import taskApi as api
-from app import guard
-from .viewfunctions import *
-import functools
-import inspect
+from app.views.functions.viewfunctions import *
 
-from datetime import datetime
 from app import db
 
 parser = reqparse.RequestParser()

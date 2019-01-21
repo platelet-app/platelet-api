@@ -1,23 +1,15 @@
-from flask import request
 from flask import jsonify
-from sqlalchemy import exc as sqlexc
-from app import models
-from app import ma
 from app import schemas
-from flask_restful import reqparse, abort, Api, Resource
+from flask_restful import reqparse, Resource
 import flask_praetorian
-from app import db
 from app import sessionApi as api
-from flask_praetorian import utilities
-from app import guard
-import sys
-import traceback
 
 parser = reqparse.RequestParser()
 parser.add_argument('user')
 sessionSchema = schemas.SessionSchema()
-from .viewfunctions import *
-from datetime import datetime
+from app.views.functions.viewfunctions import *
+from app.views.functions.sessionfunctions import *
+
 
 class Session(Resource):
     @flask_praetorian.auth_required
@@ -32,14 +24,41 @@ class Session(Resource):
         else:
             return notFound(_id)
 
-    @flask_praetorian.roles_required('admin')
+    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    @sessionIdMatchOrAdmin
     def delete(self, _id):
-        pass
+        if not _id:
+            return notFound("session")
+
+        session = getSessionObject(_id)
+
+        if not session:
+            return notFound("session", _id)
+
+        if session.flaggedForDeletion:
+            return forbiddenError("this user is already flagged for deletion")
+
+        session.flaggedForDeletion = True
+
+        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.SESSION, timeToDelete=10)
+
+        db.session.add(session)
+        db.session.add(delete)
+
+        db.session.commit()
+
+        return {'id': _id, 'message': "Session {} queued for deletion".format(session.id)}, 202
 
 class Sessions(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
         args = parser.parse_args()
+
+        if args['user']:
+            print(models.User.query.filter_by(id=args['user']))
+            if not models.User.query.filter_by(id=args['user']).first():
+                return forbiddenError("cannot create a session for a non-existent user")
+
         session = models.Session()
 
         session.user_id = utilities.current_user_id()
@@ -49,7 +68,6 @@ class Sessions(Resource):
                 session.user_id = args['user']
             else:
                 return unauthorisedError("only admins can create sessions for other users")
-
 
         db.session.add(session)
         db.session.commit()
@@ -62,11 +80,6 @@ api.add_resource(Sessions,
 api.add_resource(Session,
                 '/<_id>')
 
+
 def getSessionObject(_id):
-
     return models.Session.query.filter_by(id=_id).first()
-
-def saveValues(session, args):
-    if args['user']: session.user_id = args['user']
-
-    return session
