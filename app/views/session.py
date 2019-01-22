@@ -77,6 +77,8 @@ class Sessions(Resource):
 
     def get(self, user_id):
         user = getUserObject(user_id)
+        if not user:
+            return notFound('user', user_id)
         sessions = user.sessions.all()
 
         result = {}
