@@ -25,18 +25,20 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 guard = flask_praetorian.Praetorian()
 
-userApi = Api(app, prefix='/api/v0.1/user')
-loginApi = Api(app, prefix='/api/v0.1/login')
-sessionApi = Api(app, prefix='/api/v0.1/session')
-taskApi = Api(app, prefix='/api/v0.1/task')
+apiVersion = 'v0.1'
 
+userApi = Api(app, prefix='/api/{}/user'.format(apiVersion))
+loginApi = Api(app, prefix='/api/{}/login'.format(apiVersion))
+sessionApi = Api(app, prefix='/api/{}/session'.format(apiVersion))
+taskApi = Api(app, prefix='/api/{}/task'.format(apiVersion))
+vehicleApi = Api(app, prefix='/api/{}/vehicle'.format(apiVersion))
 
 app.debug = True
 migrate = Migrate(app, db)
 
 
 from app import models
-from app.views import task, user, views, site, login, session
+from app.views import task, user, views, site, login, session, vehicle
 
 guard.init_app(app, models.User)
 #app.register_blueprint(task.mod)

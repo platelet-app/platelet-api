@@ -8,6 +8,7 @@ parser = reqparse.RequestParser()
 parser.add_argument('user')
 sessionSchema = schemas.SessionSchema()
 from app.views.functions.viewfunctions import *
+from app.views.functions.userfunctions import getUserObject
 from app.views.functions.sessionfunctions import *
 
 
@@ -74,9 +75,22 @@ class Sessions(Resource):
 
         return {'id': session.id, 'user_id': session.user_id, 'message': 'Session {} created'.format(session.id)}, 201
 
+    def get(self, user_id):
+        user = getUserObject(user_id)
+        sessions = user.sessions.all()
+
+        result = {}
+
+        for i in sessions:
+            result[str(i.id)] = {user.username: str(i.timestamp)}
+            print(result)
+
+        return result, 200
+
 
 api.add_resource(Sessions,
-                 's')
+                 's',
+                 's/<user_id>')
 api.add_resource(Session,
                 '/<_id>')
 

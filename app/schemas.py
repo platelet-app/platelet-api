@@ -37,3 +37,15 @@ class TaskSchema(ma.Schema):
     contactNumber = ma.Int()
     pickupPostcode = ma.Function(lambda obj: obj.postcode.upper())
     destinationPostcode = ma.Function(lambda obj: obj.postcode.upper())
+
+
+class VehicleSchema(ma.Schema):
+    class Meta:
+        model = models.Task
+        fields = ('manufacturer', 'model', 'dateOfManufacture', 'dateOfRegistration',
+                  'registrationNumber')
+
+    dateOfManufacture = ma.DateTime(format='%d/%m/%Y')
+    dateOfRegistration = ma.DateTime(format='%d/%m/%Y')
+    registrationNumber = ma.Function(lambda obj: obj.registrationNumber.upper())
+

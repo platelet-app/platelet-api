@@ -1,7 +1,7 @@
 from app import db
 from datetime import datetime
 from enum import IntEnum, auto
-from sqlalchemy_utils import EmailType, ChoiceType
+from sqlalchemy_utils import EmailType
 
 class Objects(IntEnum):
     USER = auto()
@@ -53,6 +53,9 @@ class Vehicle(db.Model):
     dateOfManufacture = db.Column(db.Date)
     dateOfRegistration = db.Column(db.Date)
     registrationNumber = db.Column(db.String(10))
+
+    def updateFromDict(self, **entries):
+        self.__dict__.update(entries)
 
     def __repr__(self):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)

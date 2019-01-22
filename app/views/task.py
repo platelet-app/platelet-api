@@ -1,4 +1,3 @@
-from flask import Blueprint
 from flask import jsonify
 from app import schemas
 from flask_restful import reqparse, Resource
@@ -8,25 +7,7 @@ from app.views.functions.viewfunctions import *
 
 from app import db
 
-parser = reqparse.RequestParser()
-parser.add_argument('pickupAddressOne')
-parser.add_argument('pickupAddressTwo')
-parser.add_argument('pickupAddressTown')
-parser.add_argument('pickupTown')
-parser.add_argument('pickupPostcode')
-parser.add_argument('destinationAddressOne')
-parser.add_argument('destinationAddressTwo')
-parser.add_argument('destinationTown')
-parser.add_argument('destinationPostcode')
-parser.add_argument('patch')
-parser.add_argument('contactName')
-parser.add_argument('contactNumber')
-parser.add_argument('priority')
-parser.add_argument('session')
-
 taskSchema = schemas.TaskSchema()
-
-mod = Blueprint('task', __name__, url_prefix='/api/v1/task')
 
 class Task(Resource):
     @flask_praetorian.auth_required
