@@ -57,3 +57,29 @@ def loadRequestIntoObject(schema, objectToLoadInto):
 
 def getAllUsers():
     return models.User.query.all()
+
+def get_range(item, _range="0-50", order="descending"):
+
+    start = 0
+    end = 50
+
+    if _range:
+        between = _range.split('-')
+
+        if between[0].isdigit() and between[1].isdigit():
+            start = int(between[0])
+            end = int(between[1])
+        else:
+            return forbiddenError("invalid range")
+
+    if start > end:
+        return forbiddenError("invalid range")
+
+    if end - start > 1000:
+        return forbiddenError("range too large")
+
+    if order == "descending":
+        item.reverse()
+
+    return item[start:end]
+

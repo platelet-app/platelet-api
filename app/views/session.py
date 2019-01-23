@@ -75,24 +75,31 @@ class Sessions(Resource):
 
         return {'id': session.id, 'user_id': session.user_id, 'message': 'Session {} created'.format(session.id)}, 201
 
-    def get(self, user_id):
+    def get(self, user_id, _range=None, order="ascending"):
         user = getUserObject(user_id)
         if not user:
             return notFound('user', user_id)
-        sessions = user.sessions.all()
+
+        items = get_range(user.sessions.all(), _range, order)
 
         result = {}
 
-        for i in sessions:
+        if not isinstance(items, list):
+            return items
+
+        for i in items:
             result[str(i.id)] = {user.username: str(i.timestamp)}
-            print(result)
+
+        print(result)
 
         return result, 200
 
 
 api.add_resource(Sessions,
                  's',
-                 's/<user_id>')
+                 's/<user_id>',
+                 's/<user_id>/<_range>',
+                 's/<user_id>/<_range>/<order>')
 api.add_resource(Session,
                 '/<_id>')
 
