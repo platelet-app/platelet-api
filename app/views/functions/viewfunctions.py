@@ -58,7 +58,7 @@ def loadRequestIntoObject(schema, objectToLoadInto):
 def getAllUsers():
     return models.User.query.all()
 
-def get_range(item, _range="0-50", order="descending"):
+def get_range(items, _range="0-50", order="descending"):
 
     start = 0
     end = 50
@@ -79,7 +79,11 @@ def get_range(item, _range="0-50", order="descending"):
         return forbiddenError("range too large")
 
     if order == "descending":
-        item.reverse()
+        items.reverse()
 
-    return item[start:end]
+    for i in items[:]:
+        if i.flaggedForDeletion:
+            print(i.id)
+            items.remove(i)
 
+    return items[start:end]

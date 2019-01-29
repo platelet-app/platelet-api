@@ -37,7 +37,7 @@ class Session(Resource):
             return notFound("session", _id)
 
         if session.flaggedForDeletion:
-            return forbiddenError("this user is already flagged for deletion")
+            return forbiddenError("this session is already flagged for deletion")
 
         session.flaggedForDeletion = True
 
