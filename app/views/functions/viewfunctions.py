@@ -6,6 +6,7 @@ from flask import request
 import json
 from app import db
 from app import models
+from app.views.functions.errors import *
 
 
 def userIdMatchOrAdmin(func):

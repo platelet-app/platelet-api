@@ -8,6 +8,8 @@ from flask_migrate import Migrate
 import flask_praetorian
 import logging
 from config import Config
+import _thread
+import time
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
 logger = logging.getLogger()
@@ -39,6 +41,9 @@ migrate = Migrate(app, db)
 
 from app import models
 from app.views import task, user, views, site, login, session, vehicle
+from app.housekeeping import monitor_deletions
+
+#_thread.start_new_thread(monitor_deletions, ())
 
 guard.init_app(app, models.User)
 #app.register_blueprint(task.mod)
