@@ -71,5 +71,5 @@ def test_deleteUser():
 
 def test_addInvalidUser():
     r = requests.post('{}s'.format(url), data=json.dumps(invalid_payload), headers=authJsonHeader)
-    assert(r.status_code == 400)
+    assert(r.status_code == 500)
 

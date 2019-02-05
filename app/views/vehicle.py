@@ -4,6 +4,7 @@ from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import vehicleApi as api
 from app.views.functions.viewfunctions import *
+from app.views.functions.errors import *
 
 from app import db
 
@@ -31,10 +32,10 @@ class Vehicles(Resource):
     def post(self):
 
         vehicle = models.Vehicle()
-        error = loadRequestIntoObject(vehicleSchema, vehicle)
-
-        if error:
-            return error['errorMessage'], error['httpCode']
+        try:
+            loadRequestIntoObject(vehicleSchema, vehicle)
+        except Exception as e:
+            return internalError(e)
 
         if vehicle.dateOfManufacture > vehicle.dateOfRegistration:
             return forbiddenError("date of registration cannot be before date of manufacture")

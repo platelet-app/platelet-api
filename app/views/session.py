@@ -10,6 +10,7 @@ sessionSchema = schemas.SessionSchema()
 from app.views.functions.viewfunctions import *
 from app.views.functions.userfunctions import getUserObject
 from app.views.functions.sessionfunctions import *
+from app.views.functions.errors import *
 
 
 class Session(Resource):

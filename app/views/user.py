@@ -5,6 +5,8 @@ from flask_restful import Resource
 import flask_praetorian
 from app.views.functions.userfunctions import *
 from app.views.functions.viewfunctions import *
+from app.views.functions.errors import *
+
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
 
@@ -71,10 +73,10 @@ class Users(Resource):
 
     def post(self):
         user = models.User()
-        error = loadRequestIntoObject(userSchema, user)
-
-        if error:
-            return error['errorMessage'], error['httpCode']
+        try:
+            loadRequestIntoObject(userSchema, user)
+        except Exception as e:
+            return internalError(e)
 
         try:
             db.session.add(user)
@@ -107,9 +109,10 @@ class UserNameField(Resource):
         if not user:
             return notFound("user", _id)
 
-        error = loadRequestIntoObject(userSchema, user)
-        if error:
-            return error['errorMessage'], error['httpCode']
+        try:
+            loadRequestIntoObject(userSchema, user)
+        except Exception as e:
+            return internalError(e)
 
         try:
             db.session.add(user)
@@ -141,9 +144,10 @@ class AddressField(Resource):
         if not user:
             return notFound("user", _id)
 
-        error = loadRequestIntoObject(userAddressSchema, user)
-        if error:
-            return error['errorMessage'], error['httpCode']
+        try:
+            loadRequestIntoObject(userAddressSchema, user)
+        except Exception as e:
+            return internalError(e)
 
         try:
             db.session.add(user)

@@ -4,6 +4,7 @@ from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import taskApi as api
 from app.views.functions.viewfunctions import *
+from app.views.functions.errors import *
 
 from app import db
 
@@ -31,10 +32,10 @@ class Tasks(Resource):
     def post(self):
 
         task = models.Task()
-        error = loadRequestIntoObject(taskSchema, task)
-
-        if error:
-            return error['errorMessage'], error['httpCode']
+        try:
+            loadRequestIntoObject(taskSchema, task)
+        except Exception as e:
+            internalError(e)
 
         db.session.add(task)
         db.session.commit()
