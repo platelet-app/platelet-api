@@ -44,6 +44,7 @@ from app.views import task, user, views, site, login, session, vehicle
 from app.housekeeping import monitor_deletions
 
 #_thread.start_new_thread(monitor_deletions, ())
+#monitor_deletions()
 
 guard.init_app(app, models.User)
 #app.register_blueprint(task.mod)

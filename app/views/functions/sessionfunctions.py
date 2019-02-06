@@ -13,3 +13,7 @@ def sessionIdMatchOrAdmin(func):
             return {"id": _id, "message": "Object not owned by user"}, 401
     return wrapper
 
+def getSessionObject(_id):
+    return models.User.query.filter_by(id=_id).first()
+
+

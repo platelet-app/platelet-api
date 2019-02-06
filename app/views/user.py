@@ -7,6 +7,8 @@ from app.views.functions.userfunctions import *
 from app.views.functions.viewfunctions import *
 from app.views.functions.errors import *
 
+from app.utilities import getObject
+
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
 
@@ -20,6 +22,7 @@ class User(Resource):
             return notFound("user")
 
         user = getUserObject(_id)
+        #user = getObject(models.Objects.USER, _id)
         if not user:
             return notFound("user", _id)
 

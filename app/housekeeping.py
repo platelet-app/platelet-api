@@ -1,18 +1,19 @@
 import time
 from app import app, db, models
-from app.views.functions.userfunctions import getAllUsers, getUserObject
+from app.utilities import getObject
 import datetime
 
 def monitor_deletions():
-    while(True):
-        users = getAllUsers()
 
-        for i in users:
-            if i.flaggedForDeletion and i.timestamp < datetime.datetime.now() - datetime.timedelta(seconds=60):
-                db.session.delete(i)
+        queue = models.DeleteFlags.query.all()
+
+        for i in queue:
+            if i.timestamp < datetime.datetime.now() - datetime.timedelta(seconds=60):
+                object = getObject(i.objectType, i.objectId)
+                print(object)
+                #db.session.delete(i)
 
         db.session.commit()
 
-        time.sleep(30)
 
         print("CHECKING WOOOOO")
