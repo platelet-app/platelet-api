@@ -1,10 +1,11 @@
 from flask import jsonify
-from app import schemas
+from app import schemas, models
 from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import vehicleApi as api
-from app.views.functions.viewfunctions import *
-from app.views.functions.errors import *
+from app.views.functions.vehiclefunctions import get_vehicle_object
+from app.views.functions.viewfunctions import load_request_into_object
+from app.views.functions.errors import not_found, internal_error, forbidden_error
 
 from app import db
 
@@ -14,14 +15,14 @@ class Vehicle(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         if not _id:
-            return notFound()
+            return not_found()
 
-        vehicle = getVehicleObject(_id)
+        vehicle = get_vehicle_object(_id)
 
         if (vehicle):
             return jsonify(vehicleSchema.dump(vehicle).data)
         else:
-            return notFound(_id)
+            return not_found(_id)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, _id):
@@ -33,12 +34,12 @@ class Vehicles(Resource):
 
         vehicle = models.Vehicle()
         try:
-            loadRequestIntoObject(vehicleSchema, vehicle)
+            load_request_into_object(vehicleSchema, vehicle)
         except Exception as e:
-            return internalError(e)
+            return internal_error(e)
 
         if vehicle.dateOfManufacture > vehicle.dateOfRegistration:
-            return forbiddenError("date of registration cannot be before date of manufacture")
+            return forbidden_error("date of registration cannot be before date of manufacture")
 
         db.session.add(vehicle)
         db.session.commit()
@@ -49,5 +50,3 @@ api.add_resource(Vehicle,
                  '/<_id>')
 api.add_resource(Vehicles,
                  's')
-def getVehicleObject(_id):
-    return models.Vehicle.query.filter_by(id=_id).first()

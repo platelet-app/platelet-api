@@ -1,10 +1,11 @@
 from flask import jsonify
-from app import schemas
+from app import schemas, models
 from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import taskApi as api
-from app.views.functions.viewfunctions import *
-from app.views.functions.errors import *
+from app.views.functions.viewfunctions import load_request_into_object
+from app.views.functions.errors import internal_error, not_found
+from app.views.functions.taskfunctions import get_task_object
 
 from app import db
 
@@ -14,14 +15,14 @@ class Task(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         if not _id:
-            return notFound()
+            return not_found()
 
-        task = getTaskObject(_id)
+        task = get_task_object(_id)
 
         if (task):
             return jsonify(taskSchema.dump(task).data)
         else:
-            return notFound(_id)
+            return not_found(_id)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, _id):
@@ -33,9 +34,9 @@ class Tasks(Resource):
 
         task = models.Task()
         try:
-            loadRequestIntoObject(taskSchema, task)
+            load_request_into_object(taskSchema, task)
         except Exception as e:
-            internalError(e)
+            internal_error(e)
 
         db.session.add(task)
         db.session.commit()
@@ -46,6 +47,4 @@ api.add_resource(Task,
                  '/<_id>')
 api.add_resource(Tasks,
                  's')
-def getTaskObject(_id):
-    return models.Task.query.filter_by(id=_id).first()
 

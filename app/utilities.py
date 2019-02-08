@@ -1,11 +1,11 @@
 from app import app, db, models
-from app.views.functions.userfunctions import getUserObject
-from app.views.functions.sessionfunctions import getSessionObject
+from app.views.functions.userfunctions import get_user_object
+from app.views.functions.sessionfunctions import get_session_object
 
 def getObject(type, _id):
     switch = {
-        models.Objects.SESSION: getSessionObject(_id),
-        models.Objects.USER: getUserObject(_id)
+        models.Objects.SESSION: get_session_object(_id),
+        models.Objects.USER: get_user_object(_id)
     }
 
     obj = switch.get(type, lambda: None)

@@ -1,11 +1,12 @@
 from flask import jsonify
 from sqlalchemy import exc as sqlexc
-from app import schemas
+from app import schemas, db, models
+from app import userApi as api
 from flask_restful import Resource
 import flask_praetorian
-from app.views.functions.userfunctions import *
-from app.views.functions.viewfunctions import *
-from app.views.functions.errors import *
+from app.views.functions.userfunctions import get_user_object, get_all_users
+from app.views.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
+from app.views.functions.errors import not_found, forbidden_error, internal_error, not_unique_error, database_error
 
 from app.utilities import getObject
 
@@ -16,31 +17,30 @@ deleteTime = 60 * 60 # TODO
 
 class User(Resource):
     @flask_praetorian.auth_required
-    @userIdMatchOrAdmin
+    @user_id_match_or_admin
     def get(self, _id):
         if not _id:
-            return notFound("user")
+            return not_found("user")
 
-        user = getUserObject(_id)
-        #user = getObject(models.Objects.USER, _id)
+        user = get_user_object(_id)
         if not user:
-            return notFound("user", _id)
+            return not_found("user", _id)
 
         return userSchema.dumps(user)
 
 
     @flask_praetorian.auth_required
-    @userIdMatchOrAdmin
+    @user_id_match_or_admin
     def delete(self, _id):
         if not _id:
-            return notFound("user")
+            return not_found("user")
 
-        user = getUserObject(_id)
+        user = get_user_object(_id)
         if not user:
-            return notFound("user", _id)
+            return not_found("user", _id)
 
         if user.flaggedForDeletion:
-            return forbiddenError("this user is already flagged for deletion")
+            return forbidden_error("this user is already flagged for deletion")
 
         user.flaggedForDeletion = True
 
@@ -64,9 +64,9 @@ class Users(Resource):
 
     @flask_praetorian.auth_required
     def get(self):
-        users = getAllUsers()
+        users = get_all_users()
         if not users:
-            return notFound("user")
+            return not_found("user")
 
         usersList = {}
         for i in users:
@@ -77,15 +77,15 @@ class Users(Resource):
     def post(self):
         user = models.User()
         try:
-            loadRequestIntoObject(userSchema, user)
+            load_request_into_object(userSchema, user)
         except Exception as e:
-            return internalError(e)
+            return internal_error(e)
 
         try:
             db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError as e:
-            return notUniqueError("username")
+            return not_unique_error("username")
 
         return {'id': user.id, 'message': 'User {} created'.format(user.username)}, 201
 
@@ -98,32 +98,32 @@ class UserNameField(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         if not _id:
-            return notFound("user")
+            return not_found("user")
 
-        user = getUserObject(_id)
+        user = get_user_object(_id)
         if not user:
-            return notFound("user", _id)
+            return not_found("user", _id)
 
         return {'id': user.id, 'name': user.name}
 
     @flask_praetorian.auth_required
     def put(self, _id):
-        user = getUserObject(_id)
+        user = get_user_object(_id)
         if not user:
-            return notFound("user", _id)
+            return not_found("user", _id)
 
         try:
-            loadRequestIntoObject(userSchema, user)
+            load_request_into_object(userSchema, user)
         except Exception as e:
-            return internalError(e)
+            return internal_error(e)
 
         try:
             db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError as e:
-            return notUniqueError("username", user.id)
+            return not_unique_error("username", user.id)
         except Exception as e:
-            return databaseError(_id)
+            return database_error(_id)
 
         return {'id': user.id, 'message': 'User {} updated'.format(user.username)}, 200
 
@@ -136,27 +136,27 @@ api.add_resource(UserNameField,
 class AddressField(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
-        user = getUserObject(_id)
+        user = get_user_object(_id)
         if not user:
-            return notFound("user", _id)
+            return not_found("user", _id)
         return userAddressSchema.dumps(user)
 
     @flask_praetorian.auth_required
     def put(self, _id):
-        user = getUserObject(_id)
+        user = get_user_object(_id)
         if not user:
-            return notFound("user", _id)
+            return not_found("user", _id)
 
         try:
-            loadRequestIntoObject(userAddressSchema, user)
+            load_request_into_object(userAddressSchema, user)
         except Exception as e:
-            return internalError(e)
+            return internal_error(e)
 
         try:
             db.session.add(user)
             db.session.commit()
         except Exception as e:
-            return databaseError(_id)
+            return database_error(_id)
 
         return userAddressSchema.dumps(user)
 

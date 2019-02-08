@@ -6,10 +6,10 @@ from flask import request
 import json
 from app import db
 from app import models
-from app.views.functions.errors import *
+from app.views.functions.errors import forbidden_error
 
 
-def userIdMatchOrAdmin(func):
+def user_id_match_or_admin(func):
     @functools.wraps(func)
     def wrapper(self, _id):
         if 'admin' in utilities.current_rolenames():
@@ -22,7 +22,7 @@ def userIdMatchOrAdmin(func):
 
 
 
-def loadRequestIntoObject(schema, objectToLoadInto):
+def load_request_into_object(schema, objectToLoadInto):
     requestJson = request.get_json()
     if not requestJson:
         raise Exception("No json input data provided")
@@ -33,7 +33,7 @@ def loadRequestIntoObject(schema, objectToLoadInto):
 
     objectToLoadInto.updateFromDict(**parsedSchema.data)
 
-def getAllUsers():
+def get_all_users():
     return models.User.query.all()
 
 def get_range(items, _range="0-50", order="descending"):
@@ -48,13 +48,13 @@ def get_range(items, _range="0-50", order="descending"):
             start = int(between[0])
             end = int(between[1])
         else:
-            return forbiddenError("invalid range")
+            return forbidden_error("invalid range")
 
     if start > end:
-        return forbiddenError("invalid range")
+        return forbidden_error("invalid range")
 
     if end - start > 1000:
-        return forbiddenError("range too large")
+        return forbidden_error("range too large")
 
     if order == "descending":
         items.reverse()

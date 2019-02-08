@@ -18,7 +18,7 @@ class Login(Resource):
         ret = {'access_token': guard.encode_jwt_token(user)}
         return ret, 200
 
-def getUserObject(username):
+def get_user_object(username):
 
         return models.User.query.filter_by(username=username).first()
 

@@ -9,23 +9,11 @@ from app import models
 from app import userApi as api
 
 
-def userIdMatchOrAdmin(func):
-    @functools.wraps(func)
-    def wrapper(self, _id):
-        if 'admin' in utilities.current_rolenames():
-            return func(self, _id)
-        if utilities.current_user_id() == int(_id):
-            return func(self, _id)
-        else:
-            return {"id": _id, "message": "Object not owned by user"}, 401
-    return wrapper
-
-
-def getAllUsers():
+def get_all_users():
     return models.User.query.all()
 
 
-def getUserObject(_id):
+def get_user_object(_id):
 
     splitNum = len(api.prefix.split('/'))
 
