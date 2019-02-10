@@ -7,13 +7,13 @@ import flask_praetorian
 from app.views.functions.userfunctions import get_user_object, get_all_users
 from app.views.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
 from app.views.functions.errors import not_found, forbidden_error, internal_error, not_unique_error, database_error
+from app.exceptions import ObjectNotFoundError
 
 from app.utilities import getObject
 
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
 
-deleteTime = 60 * 60 # TODO
 
 class User(Resource):
     @flask_praetorian.auth_required
@@ -22,9 +22,12 @@ class User(Resource):
         if not _id:
             return not_found("user")
 
-        user = get_user_object(_id)
-        if not user:
+        try:
+            user = get_user_object(_id)
+        except ObjectNotFoundError as e:
             return not_found("user", _id)
+        except Exception as e:
+            return internal_error(e)
 
         return userSchema.dumps(user)
 

@@ -3,6 +3,8 @@ from app import app, db, models
 from app.utilities import getObject
 import datetime
 
+delete_time = 60 * 60 # TODO
+
 def monitor_deletions():
 
         queue = models.DeleteFlags.query.all()
@@ -15,5 +17,3 @@ def monitor_deletions():
 
         db.session.commit()
 
-
-        print("CHECKING WOOOOO")
