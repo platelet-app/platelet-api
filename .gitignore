@@ -8,3 +8,11 @@ __pycache__/
 
 # bloodbike
 app.db
+=======
+*/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# bloodbike
+app.db

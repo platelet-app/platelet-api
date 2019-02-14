@@ -1,61 +1,50 @@
-from flask import Blueprint, render_template
+from flask import jsonify
+from app import schemas, models
+from flask_restful import reqparse, Resource
+import flask_praetorian
+from app import taskApi as api
+from app.views.functions.viewfunctions import load_request_into_object
+from app.views.functions.errors import internal_error, not_found
+from app.views.functions.taskfunctions import get_task_object
 
 from app import db
 
-mod = Blueprint('task', __name__, url_prefix='/api/v1/task')
+taskSchema = schemas.TaskSchema()
 
-@mod.route('<int:id>', methods=['GET'])
-def getTask(id):
+class Task(Resource):
+    @flask_praetorian.auth_required
+    def get(self, _id):
+        if not _id:
+            return not_found()
 
-    return str(id)
+        task = get_task_object(_id)
 
+        if (task):
+            return jsonify(taskSchema.dump(task).data)
+        else:
+            return not_found(_id)
 
-@mod.route('<int:id>/date/recorded', methods=['GET'])
-def getTaskDateTime(id):
+    @flask_praetorian.roles_required('admin')
+    def delete(self, _id):
+        pass
 
-    return "Date/time {} was recorded".format(str(id))
+class Tasks(Resource):
+    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    def post(self):
 
+        task = models.Task()
+        try:
+            load_request_into_object(taskSchema, task)
+        except Exception as e:
+            internal_error(e)
 
-@mod.route('<int:id>/date/retrieved', methods=['GET'])
-def getTaskDateTimeRetrieved(id):
+        db.session.add(task)
+        db.session.commit()
 
-    return "Date/time {} was retrieved".format(str(id))
+        return {'id': task.id, 'message': 'Task {} created'.format(task.id)}, 201
 
+api.add_resource(Task,
+                 '/<_id>')
+api.add_resource(Tasks,
+                 's')
 
-@mod.route('<int:id>/date/delivered', methods=['GET'])
-def getTaskDateTimeDelivered(id):
-
-    return "Date/time {} was delivered".format(str(id))
-
-
-@mod.route('<int:id>/duration', methods=['GET'])
-def getDuration(id):
-
-    return "Delivery duration of {} ".format(str(id))
-
-
-@mod.route('<int:id>/destination', methods=['GET'])
-def getDestination(id):
-
-    return "Delivery duration of {} ".format(str(id))
-
-@mod.route('<int:id>/patch', methods=['GET'])
-def getPatch(id):
-
-    return "Delivery patch of {} ".format(str(id))
-
-
-@mod.route('<int:id>/distance', methods=['GET'])
-def getDistance(id):
-
-    return "Can google maps be used for this? {} ".format(str(id))
-
-
-@mod.route('submit', methods=['PUT'])
-def saveTask():
-    return "saved... lol not really"
-
-
-@mod.route('<int:id>/edit', methods=['POST', 'GET'])
-def editTask(id):
-    return "You tried to edit the task with id {}".format(str(id))

@@ -6,21 +6,21 @@ from app import db
 mod = Blueprint('site', __name__, url_prefix='/site')
 
 @mod.route('new', methods=['GET'])
-def startSession():
+def start_session():
 
     return "startsession"
 
 @mod.route("registercord")
-def registerCoordinator():
+def register_coordinator():
     return "registercoord"
 
 
 @mod.route("registerrider")
-def registerRider():
+def register_rider():
     return "registerrider"
 
 @mod.route("additem")
-def addItem():
+def add_item():
     return "additem"
 
 
