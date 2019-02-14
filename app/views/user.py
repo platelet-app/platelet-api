@@ -19,19 +19,6 @@ class User(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
     def get(self, _id):
-<<<<<<< HEAD
-
-        if not _id:
-            return notFound()
-
-        user = getUserObject(_id)
-
-        if (user):
-            return jsonify(userSchema.dump(user).data)
-        else:
-            return notFound(_id)
-
-=======
         if not _id:
             return not_found("user")
 
@@ -54,16 +41,10 @@ class User(Resource):
         user = get_user_object(_id)
         if not user:
             return not_found("user", _id)
->>>>>>> 8ab028c8a0c28275090a0f0ffa64a2bd9f35bf83
 
         if user.flaggedForDeletion:
             return forbidden_error("this user is already flagged for deletion")
 
-<<<<<<< HEAD
-        user = getUserObject(_id)
-
-=======
->>>>>>> 8ab028c8a0c28275090a0f0ffa64a2bd9f35bf83
         user.flaggedForDeletion = True
 
         delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.USER, timeToDelete=10)
@@ -75,16 +56,12 @@ class User(Resource):
 
         return {'id': _id, 'message': "User {} queued for deletion".format(user.username)}, 202
 
-<<<<<<< HEAD
-=======
 api.add_resource(User,
                  '',
                  '/<_id>',
                  '/username/<_id>',
                  '/id/<_id>')
->>>>>>> 8ab028c8a0c28275090a0f0ffa64a2bd9f35bf83
 
-class Users(Resource):
 
 class Users(Resource):
 
@@ -101,38 +78,11 @@ class Users(Resource):
         return jsonify({'users': usersList})
 
     def post(self):
-<<<<<<< HEAD
-
-        args = parser.parse_args()
-
-        password = args['password']
-
-        user = models.User()
-
-        try:
-            db.session.add(saveValues(user, args))
-            db.session.commit()
-        except sqlexc.IntegrityError as e:
-            return notUniqueError("username")
-
-        return {'id': user.id, 'message': 'User {} created'.format(user.username)}, 201
-
-class UserNameField(Resource):
-    
-    def get(self, _id):
-        user = getUserObject(_id)
-        
-        if (user):
-            return {'id': user.id, 'name': user.name}
-        else:
-            return notFound(_id)
-=======
         user = models.User()
         try:
             load_request_into_object(userSchema, user)
         except Exception as e:
             return internal_error(e)
->>>>>>> 8ab028c8a0c28275090a0f0ffa64a2bd9f35bf83
 
         try:
             db.session.add(user)
@@ -180,16 +130,6 @@ class UserNameField(Resource):
 
         return {'id': user.id, 'message': 'User {} updated'.format(user.username)}, 200
 
-<<<<<<< HEAD
-api.add_resource(User,
-                 '',
-                 '/<_id>',
-                 '/username/<_id>',
-                 '/id/<_id>')
-api.add_resource(Users,
-                 's')
-=======
->>>>>>> 8ab028c8a0c28275090a0f0ffa64a2bd9f35bf83
 api.add_resource(UserNameField,
                  '/username/<_id>',
                  '/username/username/<_id>',

@@ -131,11 +131,3 @@ class SavedLocations(Address, db.Model):
     contact = db.Column(db.String(64))
     phoneNumber = db.Column(db.Integer())
 
-class SavedLocations(Address, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    name = db.Column(db.String(64))
-    notes = db.Column(db.String(10000))
-    contact = db.Column(db.String(64))
-    phoneNumber = db.Column(db.Integer())
-
