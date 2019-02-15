@@ -1,15 +1,6 @@
 ### Install
-Create a virtual environment:  
-`python3 -m venv venv`
 
-Activate it:  
-`. venv/bin/activate`
-
-Install requirements:  
-`pip install -r requirements.txt`
-
-Set up database:  
-`flask db upgrade`
+`./setup.sh`
 
 ### Run
 Start the server:  
@@ -20,9 +11,9 @@ Run the tests:
 
 ### Development
 ##### Libraries
-When you add a new library with `pip install` run:  
+When you add a new library with `pip install` run:
 `pip freeze > requirements.txt`
 
 ##### Database changes
-When you make changes that require database migrations run:  
+When you make changes that require database migrations run:
 `flask db migrate -m "message"`

@@ -35,6 +35,7 @@ class Task(db.Model):
     priority = db.Column(db.Integer)
     finalDuration = db.Column(db.Time)
     miles = db.Column(db.Integer)
+    flaggedForDeletion = db.Column(db.Boolean, default=False)
     session = db.Column(db.Integer, db.ForeignKey('session.id'))
 
 
@@ -53,6 +54,7 @@ class Vehicle(db.Model):
     dateOfManufacture = db.Column(db.Date)
     dateOfRegistration = db.Column(db.Date)
     registrationNumber = db.Column(db.String(10))
+    flaggedForDeletion = db.Column(db.Boolean, default=False)
 
     def updateFromDict(self, **entries):
         self.__dict__.update(entries)
@@ -73,7 +75,7 @@ class User(Address, db.Model):
     assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
     patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
-    flaggedForDeletion = db.Column(db.Boolean)
+    flaggedForDeletion = db.Column(db.Boolean, default=False)
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
 
@@ -109,7 +111,7 @@ class Session(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
-    flaggedForDeletion = db.Column(db.Boolean)
+    flaggedForDeletion = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return '<Session {} {}>'.format(self.id, self.timestamp)
@@ -130,4 +132,5 @@ class SavedLocations(Address, db.Model):
     notes = db.Column(db.String(10000))
     contact = db.Column(db.String(64))
     phoneNumber = db.Column(db.Integer())
+    flaggedForDeletion = db.Column(db.Boolean, default=False)
 

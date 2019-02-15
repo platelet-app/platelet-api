@@ -32,7 +32,7 @@ invalid_payload = {"name": "Someone Person the 2nd",
 
 
 def test_login():
-    loginDetails = {"username": "admin", "password": "yepyepyep"}
+    loginDetails = {"username": "admin", "password": "9409u8fgrejki0"}
     r = requests.post(loginUrl, data=loginDetails)
     assert(r.status_code == 200)
     global authJsonHeader

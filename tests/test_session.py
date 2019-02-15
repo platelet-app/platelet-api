@@ -25,7 +25,7 @@ payload = {"name": "Someone Person the 2nd",
 
 
 def test_login():
-    loginDetails = {"username": "coordinator", "password": "yepyepyep"}
+    loginDetails = {"username": "coordinator", "password": "9409u8fgrejki0"}
     r = requests.post(loginUrl, data=loginDetails)
     assert(r.status_code == 200)
     global authJsonHeader

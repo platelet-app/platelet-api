@@ -9,7 +9,7 @@ from app.views.functions.viewfunctions import user_id_match_or_admin, load_reque
 from app.views.functions.errors import not_found, forbidden_error, internal_error, not_unique_error, database_error
 from app.exceptions import ObjectNotFoundError
 
-from app.utilities import getObject
+from app.utilities import get_object
 
 userSchema = schemas.UserSchema()
 userAddressSchema = schemas.UserAddressSchema()
@@ -27,6 +27,7 @@ class User(Resource):
         except ObjectNotFoundError as e:
             return not_found("user", _id)
         except Exception as e:
+            # this should probably be logged instead of returned
             return internal_error(e)
 
         return userSchema.dumps(user)
