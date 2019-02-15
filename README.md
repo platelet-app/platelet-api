@@ -2,11 +2,17 @@
 
 `./setup.sh`
 
+
 ### Run
-Start the server:  
+Source the environment:
+`source venv/bin/activate`
+
+Start the server:
 `flask run`
 
-Run the tests:  
+Run the tests (in another terminal):
+`source venv/bin/activate`
+
 `pytest --disable-pytest-warnings`
 
 ### Development
