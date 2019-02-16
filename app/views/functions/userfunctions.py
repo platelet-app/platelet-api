@@ -28,3 +28,8 @@ def get_user_object(_id):
     else:
         raise ObjectNotFoundError("User object not found")
 
+
+def is_user_present(_username):
+    if models.User.query.filter_by(username=_username).first():
+        return True
+    return False
