@@ -1,8 +1,10 @@
 import sys
 import traceback
 
+
 def internal_error(message, id ="null"):
     return {'id': id, 'message': str(message)}, 500
+
 
 def database_error(id ="null"):
     traceback.print_exception(*sys.exc_info())
@@ -23,4 +25,3 @@ def forbidden_error(message):
 
 def not_found(what, id ="null"):
     return {'id': id, 'message': "The {} was not found".format(str(what))}, 404
-

@@ -1,42 +1,32 @@
 from flask import jsonify
-from app import schemas
+from app import schemas, db, models
 from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import sessionApi as api
-
-parser = reqparse.RequestParser()
-parser.add_argument('user')
-sessionSchema = schemas.SessionSchema()
 from app.views.functions.viewfunctions import *
-from app.views.functions.userfunctions import get_user_object
+from app.views.functions.userfunctions import get_user_object, is_user_present
 from app.views.functions.sessionfunctions import *
 from app.views.functions.errors import *
+
+session_schema = schemas.SessionSchema()
 
 
 class Session(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
-        if not _id:
-            return not_found()
+        try:
+            session = get_session_object(_id)
+        except ObjectNotFoundError:
+            return not_found("session", _id)
 
-        session = get_session_object(_id)
-
-        print(session)
-
-        if (session):
-            return jsonify(sessionSchema.dump(session).data)
-        else:
-            return not_found("session",_id)
+        return jsonify(session_schema.dump(session).data)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     @session_id_match_or_admin
     def delete(self, _id):
-        if not _id:
-            return not_found("session")
-
-        session = get_session_object(_id)
-
-        if not session:
+        try:
+            session = get_session_object(_id)
+        except ObjectNotFoundError:
             return not_found("session", _id)
 
         if session.flaggedForDeletion:
@@ -48,54 +38,52 @@ class Session(Resource):
 
         db.session.add(session)
         db.session.add(delete)
-
         db.session.commit()
 
         return {'id': _id, 'message': "Session {} queued for deletion".format(session.id)}, 202
 
+
 class Sessions(Resource):
+    @flask_praetorian.auth_required
+    def get(self, user_id, _range=None, order="ascending"):
+        try:
+            user = get_user_object(user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
+
+        try:
+            items = get_range(user.sessions.all(), _range, order)
+        except ValueError as e:
+            return forbidden_error(str(e))
+
+        result = {}
+
+        for i in items:
+            result[str(i.id)] = {user.username: str(i.timestamp)}
+
+        return result, 200
+
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
+        session = models.Session()
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('user')
         args = parser.parse_args()
 
         if args['user']:
-            print(models.User.query.filter_by(id=args['user']))
-            if not models.User.query.filter_by(id=args['user']).first():
-                return forbidden_error("cannot create a session for a non-existent user")
-
-        session = models.Session()
-
-        session.user_id = utilities.current_user_id()
-
-        if args['user']:
-            if 'admin' in utilities.current_rolenames():
-                session.user_id = args['user']
-            else:
+            if 'admin' not in utilities.current_rolenames():
                 return unauthorised_error("only admins can create sessions for other users")
+            if not is_user_present(args['user']):
+                return forbidden_error("cannot create a session for a non-existent user")
+            session.user_id = args['user']
+        else:
+            session.user_id = utilities.current_user_id()
 
         db.session.add(session)
         db.session.commit()
 
         return {'id': session.id, 'user_id': session.user_id, 'message': 'Session {} created'.format(session.id)}, 201
-
-    def get(self, user_id, _range=None, order="ascending"):
-        user = get_user_object(user_id)
-        if not user:
-            return not_found('user', user_id)
-
-        items = get_range(user.sessions.all(), _range, order)
-
-        result = {}
-
-        if not isinstance(items, list):
-            return items
-
-        for i in items:
-            result[str(i.id)] = {user.username: str(i.timestamp)}
-
-        print(result)
-
-        return result, 200
 
 
 api.add_resource(Sessions,
@@ -105,4 +93,3 @@ api.add_resource(Sessions,
                  's/<user_id>/<_range>/<order>')
 api.add_resource(Session,
                 '/<_id>')
-

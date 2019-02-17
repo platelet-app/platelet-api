@@ -1,12 +1,7 @@
-import sys
-import traceback
 import functools
 from flask_praetorian import utilities
 from flask import request
-import json
-from app import db
 from app import models
-from app.views.functions.errors import forbidden_error
 
 
 def user_id_match_or_admin(func):
@@ -21,20 +16,21 @@ def user_id_match_or_admin(func):
     return wrapper
 
 
-
-def load_request_into_object(schema, objectToLoadInto):
-    requestJson = request.get_json()
-    if not requestJson:
+def load_request_into_object(schema, object_to_load_into):
+    request_json = request.get_json()
+    if not request_json:
         raise Exception("No json input data provided")
 
-    parsedSchema = schema.load(requestJson)
-    if parsedSchema.errors:
-        raise Exception(parsedSchema.errors)
+    parsed_schema = schema.load(request_json)
+    if parsed_schema.errors:
+        raise Exception(parsed_schema.errors)
 
-    objectToLoadInto.updateFromDict(**parsedSchema.data)
+    object_to_load_into.updateFromDict(**parsed_schema.data)
+
 
 def get_all_users():
     return models.User.query.all()
+
 
 def get_range(items, _range="0-50", order="descending"):
 
@@ -48,13 +44,13 @@ def get_range(items, _range="0-50", order="descending"):
             start = int(between[0])
             end = int(between[1])
         else:
-            return forbidden_error("invalid range")
+            raise ValueError("invalid range")
 
     if start > end:
-        return forbidden_error("invalid range")
+        raise ValueError("invalid range")
 
     if end - start > 1000:
-        return forbidden_error("range too large")
+        raise ValueError("range too large")
 
     if order == "descending":
         items.reverse()

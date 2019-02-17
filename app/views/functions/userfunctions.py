@@ -1,10 +1,4 @@
-import sys
-import traceback
-import functools
-from flask_praetorian import utilities
 from flask import request
-import json
-from app import db
 from app import models
 from app import userApi as api
 from app.exceptions import ObjectNotFoundError
@@ -16,9 +10,9 @@ def get_all_users():
 
 def get_user_object(_id):
 
-    splitNum = len(api.prefix.split('/'))
+    split_num = len(api.prefix.split('/'))
 
-    if (request.path.split('/')[splitNum] == 'username'):
+    if request.path.split('/')[split_num] == 'username':
         user = models.User.query.filter_by(username=_id).first()
     else:
         user = models.User.query.filter_by(id=_id).first()
@@ -29,7 +23,13 @@ def get_user_object(_id):
         raise ObjectNotFoundError("User object not found")
 
 
-def is_user_present(_username):
-    if models.User.query.filter_by(username=_username).first():
+def is_username_present(username):
+    if models.User.query.filter_by(username=username).first():
+        return True
+    return False
+
+
+def is_user_present(id):
+    if models.User.query.filter_by(id=id).first():
         return True
     return False
