@@ -2,6 +2,7 @@ import functools
 from flask_praetorian import utilities
 from app import models
 from app.exceptions import ObjectNotFoundError
+from app.views.functions.errors import unauthorised_error
 
 
 def session_id_match_or_admin(func):
@@ -12,7 +13,7 @@ def session_id_match_or_admin(func):
         if models.Session.query.filter_by(id=_id).first().user_id == utilities.current_user_id():
             return func(self, _id)
         else:
-            return {"id": _id, "message": "Object not owned by user"}, 401
+            return unauthorised_error("Object not owned by user: session id:".format(_id))
     return wrapper
 
 

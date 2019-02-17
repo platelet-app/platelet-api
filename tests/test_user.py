@@ -1,6 +1,6 @@
 import json
 from tests.testfunctions import random_string, is_json
-from app import db, models
+from app import models
 import requests
 
 user_id = -1
@@ -31,8 +31,8 @@ invalid_payload = {"name": "Someone Person the 2nd",
 
 
 
-def test_login():
-    loginDetails = {"username": "admin", "password": "9409u8fgrejki0"}
+def test_login(preload_db):
+    loginDetails = {"username": "test_admin", "password": "9409u8fgrejki0"}
     r = requests.post(loginUrl, data=loginDetails)
     assert(r.status_code == 200)
     global authJsonHeader

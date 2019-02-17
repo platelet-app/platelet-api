@@ -2,6 +2,7 @@ import functools
 from flask_praetorian import utilities
 from flask import request
 from app import models
+from app.views.functions.errors import unauthorised_error
 
 
 def user_id_match_or_admin(func):
@@ -12,7 +13,7 @@ def user_id_match_or_admin(func):
         if utilities.current_user_id() == int(_id):
             return func(self, _id)
         else:
-            return {"id": _id, "message": "Object not owned by user"}, 401
+            return unauthorised_error("Object not owned by user: user id:".format(_id))
     return wrapper
 
 
