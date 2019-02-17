@@ -72,9 +72,9 @@ class Users(Resource):
         if not users:
             return not_found("user")
 
-        usersList = {}
+        usersList = []
         for i in users:
-            usersList.update({i.id: i.username})
+            usersList.append({"id": i.id, "username": i.username})
 
         return jsonify({'users': usersList})
 

@@ -6,6 +6,7 @@ from flask import request
 import json
 from app import db
 from app import models
+from app.exceptions import InvalidRangeError
 from app.views.functions.errors import forbidden_error
 
 
@@ -48,20 +49,19 @@ def get_range(items, _range="0-50", order="descending"):
             start = int(between[0])
             end = int(between[1])
         else:
-            return forbidden_error("invalid range")
+            raise InvalidRangeError("invalid range")
 
     if start > end:
-        return forbidden_error("invalid range")
+        raise InvalidRangeError("invalid range")
 
     if end - start > 1000:
-        return forbidden_error("range too large")
+        raise InvalidRangeError("range too large")
 
     if order == "descending":
         items.reverse()
 
     for i in items[:]:
         if i.flaggedForDeletion:
-            print(i.id)
             items.remove(i)
 
     return items[start:end]

@@ -1,23 +1,24 @@
 from flask import jsonify
-from app import schemas
+from app import schemas, db, models, utilities
 from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import sessionApi as api
+from app.exceptions import InvalidRangeError, ObjectNotFoundError
 
 parser = reqparse.RequestParser()
 parser.add_argument('user')
 sessionSchema = schemas.SessionSchema()
-from app.views.functions.viewfunctions import *
+from app.views.functions.viewfunctions import get_range
 from app.views.functions.userfunctions import get_user_object
-from app.views.functions.sessionfunctions import *
-from app.views.functions.errors import *
+from app.views.functions.sessionfunctions import get_session_object, session_id_match_or_admin
+from app.views.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error
 
 
 class Session(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         if not _id:
-            return not_found()
+            return not_found("id")
 
         session = get_session_object(_id)
 
@@ -26,7 +27,7 @@ class Session(Resource):
         if (session):
             return jsonify(sessionSchema.dump(session).data)
         else:
-            return not_found("session",_id)
+            return not_found("session", _id)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     @session_id_match_or_admin
@@ -52,6 +53,9 @@ class Session(Resource):
         db.session.commit()
 
         return {'id': _id, 'message': "Session {} queued for deletion".format(session.id)}, 202
+
+api.add_resource(Session,
+                 '/<_id>')
 
 class Sessions(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
@@ -82,20 +86,22 @@ class Sessions(Resource):
         user = get_user_object(user_id)
         if not user:
             return not_found('user', user_id)
+        try:
+            items = get_range(user.sessions.all(), _range, order)
+        except InvalidRangeError as e:
+            return forbidden_error(e)
+        except Exception as e:
+            return internal_error(e)
 
-        items = get_range(user.sessions.all(), _range, order)
 
-        result = {}
-
-        if not isinstance(items, list):
-            return items
+        result = []
 
         for i in items:
-            result[str(i.id)] = {user.username: str(i.timestamp)}
+            result.append({"id": str(i.id), "username": user.username, "timestamp": str(i.timestamp)})
 
         print(result)
 
-        return result, 200
+        return jsonify({"sessions": result})
 
 
 api.add_resource(Sessions,
@@ -103,6 +109,4 @@ api.add_resource(Sessions,
                  's/<user_id>',
                  's/<user_id>/<_range>',
                  's/<user_id>/<_range>/<order>')
-api.add_resource(Session,
-                '/<_id>')
 

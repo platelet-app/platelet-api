@@ -16,4 +16,3 @@ def session_id_match_or_admin(func):
 def get_session_object(_id):
     return models.Session.query.filter_by(id=_id).first()
 
-
