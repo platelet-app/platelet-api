@@ -1,5 +1,5 @@
 import json
-from tests.testfunctions import random_string, is_json
+from tests.testutils import random_string, is_json
 from app import models
 import requests
 
