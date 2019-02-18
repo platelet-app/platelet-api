@@ -30,7 +30,7 @@ class User(Resource):
             # this should probably be logged instead of returned
             return internal_error(e)
 
-        return userSchema.dumps(user)
+        return jsonify(userSchema.dump(user).data)
 
 
     @flask_praetorian.auth_required
@@ -143,7 +143,7 @@ class AddressField(Resource):
         user = get_user_object(_id)
         if not user:
             return not_found("user", _id)
-        return userAddressSchema.dumps(user)
+        return jsonify(userAddressSchema.dump(user).data)
 
     @flask_praetorian.auth_required
     def put(self, _id):
@@ -162,7 +162,7 @@ class AddressField(Resource):
         except Exception as e:
             return database_error(_id)
 
-        return userAddressSchema.dumps(user)
+        return jsonify(userAddressSchema.dump(user).data)
 
 api.add_resource(AddressField,
                  '<_id>/address',
