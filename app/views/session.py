@@ -2,6 +2,7 @@ from flask import jsonify
 from app import schemas, db, models, utilities
 from flask_restful import reqparse, Resource
 import flask_praetorian
+from flask_praetorian import utilities
 from app import sessionApi as api
 from app.exceptions import InvalidRangeError, ObjectNotFoundError
 
