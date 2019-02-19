@@ -18,34 +18,34 @@ default_delete_time = 10
 class User(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def get(self, user_id):
+    def get(self, _id):
         try:
-            user = get_user_object(user_id)
+            user = get_user_object(_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found("user", _id)
 
         return jsonify(user_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def delete(self, user_id):
+    def delete(self, _id):
         try:
-            user = get_user_object(user_id)
+            user = get_user_object(_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found("user", _id)
 
         if user.flaggedForDeletion:
-            return already_flagged_for_deletion_error("user", user_id)
+            return already_flagged_for_deletion_error("user", _id)
 
         user.flaggedForDeletion = True
 
-        delete = models.DeleteFlags(objectId=user_id, objectType=models.Objects.USER, timeToDelete=default_delete_time)
+        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.USER, timeToDelete=default_delete_time)
 
         db.session.add(user)
         db.session.add(delete)
         db.session.commit()
 
-        return {'id': user_id, 'message': "User {} queued for deletion".format(user.username)}, 202
+        return {'id': _id, 'message': "User {} queued for deletion".format(user.username)}, 202
 
 api.add_resource(User,
                  '/<_id>')
@@ -85,21 +85,21 @@ api.add_resource(Users,
 class UserNameField(Resource):
 
     @flask_praetorian.auth_required
-    def get(self, user_id):
+    def get(self, _id):
         try:
-            user = get_user_object(user_id)
+            user = get_user_object(_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found("user", _id)
 
         return jsonify(user_username_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def put(self, user_id):
+    def put(self, _id):
         try:
-            user = get_user_object(user_id)
+            user = get_user_object(_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found("user", _id)
 
         try:
             load_request_into_object(user_username_schema, user)
@@ -107,7 +107,6 @@ class UserNameField(Resource):
             return schema_validation_error(str(e))
 
         try:
-            db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)
@@ -120,21 +119,21 @@ api.add_resource(UserNameField,
 
 class UserAddressField(Resource):
     @flask_praetorian.auth_required
-    def get(self, user_id):
+    def get(self, _id):
         try:
-            user = get_user_object(user_id)
+            user = get_user_object(_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found("user", _id)
 
         return jsonify(user_address_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def put(self, user_id):
+    def put(self, _id):
         try:
-            user = get_user_object(user_id)
+            user = get_user_object(_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found("user", _id)
 
         try:
             load_request_into_object(user_address_schema, user)
@@ -142,7 +141,6 @@ class UserAddressField(Resource):
             return schema_validation_error(str(e))
 
         try:
-            db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)

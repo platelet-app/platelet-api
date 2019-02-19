@@ -23,7 +23,15 @@ def preload_db(request):
     db.session.commit()
 
     def unload_db():
-        # TODO remove test users again
-        return
+        for user in users_to_preload:
+            db.session.delete(user)
+
+        possible_user_list = ("test_user", "second_test_user", "changed_username")  # TODO cleaner
+        for username in possible_user_list:
+            user = models.User.query.filter_by(username=username).first()
+            if user:
+                db.session.delete(user)
+
+        db.session.commit()
 
     request.addfinalizer(unload_db)

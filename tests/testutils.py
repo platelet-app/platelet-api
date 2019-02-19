@@ -2,6 +2,7 @@ import json
 import random
 import string
 import requests
+from app import models
 
 login_url = 'http://localhost:5000/api/v0.1/login'
 user_url = 'http://localhost:5000/api/v0.1/user'
@@ -57,8 +58,5 @@ def find_user(user_type):
     else:
         raise ValueError("invalid user type")
 
-    r = requests.get('{}/{}'.format(user_url, username), headers=authHeader)
-    assert(is_json(r.content))
-    id = int(json.loads(r.content)['id'])
-    assert(id)
-    return id
+    user = models.User.query.filter_by(username=username).first()
+    return user.id
