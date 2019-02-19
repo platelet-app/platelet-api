@@ -50,14 +50,6 @@ def test_get_user_by_id():
     assert(json.loads(r.content)['username'] == username)
 
 
-def test_get_user_by_username():  # fails because of https://trello.com/c/TsgIjdow/14-fix-user-get
-    r = requests.get('{}/{}'.format(user_url, username), headers=tests.testutils.authHeader)
-    assert(r.status_code == 200)
-    assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']) == user_id)
-    assert(int(json.loads(r.content)['username']) == username)
-
-
 def test_get_users():
     r = requests.get('{}s'.format(user_url),  headers=tests.testutils.authHeader)
     assert(r.status_code == 200)
@@ -92,12 +84,12 @@ def test_delete_user():
 
 def test_add_invalid_user_email():
     r = add_user(payload.update({"email": "invalidEmail"}))
-    assert(r.status_code == 500)  # TODO change error code
+    assert(r.status_code == 400)
 
 
 def test_add_invalid_user_dob():
     r = add_user(payload.update({"dob": "221256"}))
-    assert(r.status_code == 500)  # TODO change error code
+    assert(r.status_code == 400)
 
 # TODO more restricted fields
 

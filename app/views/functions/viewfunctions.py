@@ -2,6 +2,7 @@ import functools
 from flask_praetorian import utilities
 from flask import request
 from app import models
+from app.exceptions import SchemaValidationError
 from app.views.functions.errors import unauthorised_error
 
 
@@ -20,11 +21,11 @@ def user_id_match_or_admin(func):
 def load_request_into_object(schema, object_to_load_into):
     request_json = request.get_json()
     if not request_json:
-        raise Exception("No json input data provided")
+        raise SchemaValidationError("No json input data provided")
 
     parsed_schema = schema.load(request_json)
     if parsed_schema.errors:
-        raise Exception(parsed_schema.errors)
+        raise SchemaValidationError(parsed_schema.errors)
 
     object_to_load_into.updateFromDict(**parsed_schema.data)
 

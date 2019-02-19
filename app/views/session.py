@@ -9,6 +9,7 @@ from app.views.functions.sessionfunctions import *
 from app.views.functions.errors import *
 
 session_schema = schemas.SessionSchema()
+default_delete_time = 10
 
 
 class Session(Resource):
@@ -34,7 +35,7 @@ class Session(Resource):
 
         session.flaggedForDeletion = True
 
-        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.SESSION, timeToDelete=10)
+        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.SESSION, timeToDelete=default_delete_time)
 
         db.session.add(session)
         db.session.add(delete)

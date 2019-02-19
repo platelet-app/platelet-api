@@ -1,26 +1,21 @@
-from flask import request
 from app import models
-from app import userApi as api
 from app.exceptions import ObjectNotFoundError
 
 
 def get_all_users():
-    return models.User.query.all()
+    users = models.User.query.all()
+    if not users:
+        return {}
+    return users
 
 
-def get_user_object(_id):
+def get_user_object(user_id):
+    user = models.User.query.filter_by(id=user_id).first()
 
-    split_num = len(api.prefix.split('/'))
+    if not user:
+        raise ObjectNotFoundError()
 
-    if request.path.split('/')[split_num] == 'username':
-        user = models.User.query.filter_by(username=_id).first()
-    else:
-        user = models.User.query.filter_by(id=_id).first()
-
-    if user:
-        return user
-    else:
-        raise ObjectNotFoundError("User object not found")
+    return user
 
 
 def is_username_present(username):

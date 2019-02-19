@@ -6,89 +6,73 @@ from flask_restful import Resource
 import flask_praetorian
 from app.views.functions.userfunctions import get_user_object, get_all_users
 from app.views.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
-from app.views.functions.errors import not_found, forbidden_error, internal_error, not_unique_error, database_error
-from app.exceptions import ObjectNotFoundError
+from app.views.functions.errors import *
+from app.exceptions import ObjectNotFoundError, SchemaValidationError
 
-from app.utilities import get_object
-
-userSchema = schemas.UserSchema()
-userAddressSchema = schemas.UserAddressSchema()
+user_schema = schemas.UserSchema()
+user_address_schema = schemas.UserAddressSchema()
+default_delete_time = 10
 
 
 class User(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def get(self, _id):
-        if not _id:
-            return not_found("user")
-
+    def get(self, user_id):
         try:
-            user = get_user_object(_id)
-        except ObjectNotFoundError as e:
-            return not_found("user", _id)
-        except Exception as e:
-            # this should probably be logged instead of returned
-            return internal_error(e)
+            user = get_user_object(user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
 
-        return jsonify(userSchema.dump(user).data)
-
+        return jsonify(user_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def delete(self, _id):
-        if not _id:
-            return not_found("user")
-
-        user = get_user_object(_id)
-        if not user:
-            return not_found("user", _id)
+    def delete(self, user_id):
+        try:
+            user = get_user_object(user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
 
         if user.flaggedForDeletion:
-            return forbidden_error("this user is already flagged for deletion")
+            return already_flagged_for_deletion_error("user", user_id)
 
         user.flaggedForDeletion = True
 
-        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.USER, timeToDelete=10)
+        delete = models.DeleteFlags(objectId=user_id, objectType=models.Objects.USER, timeToDelete=default_delete_time)
 
         db.session.add(user)
         db.session.add(delete)
-
         db.session.commit()
 
-        return {'id': _id, 'message': "User {} queued for deletion".format(user.username)}, 202
+        return {'id': user_id, 'message': "User {} queued for deletion".format(user.username)}, 202
 
 api.add_resource(User,
-                 '',
-                 '/<_id>',
-                 '/username/<_id>',
-                 '/id/<_id>')
+                 '/<_id>')
 
 
 class Users(Resource):
 
-    @flask_praetorian.auth_required
+    @flask_praetorian.roles_accepted('coordinator', 'admin')
     def get(self):
         users = get_all_users()
-        if not users:
-            return not_found("user")
 
-        usersList = {}
-        for i in users:
-            usersList.update({i.id: i.username})
+        user_id_username_list = {}
+        for user in users:
+            user_id_username_list.update({user.id: user.username})
 
-        return jsonify({'users': usersList})
+        return jsonify({'users': user_id_username_list})
 
     def post(self):
         user = models.User()
         try:
-            load_request_into_object(userSchema, user)
-        except Exception as e:
-            return internal_error(e)
+            load_request_into_object(user_schema, user)
+        except SchemaValidationError as e:
+            return schema_validation_error(str(e))
 
         try:
             db.session.add(user)
             db.session.commit()
-        except sqlexc.IntegrityError as e:
+        except sqlexc.IntegrityError:
             return not_unique_error("username")
 
         return {'id': user.id, 'message': 'User {} created'.format(user.username)}, 201
@@ -117,7 +101,7 @@ class UserNameField(Resource):
             return not_found("user", _id)
 
         try:
-            load_request_into_object(userSchema, user)
+            load_request_into_object(user_schema, user)
         except Exception as e:
             return internal_error(e)
 
@@ -143,7 +127,7 @@ class AddressField(Resource):
         user = get_user_object(_id)
         if not user:
             return not_found("user", _id)
-        return jsonify(userAddressSchema.dump(user).data)
+        return jsonify(user_address_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     def put(self, _id):
@@ -152,7 +136,7 @@ class AddressField(Resource):
             return not_found("user", _id)
 
         try:
-            load_request_into_object(userAddressSchema, user)
+            load_request_into_object(user_address_schema, user)
         except Exception as e:
             return internal_error(e)
 
@@ -162,7 +146,7 @@ class AddressField(Resource):
         except Exception as e:
             return database_error(_id)
 
-        return jsonify(userAddressSchema.dump(user).data)
+        return jsonify(user_address_schema.dump(user).data)
 
 api.add_resource(AddressField,
                  '<_id>/address',
