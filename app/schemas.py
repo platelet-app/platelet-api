@@ -1,6 +1,7 @@
 from app import ma
 from app import models
 
+
 class UserSchema(ma.Schema):
     class Meta:
         model = models.User
@@ -13,6 +14,15 @@ class UserSchema(ma.Schema):
     postcode = ma.Function(lambda obj: obj.postcode.upper())
     dob = ma.DateTime(format='%d/%m/%Y')
 
+
+class UserUsernameSchema(ma.Schema):
+    class Meta:
+        model = models.User
+        fields = ('id', 'username')
+
+    username = ma.Str(required=True)
+
+
 class UserAddressSchema(ma.Schema):
     class Meta:
         model = models.User
@@ -20,6 +30,7 @@ class UserAddressSchema(ma.Schema):
                   'county', 'country', 'postcode')
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
+
 
 class SessionSchema(ma.Schema):
     class Meta:

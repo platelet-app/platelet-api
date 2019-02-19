@@ -14,35 +14,37 @@ default_delete_time = 10
 
 class Session(Resource):
     @flask_praetorian.auth_required
-    def get(self, _id):
+    def get(self, session_id):
         try:
-            session = get_session_object(_id)
+            session = get_session_object(session_id)
         except ObjectNotFoundError:
-            return not_found("session", _id)
+            return not_found("session", session_id)
 
         return jsonify(session_schema.dump(session).data)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     @session_id_match_or_admin
-    def delete(self, _id):
+    def delete(self, session_id):
         try:
-            session = get_session_object(_id)
+            session = get_session_object(session_id)
         except ObjectNotFoundError:
-            return not_found("session", _id)
+            return not_found("session", session_id)
 
         if session.flaggedForDeletion:
             return forbidden_error("this session is already flagged for deletion")
 
         session.flaggedForDeletion = True
 
-        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.SESSION, timeToDelete=default_delete_time)
+        delete = models.DeleteFlags(objectId=session_id, objectType=models.Objects.SESSION, timeToDelete=default_delete_time)
 
         db.session.add(session)
         db.session.add(delete)
         db.session.commit()
 
-        return {'id': _id, 'message': "Session {} queued for deletion".format(session.id)}, 202
+        return {'id': session_id, 'message': "Session {} queued for deletion".format(session.id)}, 202
 
+api.add_resource(Session,
+                 '/<_id>')
 
 class Sessions(Resource):
     @flask_praetorian.auth_required
@@ -86,11 +88,9 @@ class Sessions(Resource):
 
         return {'id': session.id, 'user_id': session.user_id, 'message': 'Session {} created'.format(session.id)}, 201
 
-
 api.add_resource(Sessions,
                  's',
                  's/<user_id>',
                  's/<user_id>/<_range>',
                  's/<user_id>/<_range>/<order>')
-api.add_resource(Session,
-                '/<_id>')
+

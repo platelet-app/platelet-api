@@ -10,6 +10,7 @@ from app.views.functions.errors import *
 from app.exceptions import ObjectNotFoundError, SchemaValidationError
 
 user_schema = schemas.UserSchema()
+user_username_schema = schemas.UserUsernameSchema()
 user_address_schema = schemas.UserAddressSchema()
 default_delete_time = 10
 
@@ -52,7 +53,7 @@ api.add_resource(User,
 
 class Users(Resource):
 
-    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    @flask_praetorian.roles_accepted('admin')
     def get(self):
         users = get_all_users()
 
@@ -84,72 +85,69 @@ api.add_resource(Users,
 class UserNameField(Resource):
 
     @flask_praetorian.auth_required
-    def get(self, _id):
-        if not _id:
-            return not_found("user")
+    def get(self, user_id):
+        try:
+            user = get_user_object(user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
 
-        user = get_user_object(_id)
-        if not user:
-            return not_found("user", _id)
-
-        return {'id': user.id, 'name': user.name}
+        return jsonify(user_username_schema.dump(user).data)
 
     @flask_praetorian.auth_required
-    def put(self, _id):
-        user = get_user_object(_id)
-        if not user:
-            return not_found("user", _id)
+    @user_id_match_or_admin
+    def put(self, user_id):
+        try:
+            user = get_user_object(user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
 
         try:
-            load_request_into_object(user_schema, user)
-        except Exception as e:
-            return internal_error(e)
+            load_request_into_object(user_username_schema, user)
+        except SchemaValidationError as e:
+            return schema_validation_error(str(e))
 
         try:
             db.session.add(user)
             db.session.commit()
-        except sqlexc.IntegrityError as e:
+        except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)
-        except Exception as e:
-            return database_error(_id)
 
         return {'id': user.id, 'message': 'User {} updated'.format(user.username)}, 200
 
 api.add_resource(UserNameField,
-                 '/username/<_id>',
-                 '/username/username/<_id>',
-                 '/id/username/<_id>')
+                 '/<_id>/username')
 
 
-class AddressField(Resource):
+class UserAddressField(Resource):
     @flask_praetorian.auth_required
-    def get(self, _id):
-        user = get_user_object(_id)
-        if not user:
-            return not_found("user", _id)
+    def get(self, user_id):
+        try:
+            user = get_user_object(user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
+
         return jsonify(user_address_schema.dump(user).data)
 
     @flask_praetorian.auth_required
-    def put(self, _id):
-        user = get_user_object(_id)
-        if not user:
-            return not_found("user", _id)
+    @user_id_match_or_admin
+    def put(self, user_id):
+        try:
+            user = get_user_object(user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
 
         try:
             load_request_into_object(user_address_schema, user)
-        except Exception as e:
-            return internal_error(e)
+        except SchemaValidationError as e:
+            return schema_validation_error(str(e))
 
         try:
             db.session.add(user)
             db.session.commit()
-        except Exception as e:
-            return database_error(_id)
+        except sqlexc.IntegrityError:
+            return not_unique_error("username", user.id)
 
-        return jsonify(user_address_schema.dump(user).data)
+        return {'id': user.id, 'message': 'User {} updated'.format(user.username)}, 200
 
-api.add_resource(AddressField,
-                 '<_id>/address',
-                 '/username/<_id>/address',
-                 '/id/<_id>/address')
-
+api.add_resource(UserAddressField,
+                 '/<_id>/address')
