@@ -1,47 +1,47 @@
-#Delivery Tracker for Blood Bike Charities
+# Delivery Tracker for Blood Bike Charities
 
-##REST API routes
+## REST API routes
 
-##Login
+## Login
 
-###/api/v0.1/login
+### /api/v0.1/login
 
 *POST*
 
-####Header:
+####  Header:
 Content-Type: application/json
 
-####Payload:
+####  Payload:
 username, password
 
-####Returns:
+####  Returns:
 status code 200 on success
 access_token
 
 status code 401 on failure
 error, message, status_code
 
-##Sessions
+## Sessions
 
-###/api/v0.1/sessions
+### /api/v0.1/sessions
 
 *POST*
 
-####Header:
+####  Header:
 Authorization: Bearer <token\>
 Content-Type: application/json (optional)
 
-####Payload:
+####  Payload:
 user (as integer id) (optional)
 
-####Returns:
+####  Returns:
 status code 200 on success
 id, user_id, message
 
 status code 403 on failure
 message
 
-####Description:
+####  Description:
 
 Creates a new session for the currently logged in user. If the user is an admin, they can specify creating a session for another user with user: id in the json payload.
 
@@ -49,85 +49,85 @@ Creates a new session for the currently logged in user. If the user is an admin,
 
 None
 
-###/api/v0.1/sessions/<user_id\>/<start\>-<end\>/<order\>
+### /api/v0.1/sessions/<user_id\>/<start\>-<end\>/<order\>
 
 *GET*
 
-####Header:
+####  Header:
 Authorization: Bearer <token\>
 
-####Payload:
+####  Payload:
 
 None
 
-####Returns:
+####  Returns:
 status code 200 on success
 sessions
 -id, timestamp, username
 
-####Description:
+####  Description:
 
 Returns a list of sessions of user id <user_id\>, of range <start\> to <end\>, in ascending or descending order. Items are ordered by time creation.
 
 <start\>-<end\> and <order\> are optional.
 
 
-###/api/v0.1/session/<session_id\>
+### /api/v0.1/session/<session_id\>
 
 *GET*
 
-####Header:
+####  Header:
 Authorization: Bearer <token\>
 
-####Payload:
+####  Payload:
 
 None
 
-####Returns:
+####  Returns:
 status code 200 on success
 id, timestamp, user_id
 
-####Description:
+####  Description:
 
 Returns details of session <session_id\>
 
-###/api/v0.1/session/<session_id\>
+### /api/v0.1/session/<session_id\>
 
 *DELETE*
 
-####Header:
+####  Header:
 Authorization: Bearer <token\>
 
-####Payload:
+#### Payload:
 
 None
 
-####Returns:
+#### Returns:
 status code 202 on success
 id, message
 
-####Description:
+#### Description:
 
 Puts session <session_id\> in a queue for deletion.
 
-##User
+## User
 
-###/api/v0.1/users
+### /api/v0.1/users
 
 *GET*
 
-####Header:
+#### Header:
 Authorization: Bearer <token\>
 
-####Payload:
+#### Payload:
 
 None
 
-####Returns:
+#### Returns:
 status code 200 on success
 users
 -id, username
 
-####Description:
+#### Description:
 
 Puts session <session_id\> in a queue for deletion.
