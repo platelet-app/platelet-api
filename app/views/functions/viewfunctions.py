@@ -1,13 +1,10 @@
-import sys
-import traceback
 import functools
 from flask_praetorian import utilities
 from flask import request
-import json
-from app import db
 from app import models
 from app.exceptions import InvalidRangeError
-from app.views.functions.errors import forbidden_error
+from app.exceptions import SchemaValidationError
+from app.views.functions.errors import unauthorised_error
 
 
 def user_id_match_or_admin(func):
@@ -18,24 +15,25 @@ def user_id_match_or_admin(func):
         if utilities.current_user_id() == int(_id):
             return func(self, _id)
         else:
-            return {"id": _id, "message": "Object not owned by user"}, 401
+            return unauthorised_error("Object not owned by user: user id:".format(_id))
     return wrapper
 
 
+def load_request_into_object(schema, object_to_load_into):
+    request_json = request.get_json()
+    if not request_json:
+        raise SchemaValidationError("No json input data provided")
 
-def load_request_into_object(schema, objectToLoadInto):
-    requestJson = request.get_json()
-    if not requestJson:
-        raise Exception("No json input data provided")
+    parsed_schema = schema.load(request_json)
+    if parsed_schema.errors:
+        raise SchemaValidationError(parsed_schema.errors)
 
-    parsedSchema = schema.load(requestJson)
-    if parsedSchema.errors:
-        raise Exception(parsedSchema.errors)
+    object_to_load_into.updateFromDict(**parsed_schema.data)
 
-    objectToLoadInto.updateFromDict(**parsedSchema.data)
 
 def get_all_users():
     return models.User.query.all()
+
 
 def get_range(items, _range="0-50", order="descending"):
 

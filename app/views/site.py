@@ -23,6 +23,3 @@ def register_rider():
 def add_item():
     return "additem"
 
-
-
-#        <li><a href="{{url_for('addItem')}}">Others</a></li>

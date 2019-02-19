@@ -2,6 +2,7 @@ from app import db
 from datetime import datetime
 from enum import IntEnum, auto
 from sqlalchemy_utils import EmailType
+from sqlalchemy.orm.attributes import flag_modified
 
 class Objects(IntEnum):
     USER = auto()
@@ -41,6 +42,8 @@ class Task(db.Model):
 
     def updateFromDict(self, **entries):
         self.__dict__.update(entries)
+        for entry in entries:
+            flag_modified(self, entry)  # without this the database doesn't update
 
     def __repr__(self):
         return '<Task ID {} taken at {} with priority {}>'.format(str(self.id), str(self.timestamp), str(self.priority))
@@ -58,6 +61,8 @@ class Vehicle(db.Model):
 
     def updateFromDict(self, **entries):
         self.__dict__.update(entries)
+        for entry in entries:
+            flag_modified(self, entry)  # without this the database doesn't update
 
     def __repr__(self):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)
@@ -101,6 +106,8 @@ class User(Address, db.Model):
 
     def updateFromDict(self, **entries):
         self.__dict__.update(entries)
+        for entry in entries:
+            flag_modified(self, entry)  # without this the database doesn't update
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
