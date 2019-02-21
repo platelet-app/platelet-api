@@ -10,3 +10,4 @@ venv/
 
 # bloodbike
 app.db
+test.db

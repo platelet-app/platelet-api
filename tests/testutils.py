@@ -1,7 +1,6 @@
 import json
 import random
 import string
-import requests
 from app import models
 from uuid import UUID
 
@@ -29,7 +28,7 @@ def random_string(length = 10):
     return ''.join(random.choice(string.ascii_letters) for m in range(length))
 
 
-def login_as(user_type):
+def login_as(client, user_type):
     if user_type == "admin":
         login_details = {"username": "test_admin", "password": "9409u8fgrejki0"}
     elif user_type == "coordinator":
@@ -39,12 +38,12 @@ def login_as(user_type):
     else:
         raise ValueError("invalid user type")
 
-    r = requests.post(login_url, data=login_details)
+    r = client.post(login_url, data=login_details)
     assert(r.status_code == 200)
     global authJsonHeader
-    authJsonHeader = {"Authorization": "Bearer {}".format(json.loads(r.content)['access_token']), 'content-type': 'application/json'}
+    authJsonHeader = {"Authorization": "Bearer {}".format(json.loads(r.data)['access_token']), 'content-type': 'application/json'}
     global authHeader
-    authHeader = {"Authorization": "Bearer {}".format(json.loads(r.content)['access_token'])}
+    authHeader = {"Authorization": "Bearer {}".format(json.loads(r.data)['access_token'])}
 
     # TODO also log out again?
 
