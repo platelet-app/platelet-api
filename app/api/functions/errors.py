@@ -31,7 +31,7 @@ def forbidden_error(message, object_id=None):
 
 
 def already_flagged_for_deletion_error(object_type, object_id):
-    return forbidden_error("{} already flagged for deletion".format(str(object_type)), object_id)
+    return forbidden_error("{} already flagged for deletion".format(object_type_to_string(object_type)), object_id)
 
 
 def not_found(object_type, object_id="null"):

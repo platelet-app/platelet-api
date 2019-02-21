@@ -1,7 +1,10 @@
+from marshmallow import ValidationError
+
 from app import ma
 from marshmallow_sqlalchemy import fields, field_for
 from marshmallow import post_load
 from app import models
+import datetime
 
 
 class NoteSchema(ma.Schema):
@@ -73,7 +76,7 @@ class VehicleSchema(ma.Schema):
                   'registration_number', 'notes', 'links', 'name')
 
     date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
-    date_of_registration = ma.DateTime(format='%d/%m/%Y')
+    date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
     registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
@@ -85,6 +88,15 @@ class VehicleSchema(ma.Schema):
     @post_load
     def make_vehicle(self, data):
         return models.Vehicle(**data)
+
+def validate_date_of_registration(obj):
+    try:
+        datetime.datetime.strptime(obj.dateOfRegistration, '%d/%m/%Y')
+    except ValueError:
+        raise ValidationError("{} has invalid date format, should be %d/%m/%Y".format(obj.dateOfRegistration))
+
+    if obj.dateOfManufacture > obj.dateOfRegistration:
+        raise ValidationError("date of registration cannot be before date of manufacture")
 
 
 class UserSchema(ma.Schema):

@@ -15,35 +15,19 @@ def add_item_to_delete_queue(item):
         return
 
     if item.flagged_for_deletion:
-        return already_flagged_for_deletion_error("user", str(item.uuid))
+        return already_flagged_for_deletion_error(item.object_type, str(item.uuid))
 
     item.flagged_for_deletion = True
 
-    delete = models.DeleteFlags(object_uuid=item.uuid, object_type=get_object_enum(item), time_to_delete=app.config['DEFAULT_DELETE_TIME'])
+    delete = models.DeleteFlags(object_uuid=item.uuid, object_type=item.object_type, time_to_delete=app.config['DEFAULT_DELETE_TIME'])
 
     db.session.add(item)
     db.session.commit()
     db.session.add(delete)
     db.session.commit()
 
-    return {'uuid': str(item.uuid), 'message': "{} queued for deletion".format(item)}, 202
+    return {'uuid': str(item.uuid), 'message': "{} queued for deletion".format(item)}, 202  # TODO does item need to be converted to string?
 
-
-def get_object_enum(item):
-    if isinstance(item, models.User):
-        return models.Objects.USER
-    elif isinstance(item, models.Session):
-        return models.Objects.SESSION
-    elif isinstance(item, models.Task):
-        return models.Objects.TASK
-    elif isinstance(item, models.Vehicle):
-        return models.Objects.VEHICLE
-    elif isinstance(item, models.Note):
-        return models.Objects.NOTE
-    elif isinstance(item, models.Deliverable):
-        return models.Objects.DELIVERABLE
-    else:
-        raise ValueError("No corresponding enum to this object")
 
 def object_type_to_string(type):
     switch = {
