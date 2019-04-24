@@ -3,9 +3,10 @@ from app import schemas, models
 from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import vehicleApi as api
-from app.views.functions.vehiclefunctions import get_vehicle_object
 from app.views.functions.viewfunctions import load_request_into_object
 from app.views.functions.errors import not_found, internal_error, forbidden_error
+from app.utilities import get_object, add_item_to_delete_queue
+from app.exceptions import ObjectNotFoundError
 
 from app import db
 
@@ -17,7 +18,7 @@ class Vehicle(Resource):
         if not _id:
             return not_found()
 
-        vehicle = get_vehicle_object(_id)
+        vehicle = get_object(models.Objects.VEHICLE, _id)
 
         if (vehicle):
             return jsonify(vehicleSchema.dump(vehicle).data)
@@ -26,7 +27,12 @@ class Vehicle(Resource):
 
     @flask_praetorian.roles_required('admin')
     def delete(self, _id):
-        pass
+        try:
+            vehicle = get_object(models.Objects.VEHICLE, _id)
+        except ObjectNotFoundError:
+            return not_found("vehicle", _id)
+
+        return add_item_to_delete_queue(vehicle)
 
 class Vehicles(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')

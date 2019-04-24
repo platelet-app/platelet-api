@@ -4,10 +4,10 @@ from app import schemas, db, models
 from app import userApi as api
 from flask_restful import Resource
 import flask_praetorian
-from app.views.functions.userfunctions import get_user_object, get_all_users
 from app.views.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
-from app.views.functions.errors import not_found, already_flagged_for_deletion_error, schema_validation_error, not_unique_error
+from app.views.functions.errors import not_found, schema_validation_error, not_unique_error
 from app.exceptions import ObjectNotFoundError, SchemaValidationError
+from app.utilities import add_item_to_delete_queue, get_object, get_all_objects
 
 user_schema = schemas.UserSchema()
 user_username_schema = schemas.UserUsernameSchema()
@@ -20,7 +20,7 @@ class User(Resource):
     @user_id_match_or_admin
     def get(self, _id):
         try:
-            user = get_user_object(_id)
+            user = get_object(models.Objects.USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -30,22 +30,12 @@ class User(Resource):
     @user_id_match_or_admin
     def delete(self, _id):
         try:
-            user = get_user_object(_id)
+            user = get_object(models.Objects.USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
-        if user.flaggedForDeletion:
-            return already_flagged_for_deletion_error("user", _id)
+        return add_item_to_delete_queue(user)
 
-        user.flaggedForDeletion = True
-
-        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.USER, timeToDelete=default_delete_time)
-
-        db.session.add(user)
-        db.session.add(delete)
-        db.session.commit()
-
-        return {'id': _id, 'message': "User {} queued for deletion".format(user.username)}, 202
 
 api.add_resource(User,
                  '/<_id>')
@@ -55,7 +45,7 @@ class Users(Resource):
 
     @flask_praetorian.roles_accepted('admin')
     def get(self):
-        users = get_all_users()
+        users = get_all_objects(models.Objects.USER)
 
         user_id_username_list = []
         for i in users:
@@ -87,7 +77,7 @@ class UserNameField(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         try:
-            user = get_user_object(_id)
+            user = get_object(models.Objects.USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -97,7 +87,7 @@ class UserNameField(Resource):
     @user_id_match_or_admin
     def put(self, _id):
         try:
-            user = get_user_object(_id)
+            user = get_object(models.Objects.USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -121,7 +111,7 @@ class UserAddressField(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         try:
-            user = get_user_object(_id)
+            user = get_object(models.Objects.USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -131,7 +121,7 @@ class UserAddressField(Resource):
     @user_id_match_or_admin
     def put(self, _id):
         try:
-            user = get_user_object(_id)
+            user = get_object(models.Objects.USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 

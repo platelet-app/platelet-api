@@ -1,5 +1,6 @@
 import sys
 import traceback
+from app.models import Objects
 
 
 def internal_error(message, object_id="null"):
@@ -34,4 +35,15 @@ def already_flagged_for_deletion_error(object_type, object_id):
 
 
 def not_found(object_type, object_id="null"):
-    return {'id': object_id, 'message': "{} not found".format(str(object_type))}, 404
+    return {'id': object_id, 'message': "{} not found".format(object_type_to_string(object_type))}, 404
+
+def object_type_to_string(type):
+
+    switch = {
+        Objects.SESSION: "session",
+        Objects.USER: "user",
+        Objects.TASK: "task",
+        Objects.VEHICLE: "vehicle"
+    }
+
+    return switch.get(type, lambda: None)

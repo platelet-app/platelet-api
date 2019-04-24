@@ -11,20 +11,22 @@ parser.add_argument('user')
 sessionSchema = schemas.SessionSchema()
 from app.views.functions.viewfunctions import get_range
 from app.views.functions.userfunctions import get_user_object, is_user_present
-from app.views.functions.sessionfunctions import get_session_object, session_id_match_or_admin
+from app.views.functions.sessionfunctions import session_id_match_or_admin
 from app.views.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error
+from app.utilities import get_object
+from app.utilities import add_item_to_delete_queue
+
+SESSION = models.Objects.SESSION
 
 session_schema = schemas.SessionSchema()
-default_delete_time = 10
-
 
 class Session(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         try:
-            session = get_session_object(_id)
+            session = get_object(SESSION, _id)
         except ObjectNotFoundError:
-            return not_found("session", _id)
+            return not_found(SESSION, _id)
 
         return jsonify(session_schema.dump(session).data)
 
@@ -32,22 +34,11 @@ class Session(Resource):
     @session_id_match_or_admin
     def delete(self, _id):
         try:
-            session = get_session_object(_id)
+            session = get_object(SESSION, _id)
         except ObjectNotFoundError:
-            return not_found("session", _id)
+            return not_found(SESSION, _id)
 
-        if session.flaggedForDeletion:
-            return forbidden_error("this session is already flagged for deletion")
-
-        session.flaggedForDeletion = True
-
-        delete = models.DeleteFlags(objectId=_id, objectType=models.Objects.SESSION, timeToDelete=default_delete_time)
-
-        db.session.add(session)
-        db.session.add(delete)
-        db.session.commit()
-
-        return {'id': _id, 'message': "Session {} queued for deletion".format(session.id)}, 202
+        return add_item_to_delete_queue(session)
 
 api.add_resource(Session,
                  '/<_id>')

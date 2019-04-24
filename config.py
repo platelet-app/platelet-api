@@ -11,3 +11,5 @@ class Config(object):
     JWT_ACCESS_LIFESPAN = {'days': 24}
 
     JWT_REFRESH_LIFESPAN = {'days': 30}
+
+    DEFAULT_DELETE_TIME = 10

@@ -5,28 +5,35 @@ import flask_praetorian
 from app import taskApi as api
 from app.views.functions.viewfunctions import load_request_into_object
 from app.views.functions.errors import internal_error, not_found
-from app.views.functions.taskfunctions import get_task_object
+from app.utilities import add_item_to_delete_queue, get_object
+from app.exceptions import ObjectNotFoundError
 
 from app import db
 
 taskSchema = schemas.TaskSchema()
 
+TASK = models.Objects.TASK
+
 class Task(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         if not _id:
-            return not_found()
+            return not_found(TASK)
 
-        task = get_task_object(_id)
+        task = get_object(TASK, _id)
 
         if (task):
             return jsonify(taskSchema.dump(task).data)
         else:
-            return not_found(_id)
+            return not_found(TASK, _id)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, _id):
-        pass
+        try:
+            task = get_object(TASK, _id)
+        except ObjectNotFoundError:
+            return not_found(TASK)
+        return add_item_to_delete_queue(task)
 
 class Tasks(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
