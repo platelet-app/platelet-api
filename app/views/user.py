@@ -12,7 +12,6 @@ from app.utilities import add_item_to_delete_queue, get_object, get_all_objects
 user_schema = schemas.UserSchema()
 user_username_schema = schemas.UserUsernameSchema()
 user_address_schema = schemas.UserAddressSchema()
-default_delete_time = 10
 
 
 class User(Resource):

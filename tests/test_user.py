@@ -71,7 +71,7 @@ def test_delete_other_user_as_coordinator():
     login_as("coordinator")
     r = requests.delete('{}/{}'.format(user_url, user_id), headers=tests.testutils.authHeader)
     print(json.loads(r.content)['message'])
-    assert(r.status_code == 401)
+    assert(r.status_code == 403)
 
 
 def test_delete_user():
