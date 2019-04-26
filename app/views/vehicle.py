@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restful import reqparse, Resource
+from flask_restful import Resource
 import flask_praetorian
 from app import vehicleApi as api
 from app.views.functions.viewfunctions import load_request_into_object

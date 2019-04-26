@@ -16,7 +16,7 @@ def create_session(other_user_id = None):
     return requests.post('{}s'.format(session_url), data=json.dumps(data), headers=tests.testutils.authJsonHeader)
 
 
-def create_session_success(other_user_id = None):
+def create_session_success(other_user_id=None):
     r = create_session(other_user_id)
     assert(r.status_code == 201)
     assert(is_json(r.content))
@@ -25,9 +25,9 @@ def create_session_success(other_user_id = None):
     return int(json.loads(r.content)['id'])
 
 
-def create_session_fail(other_user_id = None):
+def create_session_fail(other_user_id=None):
     r = create_session(other_user_id)
-    assert(r.status_code == 401)
+    assert(r.status_code == 403)
 
 
 def delete_session(session_id):
@@ -49,7 +49,7 @@ def delete_session_success(session_id):
 
 def delete_session_fail(session_id):
     r = delete_session(session_id)
-    assert(r.status_code == 401)
+    assert(r.status_code == 403)
 
 
 # Test functions
@@ -66,7 +66,7 @@ def test_coordinator_create_session(preload_db):
     coordinator_session_id = create_session_success()
 
 
-def test_rider_create_session(preload_db):  # fails because of https://trello.com/c/pm9xGcvK/15-unauthorized-access-causes-server-error
+def test_rider_create_session(preload_db):
     login_as("rider")
     create_session_fail()
 

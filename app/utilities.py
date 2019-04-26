@@ -50,14 +50,17 @@ def object_type_to_string(type):
 
 
 def get_object(type, _id):
-    switch = {
-        models.Objects.SESSION: get_session_object(_id),
-        models.Objects.USER: get_user_object(_id),
-        models.Objects.TASK: get_task_object(_id),
-        models.Objects.VEHICLE: get_vehicle_object(_id)
-    }
+
     try:
-        return switch.get(type, lambda: None)
+        if type == models.Objects.SESSION:
+            return get_session_object(_id)
+        elif type == models.Objects.USER:
+            return get_user_object(_id)
+        elif type == models.Objects.TASK:
+            return get_task_object(_id)
+        elif type == models.Objects.VEHICLE:
+            return get_vehicle_object(_id)
+
     except ObjectNotFoundError:
         raise
 
