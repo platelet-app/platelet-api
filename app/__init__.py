@@ -40,7 +40,7 @@ migrate = Migrate(app, db)
 
 
 from app import models
-from app.views import task, user, views, site, login, session, vehicle
+from app.views import task, user, views, site, login, session, vehicle, testing_views
 from app.housekeeping import monitor_deletions
 
 #_thread.start_new_thread(monitor_deletions, ())
@@ -49,6 +49,7 @@ from app.housekeeping import monitor_deletions
 guard.init_app(app, models.User)
 #app.register_blueprint(task.mod)
 app.register_blueprint(site.mod)
+app.register_blueprint(testing_views.mod)
 #app.register_blueprint(decoder.mod)
 #app.register_blueprint(encoder.mod)
 

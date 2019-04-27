@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script>
+function status(response) {
+  if (response.status >= 200 && response.status < 300) {
+    return Promise.resolve(response)
+  } else {
+    return Promise.reject(new Error(response.statusText))
+  }
+}
+
+function json(response) {
+  return response.json()
+}
+
+fetch('/api/v0.1/user/1', { credentials: 'include' })
+  .then(status)
+  .then(json)
+  .then(function(data) {
+    console.log('Request succeeded with JSON response', data);
+  }).catch(function(error) {
+    console.log('Request failed', error);
+  });
+
+
+
+
+
+
+</script>
+
+
+<form id="get_user" action="{{url_for('users')}}" method="get" enctype="multipart/form-data">
+</form>
+<form id="add_user" action="{{url_for('users')}}" method="post" enctype="multipart/form-data">
+</form>
+{% endblock %}

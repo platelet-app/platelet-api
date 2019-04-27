@@ -68,6 +68,7 @@ class Users(Resource):
         return {'id': user.id, 'message': 'User {} created'.format(user.username)}, 201
 
 api.add_resource(Users,
+                 '',
                  's')
 
 
