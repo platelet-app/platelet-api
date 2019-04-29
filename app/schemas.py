@@ -5,7 +5,7 @@ from app import models
 class UserSchema(ma.Schema):
     class Meta:
         model = models.User
-        fields = ('id', 'username', 'password', 'name', 'email',
+        fields = ('uuid', 'username', 'password', 'name', 'email',
                   'address1', 'address2', 'town',
                   'county', 'country', 'postcode', 'dob', 'patch', 'roles')
 
@@ -26,7 +26,7 @@ class UserUsernameSchema(ma.Schema):
 class UserAddressSchema(ma.Schema):
     class Meta:
         model = models.User
-        fields = ('id', 'name', 'address1', 'address2', 'town',
+        fields = ('uuid', 'name', 'address1', 'address2', 'town',
                   'county', 'country', 'postcode')
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
@@ -35,7 +35,7 @@ class UserAddressSchema(ma.Schema):
 class SessionSchema(ma.Schema):
     class Meta:
         model = models.Session
-        fields = ('id', 'user_id', 'timestamp')
+        fields = ('uuid', 'user_id', 'timestamp')
 
 
 class TaskSchema(ma.Schema):

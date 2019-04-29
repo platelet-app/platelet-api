@@ -39,7 +39,7 @@ class Task(db.Model):
     finalDuration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flaggedForDeletion = db.Column(db.Boolean, default=False)
-    session = db.Column(db.Integer, db.ForeignKey('session.uuid'))
+    session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
 
 
     def updateFromDict(self, **entries):
@@ -79,7 +79,7 @@ class User(Address, db.Model):
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
-    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.uuid'))
+    assignedVehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
     patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
     flaggedForDeletion = db.Column(db.Boolean, default=False)
