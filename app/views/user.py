@@ -48,7 +48,7 @@ class Users(Resource):
 
         user_id_username_list = []
         for i in users:
-            user_id_username_list.append({"id": i.id, "username": i.username})
+            user_id_username_list.append({"id": i.uuid, "username": i.username})
 
         return jsonify({'users': user_id_username_list})
 
@@ -65,7 +65,7 @@ class Users(Resource):
         except sqlexc.IntegrityError:
             return not_unique_error("username")
 
-        return {'id': user.id, 'message': 'User {} created'.format(user.username)}, 201
+        return {'id': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
 
 api.add_resource(Users,
                  '',

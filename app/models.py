@@ -3,6 +3,8 @@ from datetime import datetime
 from enum import IntEnum, auto
 from sqlalchemy_utils import EmailType
 from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 
 class Objects(IntEnum):
     USER = auto()
@@ -20,7 +22,7 @@ class Address(object):
 
 
 class Task(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     pickupAddress1 = db.Column(db.String(64))
     pickupAddress2 = db.Column(db.String(64))
@@ -37,7 +39,7 @@ class Task(db.Model):
     finalDuration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flaggedForDeletion = db.Column(db.Boolean, default=False)
-    session = db.Column(db.Integer, db.ForeignKey('session.id'))
+    session = db.Column(db.Integer, db.ForeignKey('session.uuid'))
 
 
     def updateFromDict(self, **entries):
@@ -46,11 +48,11 @@ class Task(db.Model):
             flag_modified(self, entry)  # without this the database doesn't update
 
     def __repr__(self):
-        return '<Task ID {} taken at {} with priority {}>'.format(str(self.id), str(self.timestamp), str(self.priority))
+        return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp), str(self.priority))
 
 
 class Vehicle(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     manufacturer = db.Column(db.String(64))
     model = db.Column(db.String(64))
@@ -69,7 +71,7 @@ class Vehicle(db.Model):
 
 
 class User(Address, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     username = db.Column(db.String(64), unique=True)
     email = db.Column(EmailType)
@@ -77,7 +79,7 @@ class User(Address, db.Model):
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
-    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
+    assignedVehicle = db.Column(db.Integer, db.ForeignKey('vehicle.uuid'))
     patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
     flaggedForDeletion = db.Column(db.Boolean, default=False)
@@ -89,11 +91,11 @@ class User(Address, db.Model):
     def lookup(cls, username):
         return cls.query.filter_by(username=username).one_or_none()
     @classmethod
-    def identify(cls, id):
-        return cls.query.get(id)
+    def identify(cls, uuid):
+        return cls.query.get(uuid)
     @property
     def identity(self):
-        return self.id
+        return self.uuid
 
     @property
     def rolenames(self):
@@ -114,9 +116,9 @@ class User(Address, db.Model):
 
 
 class Session(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flaggedForDeletion = db.Column(db.Boolean, default=False)
 
@@ -125,7 +127,7 @@ class Session(db.Model):
     
 
 class DeleteFlags(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     objectId = db.Column(db.Integer)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     timeToDelete = db.Column(db.Integer)
@@ -133,7 +135,7 @@ class DeleteFlags(db.Model):
     #objectType = db.Column(ChoiceType(Objects, impl=db.Integer()))
 
 class SavedLocations(Address, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64))
     notes = db.Column(db.String(10000))

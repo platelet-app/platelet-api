@@ -10,7 +10,7 @@ def get_all_users():
 
 
 def get_user_object(user_id):
-    user = models.User.query.filter_by(id=user_id).first()
+    user = models.User.query.filter_by(uuid=user_id).first()
 
     if not user:
         raise ObjectNotFoundError()
@@ -25,6 +25,6 @@ def is_username_present(username):
 
 
 def is_user_present(id):
-    if models.User.query.filter_by(id=id).first():
+    if models.User.query.filter_by(uuid=id).first():
         return True
     return False

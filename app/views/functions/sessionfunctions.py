@@ -18,7 +18,7 @@ def session_id_match_or_admin(func):
 
 
 def get_session_object(_id):
-    session = models.Session.query.filter_by(id=_id).first()
+    session = models.Session.query.filter_by(uuid=_id).first()
     if not session:
         raise ObjectNotFoundError("session id:{} not found".format(_id))
     return session
