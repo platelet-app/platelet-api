@@ -1,5 +1,5 @@
 import json
-from tests.testutils import is_json, session_url, login_as, find_user
+from tests.testutils import is_json, session_url, login_as, find_user, is_valid_uuid
 import tests.testutils
 from app import models
 import requests
@@ -9,7 +9,7 @@ import requests
 
 def create_session(other_user_id = None):
     if other_user_id:
-        data = {"user": other_user_id}
+        data = {"user": str(other_user_id)}
     else:
         data = ""
 
@@ -20,9 +20,9 @@ def create_session_success(other_user_id=None):
     r = create_session(other_user_id)
     assert(r.status_code == 201)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['user_id']))
-    assert(int(json.loads(r.content)['id']))
-    return int(json.loads(r.content)['id'])
+    assert(is_valid_uuid(json.loads(r.content)['user_uuid']))
+    assert(is_valid_uuid(json.loads(r.content)['uuid']))
+    return json.loads(r.content)['uuid']
 
 
 def create_session_fail(other_user_id=None):

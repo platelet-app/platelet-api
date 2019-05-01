@@ -18,7 +18,7 @@ class UserSchema(ma.Schema):
 class UserUsernameSchema(ma.Schema):
     class Meta:
         model = models.User
-        fields = ('id', 'username')
+        fields = ('uuid', 'username')
 
     username = ma.Str(required=True)
 

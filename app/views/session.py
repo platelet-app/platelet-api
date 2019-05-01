@@ -86,7 +86,7 @@ class Sessions(Resource):
         db.session.add(session)
         db.session.commit()
 
-        return {'id': str(session.uuid), 'user_id': str(session.user_id), 'message': 'Session {} created'.format(str(session.uuid))}, 201
+        return {'uuid': str(session.uuid), 'user_uuid': str(session.user_id), 'message': 'Session {} created'.format(str(session.uuid))}, 201
 
 api.add_resource(Sessions,
                  's',

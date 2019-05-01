@@ -3,6 +3,7 @@ import random
 import string
 import requests
 from app import models
+from uuid import UUID
 
 login_url = 'http://localhost:5000/api/v0.1/login'
 user_url = 'http://localhost:5000/api/v0.1/user'
@@ -21,7 +22,7 @@ def is_json(js):
 
 
 def get_user_id(js):
-    return json.loads(js)['id']
+    return json.loads(js)['uuid']
 
 
 def random_string(length = 10):
@@ -59,4 +60,12 @@ def find_user(user_type):
         raise ValueError("invalid user type")
 
     user = models.User.query.filter_by(username=username).first()
-    return user.id
+    return user.uuid
+
+def is_valid_uuid(uuid_to_test, version=4):
+    try:
+        uuid_obj = UUID(uuid_to_test, version=version)
+    except:
+        return False
+
+    return str(uuid_obj) == uuid_to_test

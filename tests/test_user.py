@@ -1,5 +1,5 @@
 import json
-from tests.testutils import random_string, is_json, user_url, login_url, login_as
+from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid
 import tests.testutils
 from app import models
 import requests
@@ -40,16 +40,16 @@ def test_add_valid_user():
     print(json.loads(r.content)['message'])
     assert(r.status_code == 201)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']))
+    assert(is_valid_uuid(json.loads(r.content)['uuid']))
     global user_id
-    user_id = int(json.loads(r.content)['id'])
+    user_id = json.loads(r.content)['id']
 
 
 def test_get_user():
     r = requests.get('{}/{}'.format(user_url, user_id), headers=tests.testutils.authHeader)
     assert(r.status_code == 200)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']) == user_id)
+    assert(json.loads(r.content)['uuid'] == user_id)
     assert(json.loads(r.content)['username'] == username)
 
 
@@ -115,14 +115,14 @@ def test_get_username():
     print(json.loads(r.content)['message'])
     assert(r.status_code == 201)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']))
+    assert(is_valid_uuid(json.loads(r.content)['uuid']))
     global user_id
-    user_id = int(json.loads(r.content)['id'])
+    user_id = json.loads(r.content)['uuid']
 
     r = requests.get('{}/{}/username'.format(user_url, user_id), headers=tests.testutils.authHeader)
     assert(r.status_code == 200)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']) == user_id)
+    assert(json.loads(r.content)['uuid'] == user_id)
     assert(json.loads(r.content)['username'] == username)
 
 
@@ -136,7 +136,7 @@ def test_change_username():
     r = requests.get('{}/{}/username'.format(user_url, user_id), headers=tests.testutils.authHeader)
     assert(r.status_code == 200)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']) == user_id)
+    assert(json.loads(r.content)['uuid'] == user_id)
     assert(json.loads(r.content)['username'] == new_username)
 
 
@@ -154,7 +154,7 @@ def test_get_address():
     r = requests.get('{}/{}/address'.format(user_url, user_id), headers=tests.testutils.authHeader)
     assert(r.status_code == 200)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']) == user_id)
+    assert(json.loads(r.content)['uuid'] == user_id)
     for key in address:
         if key == "postcode":
             assert(json.loads(r.content)[key] == address[key].upper())
@@ -172,7 +172,7 @@ def test_change_address():
     r = requests.get('{}/{}/address'.format(user_url, user_id), headers=tests.testutils.authHeader)
     assert(r.status_code == 200)
     assert(is_json(r.content))
-    assert(int(json.loads(r.content)['id']) == user_id)
+    assert(json.loads(r.content)['uuid'] == user_id)
     for key in new_address:
         if key == "postcode":
             assert(json.loads(r.content)[key] == new_address[key].upper())
