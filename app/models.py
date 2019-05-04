@@ -34,12 +34,7 @@ class Address(db.Model):
     town = db.Column(db.String(64))
     county = db.Column(db.String(64))
     country = db.Column(db.String(64))
-    postcode = db.Column(db.String(7))
-
-    def updateFromDict(self, **entries):
-        self.__dict__.update(entries)
-        for entry in entries:
-            flag_modified(self, entry)  # without this the database doesn't update
+    postcode = db.Column(db.String(64))
 
 
 class Task(db.Model):
@@ -139,6 +134,13 @@ class User(db.Model):
             return []
 
     def updateFromDict(self, **entries):
+
+        self.address.address1 = entries['address']['address1']
+        print(self.address.address1)
+
+        for item in entries:
+            print(item)
+
         self.__dict__.update(entries)
         for entry in entries:
             flag_modified(self, entry)  # without this the database doesn't update

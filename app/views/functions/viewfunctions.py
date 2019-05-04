@@ -5,12 +5,17 @@ from app import models
 from app.exceptions import InvalidRangeError
 from app.exceptions import SchemaValidationError
 from app.views.functions.errors import forbidden_error
+from app import schemas
+
+user_schema = schemas.UserSchema()
+address_schema = schemas.AddressSchema()
+user_username_schema = schemas.UserUsernameSchema()
+user_address_schema = schemas.UserAddressSchema()
 
 
 def user_id_match_or_admin(func):
     @functools.wraps(func)
     def wrapper(self, _id):
-        print(_id, utilities.current_user_id(), "SJAKLDFJKLSAF")
         if 'admin' in utilities.current_rolenames():
             return func(self, _id)
         if utilities.current_user_id() == _id:
@@ -20,16 +25,13 @@ def user_id_match_or_admin(func):
     return wrapper
 
 
-def load_request_into_object(schema, object_to_load_into):
+def load_request_into_object(model_enum):
     request_json = request.get_json()
     if not request_json:
         raise SchemaValidationError("No json input data provided")
 
-    parsed_schema = schema.load(request_json)
-    if parsed_schema.errors:
-        raise SchemaValidationError(parsed_schema.errors)
-
-    object_to_load_into.updateFromDict(**parsed_schema.data)
+    if model_enum is models.Objects.USER:
+        return user_schema.load(request_json).data
 
 
 def get_all_users():

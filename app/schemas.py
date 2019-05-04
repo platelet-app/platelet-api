@@ -1,14 +1,21 @@
 from app import ma
-from flask_marshmallow import fields
+#from flask_marshmallow import fields
+from marshmallow_sqlalchemy import fields, field_for
+from marshmallow import post_load
 from app import models
 
 class AddressSchema(ma.Schema):
     class Meta:
         model = models.Address
 
-        fields = ('address1', 'address2', 'town',
+        fields = ('id', 'address1', 'address2', 'town',
                   'county', 'country', 'postcode')
 
+    id = field_for(models.Address, 'id', dump_only=True)
+
+    @post_load
+    def make_address(self, data):
+        return models.Address(**data)
     #postcode = ma.Function(lambda obj: obj.postcode.upper())
 
 class UserSchema(ma.Schema):
@@ -21,6 +28,11 @@ class UserSchema(ma.Schema):
     email = ma.Email()
     dob = ma.DateTime(format='%d/%m/%Y')
     address = fields.fields.Nested(AddressSchema)
+    uuid = field_for(models.User, 'uuid', dump_only=True)
+
+    @post_load
+    def make_user(self, data):
+        return models.User(**data)
 
 
 class UserUsernameSchema(ma.Schema):

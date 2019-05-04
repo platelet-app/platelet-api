@@ -53,9 +53,8 @@ class Users(Resource):
         return jsonify({'users': user_id_username_list})
 
     def post(self):
-        user = models.User()
         try:
-            load_request_into_object(user_schema, user)
+            user = load_request_into_object(models.Objects.USER)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 
