@@ -10,6 +10,7 @@ from app.exceptions import ObjectNotFoundError, SchemaValidationError
 from app.utilities import add_item_to_delete_queue, get_object, get_all_objects
 
 user_schema = schemas.UserSchema()
+address_schema = schemas.AddressSchema()
 user_username_schema = schemas.UserUsernameSchema()
 user_address_schema = schemas.UserAddressSchema()
 
@@ -41,7 +42,6 @@ api.add_resource(User,
 
 
 class Users(Resource):
-
     @flask_praetorian.roles_accepted('admin')
     def get(self):
         users = get_all_objects(models.Objects.USER)
@@ -59,13 +59,15 @@ class Users(Resource):
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 
+
+        print(user.address)
         try:
             db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError:
             return not_unique_error("username")
 
-        return {'id': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
+        return {'uuid': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
 
 api.add_resource(Users,
                  '',
@@ -73,7 +75,6 @@ api.add_resource(Users,
 
 
 class UserNameField(Resource):
-
     @flask_praetorian.auth_required
     def get(self, _id):
         try:
@@ -101,7 +102,7 @@ class UserNameField(Resource):
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)
 
-        return {'id': user.id, 'message': 'User {} updated'.format(user.username)}, 200
+        return {'uuid': user.id, 'message': 'User {} updated'.format(user.username)}, 200
 
 api.add_resource(UserNameField,
                  '/<_id>/username')
@@ -135,7 +136,7 @@ class UserAddressField(Resource):
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)
 
-        return {'id': user.id, 'message': 'User {} updated'.format(user.username)}, 200
+        return {'uuid': user.id, 'message': 'User {} updated'.format(user.username)}, 200
 
 api.add_resource(UserAddressField,
                  '/<_id>/address')

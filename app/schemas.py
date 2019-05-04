@@ -1,18 +1,26 @@
 from app import ma
+from flask_marshmallow import fields
 from app import models
 
+class AddressSchema(ma.Schema):
+    class Meta:
+        model = models.Address
+
+        fields = ('address1', 'address2', 'town',
+                  'county', 'country', 'postcode')
+
+    #postcode = ma.Function(lambda obj: obj.postcode.upper())
 
 class UserSchema(ma.Schema):
     class Meta:
         model = models.User
-        fields = ('uuid', 'username', 'password', 'name', 'email',
-                  'address1', 'address2', 'town',
-                  'county', 'country', 'postcode', 'dob', 'patch', 'roles')
+        fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
+                  'dob', 'patch', 'roles')
 
     username = ma.Str(required=True)
     email = ma.Email()
-    postcode = ma.Function(lambda obj: obj.postcode.upper())
     dob = ma.DateTime(format='%d/%m/%Y')
+    address = fields.fields.Nested(AddressSchema)
 
 
 class UserUsernameSchema(ma.Schema):
