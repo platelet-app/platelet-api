@@ -2,7 +2,7 @@ from flask import jsonify
 from sqlalchemy import exc as sqlexc
 from app import schemas, db, models
 from app import userApi as api
-from flask_restful import Resource
+from flask_restful import Resource, reqparse
 import flask_praetorian
 from app.views.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
 from app.views.functions.errors import not_found, schema_validation_error, not_unique_error
@@ -24,6 +24,8 @@ class User(Resource):
             user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
+        except:
+            raise
 
         return jsonify(user_schema.dump(user).data)
 
@@ -39,7 +41,8 @@ class User(Resource):
 
 
 api.add_resource(User,
-                 '/<_id>')
+                 '/<_id>',
+                 endpoint='user')
 
 
 class Users(Resource):
@@ -70,7 +73,8 @@ class Users(Resource):
 
 api.add_resource(Users,
                  '',
-                 's')
+                 's',
+                 endpoint='users')
 
 
 class UserNameField(Resource):
@@ -86,15 +90,20 @@ class UserNameField(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
     def put(self, _id):
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('username')
+        args = parser.parse_args()
         try:
             user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
-        try:
-            user.username = load_request_into_object(USER).username
-        except SchemaValidationError as e:
-            return schema_validation_error(str(e))
+        if args['username']:
+            user.username = args['username']
+
+        else:
+            return schema_validation_error("No data")
 
         try:
             db.session.add(user)
@@ -102,7 +111,7 @@ class UserNameField(Resource):
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)
 
-        return {'uuid': user.id, 'message': 'User {} updated'.format(user.username)}, 200
+        return {'uuid': str(user.uuid), 'message': 'User {} updated'.format(user.username)}, 200
 
 api.add_resource(UserNameField,
                  '/<_id>/username')
@@ -127,7 +136,11 @@ class UserAddressField(Resource):
             return not_found("user", _id)
 
         try:
-            user.address = load_request_into_object(USER).address
+            #user.address = load_request_into_object(USER).address
+            user_add = load_request_into_object(USER)
+            if not isinstance(user_add, models.User):
+                for i in user_add:
+                    print(i)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 
@@ -137,7 +150,7 @@ class UserAddressField(Resource):
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)
 
-        return {'uuid': user.id, 'message': 'User {} updated'.format(user.username)}, 200
+        return {'uuid': str(user.uuid), 'message': 'User {} updated'.format(user.username)}, 200
 
 api.add_resource(UserAddressField,
                  '/<_id>/address')

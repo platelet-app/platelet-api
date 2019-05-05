@@ -2,9 +2,9 @@ from app import db
 from datetime import datetime
 from enum import IntEnum, auto
 from sqlalchemy_utils import EmailType
-from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
+
 
 class Objects(IntEnum):
     USER = auto()
@@ -12,20 +12,22 @@ class Objects(IntEnum):
     TASK = auto()
     VEHICLE = auto()
 
+
 class Deliverable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
-    #notes = db.relationship('Note', backref='note', lazy='dynamic')
     task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(10000))
-    #task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
-    #user = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    #session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
-    #vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
-    #deliverable = db.Column(db.Integer, db.ForeignKey('deliverable.id'))
+    task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    user = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
+    deliverable = db.Column(db.Integer, db.ForeignKey('deliverable.id'))
+
 
 class Address(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -56,13 +58,7 @@ class Task(db.Model):
     miles = db.Column(db.Integer)
     flaggedForDeletion = db.Column(db.Boolean, default=False)
     session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
-    #notes = db.relationship('Note', backref='note', lazy='dynamic')
-
-
-    def updateFromDict(self, **entries):
-        self.__dict__.update(entries)
-        for entry in entries:
-            flag_modified(self, entry)  # without this the database doesn't update
+    deliverables = db.relationship('Deliverable', backref='parent_task', lazy='dynamic')
 
     def __repr__(self):
         return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp), str(self.priority))
@@ -77,12 +73,6 @@ class Vehicle(db.Model):
     dateOfRegistration = db.Column(db.Date)
     registrationNumber = db.Column(db.String(10))
     flaggedForDeletion = db.Column(db.Boolean, default=False)
-    #notes = db.relationship('Note', backref='note', lazy='dynamic')
-
-    def updateFromDict(self, **entries):
-        self.__dict__.update(entries)
-        for entry in entries:
-            flag_modified(self, entry)  # without this the database doesn't update
 
     def __repr__(self):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)
@@ -106,7 +96,6 @@ class User(db.Model):
     flaggedForDeletion = db.Column(db.Boolean, default=False)
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
-    #notes = db.relationship('Note', backref='note', lazy='dynamic')
 
 
     @classmethod
@@ -126,18 +115,6 @@ class User(db.Model):
         except Exception:
             return []
 
-    def updateFromDict(self, **entries):
-
-        self.address.address1 = entries['address']['address1']
-        print(self.address.address1)
-
-        for item in entries:
-            print(item)
-
-        self.__dict__.update(entries)
-        for entry in entries:
-            flag_modified(self, entry)  # without this the database doesn't update
-
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
@@ -148,7 +125,6 @@ class Session(db.Model):
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flaggedForDeletion = db.Column(db.Boolean, default=False)
-    #notes = db.relationship('Note', backref='note', lazy='dynamic')
 
     def __repr__(self):
         return '<Session {} {}>'.format(self.id, self.timestamp)
@@ -156,7 +132,7 @@ class Session(db.Model):
 
 class DeleteFlags(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
-    objectId = db.Column(db.Integer)
+    objectUUID = db.Column(UUID(as_uuid=True))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     timeToDelete = db.Column(db.Integer)
     objectType = db.Column(db.Integer)
@@ -171,5 +147,4 @@ class SavedLocations(Address, db.Model):
     address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
     address = db.relationship("Address", foreign_keys=[address_id])
-    #notes = db.relationship('Note', backref='note', lazy='dynamic')
 

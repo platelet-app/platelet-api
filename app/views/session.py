@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, request
 from app import schemas, db, models, utilities
 from flask_restful import reqparse, Resource
 import flask_praetorian
@@ -15,10 +15,12 @@ from app.views.functions.sessionfunctions import session_id_match_or_admin
 from app.views.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error, schema_validation_error
 from app.utilities import get_object
 from app.utilities import add_item_to_delete_queue
+import uuid
 
 SESSION = models.Objects.SESSION
 
 session_schema = schemas.SessionSchema()
+sessions_schema = schemas.SessionSchema(many=True)
 
 class Session(Resource):
     @flask_praetorian.auth_required
@@ -41,7 +43,8 @@ class Session(Resource):
         return add_item_to_delete_queue(session)
 
 api.add_resource(Session,
-                 '/<_id>')
+                 '/<_id>',
+                 endpoint='session')
 
 class Sessions(Resource):
     @flask_praetorian.auth_required
@@ -58,34 +61,31 @@ class Sessions(Resource):
         except Exception as e:
             return internal_error(e)
 
-        result = []
-
-        for i in items:
-            result.append({"id": str(i.id), "username": user.username, "timestamp": str(i.timestamp)})
-
-
-        return jsonify({"sessions": result})
+        return sessions_schema.jsonify(items)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
-        session = None
-        try:
-            session = load_request_into_object(SESSION)
-        except SchemaValidationError as e:
-            return schema_validation_error(str(e))
+        user = None
 
-        parser = reqparse.RequestParser()
-        parser.add_argument('user')
-        args = parser.parse_args()
+        if request.get_json():
+            try:
+                session = load_request_into_object(SESSION)
+            except SchemaValidationError as e:
+                return schema_validation_error(str(e))
 
-        if args['user']:
+            user = session.user_id
+
+        else:
+            session = models.Session()
+
+        if user:
             if 'admin' not in utilities.current_rolenames():
                 return unauthorised_error("only admins can create sessions for other users")
-            if not is_user_present(args['user']):
+            if not is_user_present(user):
                 return forbidden_error("cannot create a session for a non-existent user")
-            session.user_id = args['user']
+            session.user_id = user
         else:
-            session.user_id = utilities.current_user_id()
+            session.user_id = uuid.UUID(utilities.current_user_id())
 
         db.session.add(session)
         db.session.commit()
@@ -96,4 +96,5 @@ api.add_resource(Sessions,
                  's',
                  's/<user_id>',
                  's/<user_id>/<_range>',
-                 's/<user_id>/<_range>/<order>')
+                 's/<user_id>/<_range>/<order>',
+                 endpoint='sessions')

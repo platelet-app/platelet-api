@@ -6,7 +6,7 @@ import requests
 
 user_id = -1
 username = "test_user"
-address = {"address1": "123 fake street", "address2": "woopity complex",
+address = {"line1": "123 fake street", "line2": "woopity complex",
            "town": "bristol", "county": "bristol", "postcode": "bs11 3ey",
            "country": "uk"}
 payload = {"name": "Someone Person the 2nd",
@@ -42,7 +42,7 @@ def test_add_valid_user():
     assert(is_json(r.content))
     assert(is_valid_uuid(json.loads(r.content)['uuid']))
     global user_id
-    user_id = json.loads(r.content)['id']
+    user_id = json.loads(r.content)['uuid']
 
 
 def test_get_user():
@@ -81,10 +81,10 @@ def test_delete_user():
     assert(r.status_code == 202)
     assert(is_json(r.content))
 
-    user = models.User.query.filter_by(id=user_id).first()
+    user = models.User.query.filter_by(uuid=user_id).first()
     assert user.flaggedForDeletion
 
-    queue = models.DeleteFlags.query.filter_by(objectId=user_id, objectType=models.Objects.USER).first()
+    queue = models.DeleteFlags.query.filter_by(objectUUID=user_id, objectType=models.Objects.USER).first()
     assert int(queue.objectType) == int(models.Objects.USER)
 
 
@@ -164,7 +164,7 @@ def test_get_address():
 
 def test_change_address():
     new_address = address.copy()
-    new_address.update({"address1": "321 sill fake street"})
+    new_address.update({"line1": "321 sill fake street"})
     r = requests.put('{}/{}/address'.format(user_url, user_id), data=json.dumps(new_address), headers=tests.testutils.authJsonHeader)
     print(json.loads(r.content)['message'])
     assert(r.status_code == 200)

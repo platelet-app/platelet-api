@@ -12,17 +12,17 @@ def add_item_to_delete_queue(item):
         return
 
     if item.flaggedForDeletion:
-        return already_flagged_for_deletion_error("user", item.id)
+        return already_flagged_for_deletion_error("user", item.uuid)
 
     item.flaggedForDeletion = True
 
-    delete = models.DeleteFlags(objectId=item.id, objectType=get_object_enum(item), timeToDelete=app.config['DEFAULT_DELETE_TIME'])
+    delete = models.DeleteFlags(objectUUID=item.uuid, objectType=get_object_enum(item), timeToDelete=app.config['DEFAULT_DELETE_TIME'])
 
     db.session.add(item)
     db.session.add(delete)
     db.session.commit()
 
-    return {'id': item.id, 'message': "{} queued for deletion".format(item)}, 202
+    return {'uuid': str(item.uuid), 'message': "{} queued for deletion".format(item)}, 202
 
 
 def get_object_enum(item):

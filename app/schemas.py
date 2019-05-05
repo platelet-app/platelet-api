@@ -1,5 +1,4 @@
 from app import ma
-#from flask_marshmallow import fields
 from marshmallow_sqlalchemy import fields, field_for
 from marshmallow import post_load
 from app import models
@@ -11,11 +10,11 @@ class AddressSchema(ma.Schema):
         fields = ('line1', 'line2', 'town',
                   'county', 'country', 'postcode')
 
+    postcode = ma.Function(lambda obj: obj.postcode.upper())
 
     @post_load
     def make_address(self, data):
         return models.Address(**data)
-    #postcode = ma.Function(lambda obj: obj.postcode.upper())
 
 class UserSchema(ma.Schema):
     class Meta:
@@ -28,6 +27,10 @@ class UserSchema(ma.Schema):
     dob = ma.DateTime(format='%d/%m/%Y')
     address = fields.fields.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
+
+    _links = ma.Hyperlinks(
+        {"self": ma.URLFor("user", id="<uuid>"), "collection": ma.URLFor("users")}
+    )
 
     @post_load
     def make_user(self, data):
@@ -45,11 +48,10 @@ class UserUsernameSchema(ma.Schema):
 class UserAddressSchema(ma.Schema):
     class Meta:
         model = models.User
-        fields = ('uuid', 'name', 'address1', 'address2', 'town',
-                  'county', 'country', 'postcode')
+        fields = ('uuid', 'name', 'address')
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
-
+    address = fields.fields.Nested(AddressSchema)
 
 class SessionSchema(ma.Schema):
     class Meta:
