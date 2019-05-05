@@ -8,10 +8,9 @@ class AddressSchema(ma.Schema):
     class Meta:
         model = models.Address
 
-        fields = ('id', 'address1', 'address2', 'town',
+        fields = ('line1', 'line2', 'town',
                   'county', 'country', 'postcode')
 
-    id = field_for(models.Address, 'id', dump_only=True)
 
     @post_load
     def make_address(self, data):
@@ -57,17 +56,25 @@ class SessionSchema(ma.Schema):
         model = models.Session
         fields = ('uuid', 'user_id', 'timestamp')
 
+    @post_load
+    def make_session(self, data):
+        return models.Session(**data)
+
 
 class TaskSchema(ma.Schema):
     class Meta:
         model = models.Task
-        fields = ('pickupAddress1', 'pickupAddress2', 'pickupTown', 'pickupPostcode',
-                  'destinationAddress1', 'destinationAddress2', 'destinationTown', 'destinationPostcode',
-                  'patch', 'contactName', 'contactNumber', 'priority', 'session', 'timestamp')
+        fields = ('pickupAddress', 'dropoffAddress', 'patch', 'contactName',
+                  'contactNumber', 'priority', 'session', 'timestamp')
 
     contactNumber = ma.Int()
-    pickupPostcode = ma.Function(lambda obj: obj.postcode.upper())
-    destinationPostcode = ma.Function(lambda obj: obj.postcode.upper())
+
+    pickupAddress = fields.fields.Nested(AddressSchema)
+    dropoffAddress = fields.fields.Nested(AddressSchema)
+
+    @post_load
+    def make_task(self, data):
+        return models.Task(**data)
 
 
 class VehicleSchema(ma.Schema):
@@ -80,3 +87,6 @@ class VehicleSchema(ma.Schema):
     dateOfRegistration = ma.DateTime(format='%d/%m/%Y')
     registrationNumber = ma.Function(lambda obj: obj.registrationNumber.upper())
 
+    @post_load
+    def make_vehicle(self, data):
+        return models.Vehicle(**data)

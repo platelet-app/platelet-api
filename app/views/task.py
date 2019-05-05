@@ -38,17 +38,16 @@ class Task(Resource):
 class Tasks(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
-
-        task = models.Task()
+        task = None
         try:
-            load_request_into_object(taskSchema, task)
+            task = load_request_into_object(TASK)
         except Exception as e:
             internal_error(e)
 
         db.session.add(task)
         db.session.commit()
 
-        return {'id': task.id, 'message': 'Task {} created'.format(task.id)}, 201
+        return {'uuid': str(task.uuid), 'message': 'Task {} created'.format(task.uuid)}, 201
 
 api.add_resource(Task,
                  '/<_id>')

@@ -8,6 +8,7 @@ from app.views.functions.viewfunctions import user_id_match_or_admin, load_reque
 from app.views.functions.errors import not_found, schema_validation_error, not_unique_error
 from app.exceptions import ObjectNotFoundError, SchemaValidationError
 from app.utilities import add_item_to_delete_queue, get_object, get_all_objects
+USER = models.Objects.USER
 
 user_schema = schemas.UserSchema()
 address_schema = schemas.AddressSchema()
@@ -20,7 +21,7 @@ class User(Resource):
     @user_id_match_or_admin
     def get(self, _id):
         try:
-            user = get_object(models.Objects.USER, _id)
+            user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -30,7 +31,7 @@ class User(Resource):
     @user_id_match_or_admin
     def delete(self, _id):
         try:
-            user = get_object(models.Objects.USER, _id)
+            user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -44,7 +45,7 @@ api.add_resource(User,
 class Users(Resource):
     @flask_praetorian.roles_accepted('admin')
     def get(self):
-        users = get_all_objects(models.Objects.USER)
+        users = get_all_objects(USER)
 
         user_id_username_list = []
         for i in users:
@@ -54,12 +55,11 @@ class Users(Resource):
 
     def post(self):
         try:
-            user = load_request_into_object(models.Objects.USER)
+            user = load_request_into_object(USER)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 
 
-        print(user.address)
         try:
             db.session.add(user)
             db.session.commit()
@@ -77,7 +77,7 @@ class UserNameField(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         try:
-            user = get_object(models.Objects.USER, _id)
+            user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -87,16 +87,17 @@ class UserNameField(Resource):
     @user_id_match_or_admin
     def put(self, _id):
         try:
-            user = get_object(models.Objects.USER, _id)
+            user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
         try:
-            load_request_into_object(user_username_schema, user)
+            user.username = load_request_into_object(USER).username
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 
         try:
+            db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)
@@ -111,7 +112,7 @@ class UserAddressField(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         try:
-            user = get_object(models.Objects.USER, _id)
+            user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
@@ -121,16 +122,17 @@ class UserAddressField(Resource):
     @user_id_match_or_admin
     def put(self, _id):
         try:
-            user = get_object(models.Objects.USER, _id)
+            user = get_object(USER, _id)
         except ObjectNotFoundError:
             return not_found("user", _id)
 
         try:
-            load_request_into_object(user_address_schema, user)
+            user.address = load_request_into_object(USER).address
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 
         try:
+            db.session.add(user)
             db.session.commit()
         except sqlexc.IntegrityError:
             return not_unique_error("username", user.id)

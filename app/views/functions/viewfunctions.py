@@ -8,6 +8,10 @@ from app.views.functions.errors import forbidden_error
 from app import schemas
 
 user_schema = schemas.UserSchema()
+vehicle_schema = schemas.VehicleSchema()
+task_schema = schemas.TaskSchema()
+session_schema = schemas.SessionSchema()
+
 address_schema = schemas.AddressSchema()
 user_username_schema = schemas.UserUsernameSchema()
 user_address_schema = schemas.UserAddressSchema()
@@ -32,6 +36,12 @@ def load_request_into_object(model_enum):
 
     if model_enum is models.Objects.USER:
         return user_schema.load(request_json).data
+    if model_enum is models.Objects.SESSION:
+        return session_schema.load(request_json).data
+    if model_enum is models.Objects.TASK:
+        return task_schema.load(request_json).data
+    if model_enum is models.Objects.VEHICLE:
+        return vehicle_schema.load(request_json).data
 
 
 def get_all_users():

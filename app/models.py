@@ -29,8 +29,8 @@ class Note(db.Model):
 
 class Address(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    address1 = db.Column(db.String(64))
-    address2 = db.Column(db.String(64))
+    line1 = db.Column(db.String(64))
+    line2 = db.Column(db.String(64))
     town = db.Column(db.String(64))
     county = db.Column(db.String(64))
     country = db.Column(db.String(64))
@@ -40,21 +40,14 @@ class Address(db.Model):
 class Task(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    pickupAddress_id = db.Column(db.Integer, db.ForeignKey("address.id"))
-    dropoffAddress_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
-    pickupAddress = db.relationship("Address", foreign_keys=[pickupAddress_id])
-    dropoffAddress = db.relationship("Address", foreign_keys=[dropoffAddress_id])
+    pickup_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+    dropoff_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+
+    pickupAddress = db.relationship("Address", foreign_keys=[pickup_address_id])
+    dropoffAddress = db.relationship("Address", foreign_keys=[dropoff_address_id])
 
 
-    pickupAddress1 = db.Column(db.String(64))
-    pickupAddress2 = db.Column(db.String(64))
-    pickupTown = db.Column(db.String(64))
-    pickupPostcode = db.Column(db.String(7))
-    destinationAddress1 = db.Column(db.String(64))
-    destinationAddress2 = db.Column(db.String(64))
-    destinationTown = db.Column(db.String(64))
-    destinationPostcode = db.Column(db.String(7))
     patch = db.Column(db.String(64))
     contactName = db.Column(db.String(64))
     contactNumber = db.Column(db.Integer)
