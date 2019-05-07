@@ -7,14 +7,14 @@ import requests
 user_id = -1
 username = "test_user"
 address = {"line1": "123 fake street", "line2": "woopity complex",
-           "town": "bristol", "county": "bristol", "postcode": "bs11 3ey",
+           "town": "bristol", "county": "bristol", "postcode": "bs113ey",
            "country": "uk"}
 payload = {"name": "Someone Person the 2nd",
            "password": "yepyepyep", "email": "asdf@asdf.com",
            "dob": "24/11/1987", "status": "active",
            "vehicle": "1", "patch": "north", "roles": "admin"}
 payload.update({"username": username})
-payload.update(address)
+payload['address'] = address
 
 
 # Util functions
@@ -152,29 +152,33 @@ def test_change_id():
 
 def test_get_address():
     r = requests.get('{}/{}/address'.format(user_url, user_id), headers=tests.testutils.authHeader)
+    data = json.loads(r.content)
     assert(r.status_code == 200)
     assert(is_json(r.content))
-    assert(json.loads(r.content)['uuid'] == user_id)
+    assert(data['uuid'] == user_id)
+    resulting_address = data['address']
     for key in address:
         if key == "postcode":
-            assert(json.loads(r.content)[key] == address[key].upper())
+            assert(resulting_address[key] == address[key].upper())
         else:
-            assert(json.loads(r.content)[key] == address[key])
+            assert(resulting_address[key] == address[key])
 
 
 def test_change_address():
     new_address = address.copy()
     new_address.update({"line1": "321 sill fake street"})
-    r = requests.put('{}/{}/address'.format(user_url, user_id), data=json.dumps(new_address), headers=tests.testutils.authJsonHeader)
-    print(json.loads(r.content)['message'])
+    payload = {'address': new_address}
+    r = requests.put('{}/{}/address'.format(user_url, user_id), data=json.dumps(payload), headers=tests.testutils.authJsonHeader)
     assert(r.status_code == 200)
 
     r = requests.get('{}/{}/address'.format(user_url, user_id), headers=tests.testutils.authHeader)
     assert(r.status_code == 200)
     assert(is_json(r.content))
-    assert(json.loads(r.content)['uuid'] == user_id)
+    data = json.loads(r.content)
+    assert(data['uuid'] == user_id)
+    resulting_address = data['address']
     for key in new_address:
         if key == "postcode":
-            assert(json.loads(r.content)[key] == new_address[key].upper())
+            assert(resulting_address[key] == new_address[key].upper())
         else:
-            assert(json.loads(r.content)[key] == new_address[key])
+            assert(resulting_address[key] == new_address[key])

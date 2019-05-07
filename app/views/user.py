@@ -137,10 +137,7 @@ class UserAddressField(Resource):
 
         try:
             #user.address = load_request_into_object(USER).address
-            user_add = load_request_into_object(USER)
-            if not isinstance(user_add, models.User):
-                for i in user_add:
-                    print(i)
+            user = load_request_into_object(USER)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 

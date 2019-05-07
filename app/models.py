@@ -127,7 +127,7 @@ class Session(db.Model):
     flaggedForDeletion = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
-        return '<Session {} {}>'.format(self.id, self.timestamp)
+        return '<Session {} {}>'.format(self.uuid, self.timestamp)
     
 
 class DeleteFlags(db.Model):
