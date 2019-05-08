@@ -12,7 +12,7 @@ address = {"line1": "123 fake street", "line2": "woopity complex",
 payload = {"name": "Someone Person the 2nd",
            "password": "yepyepyep", "email": "asdf@asdf.com",
            "dob": "24/11/1987", "status": "active",
-           "vehicle": "1", "patch": "north", "roles": "admin"}
+           "patch": "north", "roles": "admin"}
 payload.update({"username": username})
 payload['address'] = address
 

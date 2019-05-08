@@ -14,23 +14,23 @@ class Objects(IntEnum):
 
 
 class Deliverable(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     name = db.Column(db.String(64))
     task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
 
 
 class Note(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
     task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     user = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
-    deliverable = db.Column(db.Integer, db.ForeignKey('deliverable.id'))
+    deliverable = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
 
 
 class Address(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     line1 = db.Column(db.String(64))
     line2 = db.Column(db.String(64))
     town = db.Column(db.String(64))
@@ -43,8 +43,8 @@ class Task(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
-    pickup_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
-    dropoff_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+    pickup_address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
+    dropoff_address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
 
     pickupAddress = db.relationship("Address", foreign_keys=[pickup_address_id])
     dropoffAddress = db.relationship("Address", foreign_keys=[dropoff_address_id])
@@ -80,7 +80,7 @@ class Vehicle(db.Model):
 
 class User(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
-    address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+    address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
 
     address = db.relationship("Address", foreign_keys=[address_id])
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -144,7 +144,6 @@ class SavedLocations(Address, db.Model):
     contact = db.Column(db.String(64))
     phoneNumber = db.Column(db.Integer())
     flaggedForDeletion = db.Column(db.Boolean, default=False)
-    address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
-
+    address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
     address = db.relationship("Address", foreign_keys=[address_id])
 

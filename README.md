@@ -1,5 +1,7 @@
 ### Install
 
+Install postgresql and start the service.
+
 `./setup.sh`
 
 
