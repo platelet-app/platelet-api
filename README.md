@@ -8,6 +8,8 @@ Add an admin user:
 
 `source venv/bin/activate`
 
+`python`
+
 `from app import models, db`
 
 `import datetime`
