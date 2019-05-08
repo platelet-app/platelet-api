@@ -7,11 +7,17 @@ Install postgresql and start the service.
 Add an admin user:
 
 `source venv/bin/activate`
+
 `from app import models, db`
+
 `import datetime`
+
 `date = datetime.datetime.strptime('01/01/1980', '%d/%m/%Y').date()`
+
 `user = models.User(username="admin", email="asdf@asdf.com", password="somepassword", name="Someone", dob=date, roles="admin,coordinator,rider")`
+
 `db.session.add(user)`
+
 `db.session.commit()`
 
 ### Run
