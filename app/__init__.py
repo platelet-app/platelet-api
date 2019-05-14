@@ -34,12 +34,14 @@ loginApi = Api(app, prefix='/api/{}/login'.format(apiVersion), catch_all_404s=Tr
 sessionApi = Api(app, prefix='/api/{}/session'.format(apiVersion), catch_all_404s=True)
 taskApi = Api(app, prefix='/api/{}/task'.format(apiVersion), catch_all_404s=True)
 vehicleApi = Api(app, prefix='/api/{}/vehicle'.format(apiVersion), catch_all_404s=True)
+noteApi = Api(app, prefix='/api/{}/note'.format(apiVersion), catch_all_404s=True)
+deliverableApi = Api(app, prefix='/api/{}/deliverable'.format(apiVersion), catch_all_404s=True)
 
 app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.views import task, user, views, site, login, session, vehicle, testing_views
+from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note
 from app.housekeeping import monitor_deletions
 
 #_thread.start_new_thread(monitor_deletions, ())

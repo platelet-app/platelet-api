@@ -1,6 +1,6 @@
 import pytest
 from app import db, models
-from app.views.functions.userfunctions import is_username_present
+from app.api.functions.userfunctions import is_username_present
 import datetime
 
 

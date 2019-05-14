@@ -3,12 +3,14 @@ from app import schemas, models
 from flask_restful import Resource
 import flask_praetorian
 from app import vehicleApi as api
-from app.views.functions.viewfunctions import load_request_into_object
-from app.views.functions.errors import not_found, internal_error, forbidden_error
+from app.api.functions.viewfunctions import load_request_into_object
+from app.api.functions.errors import not_found, internal_error, forbidden_error
 from app.utilities import get_object, add_item_to_delete_queue
 from app.exceptions import ObjectNotFoundError
 
 from app import db
+
+VEHICLE = models.Objects.VEHICLE
 
 vehicleSchema = schemas.VehicleSchema()
 
@@ -18,7 +20,7 @@ class Vehicle(Resource):
         if not _id:
             return not_found()
 
-        vehicle = get_object(models.Objects.VEHICLE, _id)
+        vehicle = get_object(VEHICLE, _id)
 
         if (vehicle):
             return jsonify(vehicleSchema.dump(vehicle).data)
@@ -28,7 +30,7 @@ class Vehicle(Resource):
     @flask_praetorian.roles_required('admin')
     def delete(self, _id):
         try:
-            vehicle = get_object(models.Objects.VEHICLE, _id)
+            vehicle = get_object(VEHICLE, _id)
         except ObjectNotFoundError:
             return not_found("vehicle", _id)
 
@@ -38,9 +40,8 @@ class Vehicles(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
 
-        vehicle = models.Vehicle()
         try:
-            load_request_into_object(vehicleSchema, vehicle)
+            vehicle = load_request_into_object(VEHICLE)
         except Exception as e:
             return internal_error(e)
 
@@ -50,7 +51,7 @@ class Vehicles(Resource):
         db.session.add(vehicle)
         db.session.commit()
 
-        return {'id': vehicle.id, 'message': 'Vehicle {} created'.format(vehicle.id)}, 201
+        return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} created'.format(str(vehicle.uuid))}, 201
 
 api.add_resource(Vehicle,
                  '/<_id>')

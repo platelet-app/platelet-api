@@ -3,8 +3,8 @@ from app import schemas, models
 from flask_restful import reqparse, Resource
 import flask_praetorian
 from app import taskApi as api
-from app.views.functions.viewfunctions import load_request_into_object
-from app.views.functions.errors import internal_error, not_found
+from app.api.functions.viewfunctions import load_request_into_object
+from app.api.functions.errors import internal_error, not_found
 from app.utilities import add_item_to_delete_queue, get_object
 from app.exceptions import ObjectNotFoundError
 

@@ -4,7 +4,7 @@ from flask import request
 from app import models
 from app.exceptions import InvalidRangeError
 from app.exceptions import SchemaValidationError
-from app.views.functions.errors import forbidden_error
+from app.api.functions.errors import forbidden_error
 from app import schemas
 
 user_schema = schemas.UserSchema()
@@ -15,6 +15,8 @@ session_schema = schemas.SessionSchema()
 address_schema = schemas.AddressSchema()
 user_username_schema = schemas.UserUsernameSchema()
 user_address_schema = schemas.UserAddressSchema()
+deliverable_schema = schemas.DeliverableSchema()
+note_schema = schemas.NoteSchema()
 
 
 def user_id_match_or_admin(func):
@@ -42,6 +44,10 @@ def load_request_into_object(model_enum):
         return task_schema.load(request_json).data
     if model_enum is models.Objects.VEHICLE:
         return vehicle_schema.load(request_json).data
+    if model_enum is models.Objects.DELIVERABLE:
+        return deliverable_schema.load(request_json).data
+    if model_enum is models.Objects.NOTE:
+        return note_schema.load(request_json).data
 
 
 def get_all_users():

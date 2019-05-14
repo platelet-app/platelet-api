@@ -4,8 +4,8 @@ from app import schemas, db, models
 from app import userApi as api
 from flask_restful import Resource, reqparse
 import flask_praetorian
-from app.views.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
-from app.views.functions.errors import not_found, schema_validation_error, not_unique_error
+from app.api.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
+from app.api.functions.errors import not_found, schema_validation_error, not_unique_error
 from app.exceptions import ObjectNotFoundError, SchemaValidationError
 from app.utilities import add_item_to_delete_queue, get_object, get_all_objects
 USER = models.Objects.USER
@@ -48,6 +48,7 @@ api.add_resource(User,
 class Users(Resource):
     @flask_praetorian.roles_accepted('admin')
     def get(self):
+        #TODO: Any need to restrict this to a range?
         users = get_all_objects(USER)
 
         user_id_username_list = []

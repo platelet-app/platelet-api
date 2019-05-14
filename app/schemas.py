@@ -63,16 +63,26 @@ class SessionSchema(ma.Schema):
         return models.Session(**data)
 
 
+class DeliverableSchema(ma.Schema):
+    class Meta:
+        model = models.Deliverable
+        fields = ('uuid', 'name', 'task')
+
+    @post_load
+    def make_deliverable(self, data):
+        return models.Deliverable(**data)
+
 class TaskSchema(ma.Schema):
     class Meta:
         model = models.Task
-        fields = ('pickupAddress', 'dropoffAddress', 'patch', 'contactName',
-                  'contactNumber', 'priority', 'session', 'timestamp')
+        fields = ('uuid', 'pickupAddress', 'dropoffAddress', 'patch', 'contactName',
+                  'contactNumber', 'priority', 'session', 'timestamp', 'deliverables')
 
     contactNumber = ma.Int()
 
     pickupAddress = fields.fields.Nested(AddressSchema)
     dropoffAddress = fields.fields.Nested(AddressSchema)
+    deliverables = fields.fields.Nested(DeliverableSchema, many=True)
 
     @post_load
     def make_task(self, data):
@@ -92,3 +102,9 @@ class VehicleSchema(ma.Schema):
     @post_load
     def make_vehicle(self, data):
         return models.Vehicle(**data)
+
+class NoteSchema(ma.Schema):
+    class Meta:
+        model = models.Note
+        fields = ('uuid', 'body')
+

@@ -5,14 +5,14 @@ import flask_praetorian
 from flask_praetorian import utilities
 from app import sessionApi as api
 from app.exceptions import InvalidRangeError, ObjectNotFoundError, SchemaValidationError
-from app.views.functions.viewfunctions import load_request_into_object
+from app.api.functions.viewfunctions import load_request_into_object
 parser = reqparse.RequestParser()
 parser.add_argument('user')
 sessionSchema = schemas.SessionSchema()
-from app.views.functions.viewfunctions import get_range
-from app.views.functions.userfunctions import get_user_object, is_user_present
-from app.views.functions.sessionfunctions import session_id_match_or_admin
-from app.views.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error, schema_validation_error
+from app.api.functions.viewfunctions import get_range
+from app.api.functions.userfunctions import get_user_object, is_user_present
+from app.api.functions.sessionfunctions import session_id_match_or_admin
+from app.api.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error, schema_validation_error
 from app.utilities import get_object
 from app.utilities import add_item_to_delete_queue
 import uuid

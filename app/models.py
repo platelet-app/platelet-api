@@ -11,6 +11,8 @@ class Objects(IntEnum):
     SESSION = auto()
     TASK = auto()
     VEHICLE = auto()
+    NOTE = auto()
+    DELIVERABLE = auto()
 
 
 class Deliverable(db.Model):
@@ -97,13 +99,14 @@ class User(db.Model):
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
 
-
     @classmethod
     def lookup(cls, username):
         return cls.query.filter_by(username=username).one_or_none()
+
     @classmethod
     def identify(cls, uuid):
         return cls.query.get(uuid)
+
     @property
     def identity(self):
         return self.uuid

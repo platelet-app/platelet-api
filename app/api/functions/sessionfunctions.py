@@ -2,7 +2,7 @@ import functools
 from flask_praetorian import utilities
 from app import models
 from app.exceptions import ObjectNotFoundError
-from app.views.functions.errors import forbidden_error
+from app.api.functions.errors import forbidden_error
 
 
 def session_id_match_or_admin(func):
