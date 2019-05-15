@@ -1,8 +1,8 @@
-"""
+"""remove pass restriction
 
-Revision ID: c6613f98c580
+Revision ID: 29a43b1241b0
 Revises: 
-Create Date: 2019-05-08 19:57:42.901688
+Create Date: 2019-05-15 21:16:34.714184
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 import sqlalchemy_utils
 
 # revision identifiers, used by Alembic.
-revision = 'c6613f98c580'
+revision = '29a43b1241b0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -72,7 +72,7 @@ def upgrade():
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.Column('username', sa.String(length=64), nullable=True),
     sa.Column('email', sqlalchemy_utils.types.email.EmailType(length=255), nullable=True),
-    sa.Column('password', sa.String(length=128), nullable=True),
+    sa.Column('password', sa.String(), nullable=True),
     sa.Column('name', sa.String(length=64), nullable=True),
     sa.Column('dob', sa.Date(), nullable=True),
     sa.Column('assignedVehicle', postgresql.UUID(as_uuid=True), nullable=True),
@@ -129,6 +129,7 @@ def upgrade():
     op.create_table('note',
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('body', sa.String(length=10000), nullable=True),
+    sa.Column('subject', sa.String(length=200), nullable=True),
     sa.Column('task', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('user', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('session', postgresql.UUID(as_uuid=True), nullable=True),

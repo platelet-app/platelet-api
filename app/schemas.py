@@ -42,7 +42,7 @@ class UserSchema(ma.Schema):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
-                  'dob', 'patch', 'roles', 'notes')
+                  'dob', 'patch', 'roles', 'notes', 'links')
 
     username = ma.Str(required=True)
     email = ma.Email()
@@ -51,8 +51,8 @@ class UserSchema(ma.Schema):
     uuid = field_for(models.User, 'uuid', dump_only=True)
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session'))
 
-    _links = ma.Hyperlinks(
-        {"self": ma.URLFor("user", id="<uuid>"), "collection": ma.URLFor("users")}
+    links = ma.Hyperlinks(
+        {"self": ma.URLFor("user", uuid="<uuid>"), "collection": ma.URLFor("users")}
     )
 
     @post_load
@@ -80,7 +80,7 @@ class TaskSchema(ma.Schema):
     class Meta:
         model = models.Task
         fields = ('uuid', 'pickupAddress', 'dropoffAddress', 'patch', 'contactName',
-                  'contactNumber', 'priority', 'session', 'timestamp', 'deliverables', 'notes')
+                  'contactNumber', 'priority', 'session', 'timestamp', 'deliverables', 'notes', 'links')
 
     contactNumber = ma.Int()
 
@@ -88,6 +88,11 @@ class TaskSchema(ma.Schema):
     dropoffAddress = fields.fields.Nested(AddressSchema)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'session'))
+
+    links = ma.Hyperlinks({
+        'self': ma.URLFor('task_detail', uuid='<uuid>'),
+        'collection': ma.URLFor('tasks_list')
+    })
 
     @post_load
     def make_task(self, data):
@@ -100,8 +105,9 @@ class SessionSchema(ma.Schema):
         fields = ('uuid', 'user_id',
                   'timestamp', 'tasks',
                   'notes')
-    tasks = fields.fields.Nested(TaskSchema, many=True, exclude=('notes', 'deliverables'))
+    tasks = fields.fields.Nested(TaskSchema, many=True, exclude=('notes', 'deliverables', 'links:self'))
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'task'))
+
 
     @post_load
     def make_session(self, data):

@@ -16,16 +16,16 @@ TASK = models.Objects.TASK
 
 class Task(Resource):
     @flask_praetorian.auth_required
-    def get(self, _id):
-        if not _id:
+    def get(self, uuid):
+        if not uuid:
             return not_found(TASK)
 
-        task = get_object(TASK, _id)
+        task = get_object(TASK, uuid)
 
         if (task):
             return jsonify(taskSchema.dump(task).data)
         else:
-            return not_found(TASK, _id)
+            return not_found(TASK, uuid)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, _id):
@@ -50,7 +50,7 @@ class Tasks(Resource):
         return {'uuid': str(task.uuid), 'message': 'Task {} created'.format(task.uuid)}, 201
 
 api.add_resource(Task,
-                 '/<_id>')
+                 '/<uuid>', endpoint="task_detail")
 api.add_resource(Tasks,
-                 's')
+                 's', endpoint="tasks_list")
 

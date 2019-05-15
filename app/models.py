@@ -90,7 +90,7 @@ class User(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     username = db.Column(db.String(64), unique=True)
     email = db.Column(EmailType)
-    password = db.Column(db.String(128))
+    password = db.Column(db.String())
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
