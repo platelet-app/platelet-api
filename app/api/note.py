@@ -47,7 +47,7 @@ class Notes(Resource):
         db.session.add(note)
         db.session.commit()
 
-        return {'uuid': str(note.uuid), 'message': 'Vehicle {} created'.format(note.uuid)}, 201
+        return {'uuid': str(note.uuid), 'message': 'Note {} created'.format(note.uuid)}, 201
 
 api.add_resource(Note,
                  '/<_id>')

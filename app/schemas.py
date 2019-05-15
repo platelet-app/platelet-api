@@ -3,6 +3,28 @@ from marshmallow_sqlalchemy import fields, field_for
 from marshmallow import post_load
 from app import models
 
+class NoteSchema(ma.Schema):
+    class Meta:
+        model = models.Note
+        fields = ('uuid', 'subject', 'body',
+                  'task', 'vehicle', 'session',
+                  'user', 'deliverable')
+
+    @post_load
+    def make_note(self, data):
+        return models.Note(**data)
+
+class DeliverableSchema(ma.Schema):
+    class Meta:
+        model = models.Deliverable
+        fields = ('uuid', 'name', 'task', 'notes')
+
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'vehicle', 'session'))
+
+    @post_load
+    def make_deliverable(self, data):
+        return models.Deliverable(**data)
+
 class AddressSchema(ma.Schema):
     class Meta:
         model = models.Address
@@ -20,13 +42,14 @@ class UserSchema(ma.Schema):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
-                  'dob', 'patch', 'roles')
+                  'dob', 'patch', 'roles', 'notes')
 
     username = ma.Str(required=True)
     email = ma.Email()
     dob = ma.DateTime(format='%d/%m/%Y')
     address = fields.fields.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session'))
 
     _links = ma.Hyperlinks(
         {"self": ma.URLFor("user", id="<uuid>"), "collection": ma.URLFor("users")}
@@ -53,58 +76,50 @@ class UserAddressSchema(ma.Schema):
     postcode = ma.Function(lambda obj: obj.postcode.upper())
     address = fields.fields.Nested(AddressSchema)
 
-class SessionSchema(ma.Schema):
-    class Meta:
-        model = models.Session
-        fields = ('uuid', 'user_id', 'timestamp')
-
-    @post_load
-    def make_session(self, data):
-        return models.Session(**data)
-
-
-class DeliverableSchema(ma.Schema):
-    class Meta:
-        model = models.Deliverable
-        fields = ('uuid', 'name', 'task')
-
-    @post_load
-    def make_deliverable(self, data):
-        return models.Deliverable(**data)
-
 class TaskSchema(ma.Schema):
     class Meta:
         model = models.Task
         fields = ('uuid', 'pickupAddress', 'dropoffAddress', 'patch', 'contactName',
-                  'contactNumber', 'priority', 'session', 'timestamp', 'deliverables')
+                  'contactNumber', 'priority', 'session', 'timestamp', 'deliverables', 'notes')
 
     contactNumber = ma.Int()
 
     pickupAddress = fields.fields.Nested(AddressSchema)
     dropoffAddress = fields.fields.Nested(AddressSchema)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'session'))
 
     @post_load
     def make_task(self, data):
         return models.Task(**data)
 
 
+class SessionSchema(ma.Schema):
+    class Meta:
+        model = models.Session
+        fields = ('uuid', 'user_id',
+                  'timestamp', 'tasks',
+                  'notes')
+    tasks = fields.fields.Nested(TaskSchema, many=True, exclude=('notes', 'deliverables'))
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'task'))
+
+    @post_load
+    def make_session(self, data):
+        return models.Session(**data)
+
+
 class VehicleSchema(ma.Schema):
     class Meta:
         model = models.Task
         fields = ('manufacturer', 'model', 'dateOfManufacture', 'dateOfRegistration',
-                  'registrationNumber')
+                  'registrationNumber', 'notes')
 
     dateOfManufacture = ma.DateTime(format='%d/%m/%Y')
     dateOfRegistration = ma.DateTime(format='%d/%m/%Y')
     registrationNumber = ma.Function(lambda obj: obj.registrationNumber.upper())
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'deliverable', 'session'))
 
     @post_load
     def make_vehicle(self, data):
         return models.Vehicle(**data)
-
-class NoteSchema(ma.Schema):
-    class Meta:
-        model = models.Note
-        fields = ('uuid', 'body')
 

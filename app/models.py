@@ -15,21 +15,21 @@ class Objects(IntEnum):
     DELIVERABLE = auto()
 
 
-class Deliverable(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
-    name = db.Column(db.String(64))
-    task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
-
-
 class Note(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
+    subject = db.Column(db.String(200))
     task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     user = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
     deliverable = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
 
+class Deliverable(db.Model):
+    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    name = db.Column(db.String(64))
+    task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
 
 class Address(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
@@ -60,7 +60,8 @@ class Task(db.Model):
     miles = db.Column(db.Integer)
     flaggedForDeletion = db.Column(db.Boolean, default=False)
     session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
-    deliverables = db.relationship('Deliverable', backref='parent_task', lazy='dynamic')
+    deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
+    notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
 
     def __repr__(self):
         return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp), str(self.priority))
@@ -75,6 +76,7 @@ class Vehicle(db.Model):
     dateOfRegistration = db.Column(db.Date)
     registrationNumber = db.Column(db.String(10))
     flaggedForDeletion = db.Column(db.Boolean, default=False)
+    notes = db.relationship('Note', backref='vehicle_parent', lazy='dynamic')
 
     def __repr__(self):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)
@@ -98,6 +100,7 @@ class User(db.Model):
     flaggedForDeletion = db.Column(db.Boolean, default=False)
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
+    notes = db.relationship('Note', backref='user_parent', lazy='dynamic')
 
     @classmethod
     def lookup(cls, username):
@@ -128,6 +131,7 @@ class Session(db.Model):
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flaggedForDeletion = db.Column(db.Boolean, default=False)
+    notes = db.relationship('Note', backref='session_parent', lazy='dynamic')
 
     def __repr__(self):
         return '<Session {} {}>'.format(self.uuid, self.timestamp)
