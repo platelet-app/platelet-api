@@ -21,6 +21,6 @@ cp api_jwt.py venv/lib/python3.*/site-packages/jwt
 
 flask db upgrade
 
-python setup.py pswd
+python setup.py $pswd
 
 echo "Completed setup"
