@@ -118,12 +118,17 @@ class VehicleSchema(ma.Schema):
     class Meta:
         model = models.Task
         fields = ('manufacturer', 'model', 'dateOfManufacture', 'dateOfRegistration',
-                  'registrationNumber', 'notes')
+                  'registrationNumber', 'notes', 'links')
 
     dateOfManufacture = ma.DateTime(format='%d/%m/%Y')
     dateOfRegistration = ma.DateTime(format='%d/%m/%Y')
     registrationNumber = ma.Function(lambda obj: obj.registrationNumber.upper())
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'deliverable', 'session'))
+
+    links = ma.Hyperlinks({
+        'self': ma.URLFor('vehicle_detail', uuid='<uuid>'),
+        'collection': ma.URLFor('vehicle_list')
+    })
 
     @post_load
     def make_vehicle(self, data):

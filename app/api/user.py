@@ -57,12 +57,6 @@ class Users(Resource):
 
         return jsonify(users_schema.dump(users).data)
 
-        user_id_username_list = []
-        for i in users:
-            user_id_username_list.append({"id": i.uuid, "username": i.username})
-
-        return jsonify({'users': user_id_username_list})
-
     def post(self):
         try:
             user = load_request_into_object(USER)

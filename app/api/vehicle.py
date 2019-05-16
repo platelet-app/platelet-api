@@ -54,6 +54,6 @@ class Vehicles(Resource):
         return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} created'.format(str(vehicle.uuid))}, 201
 
 api.add_resource(Vehicle,
-                 '/<_id>')
+                 '/<uuid>', endpoint='vehicle_detail')
 api.add_resource(Vehicles,
-                 's')
+                 's', endpoint='vehicle_list')
