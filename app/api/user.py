@@ -36,11 +36,15 @@ class User(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
     def delete(self, uuid):
+        print("ASDFJKL;ASDFJKL;")
         try:
+            print("ASDFJKL;ASDFJKL;")
             user = get_object(USER, uuid)
+            print("ASDFJKL;ASDFJKL;")
         except ObjectNotFoundError:
             return not_found("user", uuid)
 
+        print("ASDFJKL;ASDFJKL;")
         return add_item_to_delete_queue(user)
 
 

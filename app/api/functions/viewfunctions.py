@@ -78,7 +78,7 @@ def get_range(items, _range="0-50", order="descending"):
         items.reverse()
 
     for i in items[:]:
-        if i.flaggedForDeletion:
+        if i.flagged_for_deletion:
             items.remove(i)
 
     return items[start:end]

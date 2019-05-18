@@ -3,6 +3,7 @@ from marshmallow_sqlalchemy import fields, field_for
 from marshmallow import post_load
 from app import models
 
+
 class NoteSchema(ma.Schema):
     class Meta:
         model = models.Note
@@ -14,6 +15,7 @@ class NoteSchema(ma.Schema):
     def make_note(self, data):
         return models.Note(**data)
 
+
 class DeliverableSchema(ma.Schema):
     class Meta:
         model = models.Deliverable
@@ -24,6 +26,7 @@ class DeliverableSchema(ma.Schema):
     @post_load
     def make_deliverable(self, data):
         return models.Deliverable(**data)
+
 
 class AddressSchema(ma.Schema):
     class Meta:
@@ -37,6 +40,7 @@ class AddressSchema(ma.Schema):
     @post_load
     def make_address(self, data):
         return models.Address(**data)
+
 
 class UserSchema(ma.Schema):
     class Meta:
@@ -76,11 +80,12 @@ class UserAddressSchema(ma.Schema):
     postcode = ma.Function(lambda obj: obj.postcode.upper())
     address = fields.fields.Nested(AddressSchema)
 
+
 class TaskSchema(ma.Schema):
     class Meta:
         model = models.Task
-        fields = ('uuid', 'pickupAddress', 'dropoffAddress', 'patch', 'contactName',
-                  'contactNumber', 'priority', 'session', 'timestamp', 'deliverables', 'notes', 'links')
+        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
+                  'contact_number', 'priority', 'session', 'timestamp', 'deliverables', 'notes', 'links')
 
     contactNumber = ma.Int()
 
@@ -117,8 +122,8 @@ class SessionSchema(ma.Schema):
 class VehicleSchema(ma.Schema):
     class Meta:
         model = models.Task
-        fields = ('manufacturer', 'model', 'dateOfManufacture', 'dateOfRegistration',
-                  'registrationNumber', 'notes', 'links')
+        fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
+                  'registration_number', 'notes', 'links')
 
     dateOfManufacture = ma.DateTime(format='%d/%m/%Y')
     dateOfRegistration = ma.DateTime(format='%d/%m/%Y')

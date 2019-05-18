@@ -40,7 +40,7 @@ def delete_session_success(session_id):
     assert(r.status_code == 202)
     assert(is_json(r.content))
     session = models.Session.query.filter_by(uuid=session_id).first()
-    assert session.flaggedForDeletion
+    assert session.flagged_for_deletion
 
     queue = models.DeleteFlags.query.filter_by(objectUUID=session_id, objectType=int(models.Objects.SESSION)).first()
 

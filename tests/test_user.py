@@ -82,7 +82,7 @@ def test_delete_user():
     assert(is_json(r.content))
 
     user = models.User.query.filter_by(uuid=user_id).first()
-    assert user.flaggedForDeletion
+    assert user.flagged_for_deletion
 
     queue = models.DeleteFlags.query.filter_by(objectUUID=user_id, objectType=models.Objects.USER).first()
     assert int(queue.objectType) == int(models.Objects.USER)

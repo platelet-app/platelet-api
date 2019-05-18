@@ -13,14 +13,15 @@ def add_item_to_delete_queue(item):
     if not item:
         return
 
-    if item.flaggedForDeletion:
-        return already_flagged_for_deletion_error("user", item.uuid)
+    if item.flagged_for_deletion:
+        return already_flagged_for_deletion_error("user", str(item.uuid))
 
-    item.flaggedForDeletion = True
+    item.flagged_for_deletion = True
 
-    delete = models.DeleteFlags(objectUUID=item.uuid, objectType=get_object_enum(item), timeToDelete=app.config['DEFAULT_DELETE_TIME'])
+    delete = models.DeleteFlags(object_uuid=item.uuid, object_type=get_object_enum(item), time_to_delete=app.config['DEFAULT_DELETE_TIME'])
 
     db.session.add(item)
+    db.session.commit()
     db.session.add(delete)
     db.session.commit()
 
