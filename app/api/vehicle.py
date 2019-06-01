@@ -1,8 +1,8 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restful import Resource
+from flask_restplus import Resource
 import flask_praetorian
-from app import vehicleApi as api
+from app import vehicle_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error
 from app.utilities import get_object, add_item_to_delete_queue
@@ -14,6 +14,8 @@ VEHICLE = models.Objects.VEHICLE
 
 vehicleSchema = schemas.VehicleSchema()
 
+
+@ns.route('/<uuid>', endpoint='vehicle_detail')
 class Vehicle(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
@@ -36,6 +38,8 @@ class Vehicle(Resource):
 
         return add_item_to_delete_queue(vehicle)
 
+
+@ns.route('s', endpoint='vehicle_list')
 class Vehicles(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
@@ -53,7 +57,3 @@ class Vehicles(Resource):
 
         return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} created'.format(str(vehicle.uuid))}, 201
 
-api.add_resource(Vehicle,
-                 '/<uuid>', endpoint='vehicle_detail')
-api.add_resource(Vehicles,
-                 's', endpoint='vehicle_list')

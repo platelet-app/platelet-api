@@ -1,9 +1,9 @@
 from flask import jsonify, request
 from app import schemas, db, models, utilities
-from flask_restful import reqparse, Resource
+from flask_restplus import reqparse, Resource
 import flask_praetorian
 from flask_praetorian import utilities
-from app import sessionApi as api
+from app import session_ns as ns
 from app.exceptions import InvalidRangeError, ObjectNotFoundError, SchemaValidationError
 from app.api.functions.viewfunctions import load_request_into_object
 parser = reqparse.RequestParser()
@@ -22,30 +22,34 @@ SESSION = models.Objects.SESSION
 session_schema = schemas.SessionSchema()
 sessions_schema = schemas.SessionSchema(many=True)
 
+
+@ns.route('/<session_id>')
 class Session(Resource):
     @flask_praetorian.auth_required
-    def get(self, _id):
+    def get(self, session_id):
         try:
-            session = get_object(SESSION, _id)
+            session = get_object(SESSION, session_id)
         except ObjectNotFoundError:
-            return not_found(SESSION, _id)
+            return not_found(SESSION, session_id)
 
         return jsonify(session_schema.dump(session).data)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     @session_id_match_or_admin
-    def delete(self, _id):
+    def delete(self, session_id):
         try:
-            session = get_object(SESSION, _id)
+            session = get_object(SESSION, session_id)
         except ObjectNotFoundError:
-            return not_found(SESSION, _id)
+            return not_found(SESSION, session_id)
 
         return add_item_to_delete_queue(session)
 
-api.add_resource(Session,
-                 '/<_id>',
-                 endpoint='session')
 
+@ns.route(
+    's',
+    's/<user_id>',
+    's/<user_id>/<_range>',
+    's/<user_id>/<_range>/<order>')
 class Sessions(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id, _range=None, order="ascending"):
@@ -92,9 +96,3 @@ class Sessions(Resource):
 
         return {'uuid': str(session.uuid), 'user_uuid': str(session.user_id), 'message': 'Session {} created'.format(str(session.uuid))}, 201
 
-api.add_resource(Sessions,
-                 's',
-                 's/<user_id>',
-                 's/<user_id>/<_range>',
-                 's/<user_id>/<_range>/<order>',
-                 endpoint='sessions')

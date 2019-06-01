@@ -1,5 +1,6 @@
 from flask import render_template
 from app import app
+import flask_praetorian
 
 from app import db
 

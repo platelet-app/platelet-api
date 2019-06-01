@@ -141,6 +141,7 @@ class DeleteFlags(db.Model):
     object_uuid = db.Column(UUID(as_uuid=True))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     time_to_delete = db.Column(db.Integer)
+    time_deleted = db.Column(db.DateTime, index=True)
     object_type = db.Column(db.Integer)
     active = db.Column(db.Boolean, default=True)
 
