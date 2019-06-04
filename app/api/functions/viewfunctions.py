@@ -21,13 +21,13 @@ note_schema = schemas.NoteSchema()
 
 def user_id_match_or_admin(func):
     @functools.wraps(func)
-    def wrapper(self, uuid):
+    def wrapper(self, user_id):
         if 'admin' in utilities.current_rolenames():
-            return func(self, uuid)
-        if utilities.current_user_id() == uuid:
-            return func(self, uuid)
+            return func(self, user_id)
+        if utilities.current_user_id() == user_id:
+            return func(self, user_id)
         else:
-            return forbidden_error("Object not owned by user: user id:".format(uuid))
+            return forbidden_error("Object not owned by user: user id:".format(user_id))
     return wrapper
 
 

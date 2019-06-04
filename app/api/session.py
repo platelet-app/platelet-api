@@ -6,9 +6,6 @@ from flask_praetorian import utilities
 from app import session_ns as ns
 from app.exceptions import InvalidRangeError, ObjectNotFoundError, SchemaValidationError
 from app.api.functions.viewfunctions import load_request_into_object
-parser = reqparse.RequestParser()
-parser.add_argument('user')
-sessionSchema = schemas.SessionSchema()
 from app.api.functions.viewfunctions import get_range
 from app.api.functions.userfunctions import get_user_object, is_user_present
 from app.api.functions.sessionfunctions import session_id_match_or_admin
@@ -23,7 +20,8 @@ session_schema = schemas.SessionSchema()
 sessions_schema = schemas.SessionSchema(many=True)
 
 
-@ns.route('/<session_id>')
+@ns.route('/<session_id>',
+          endpoint='session_detail')
 class Session(Resource):
     @flask_praetorian.auth_required
     def get(self, session_id):
@@ -49,7 +47,8 @@ class Session(Resource):
     's',
     's/<user_id>',
     's/<user_id>/<_range>',
-    's/<user_id>/<_range>/<order>')
+    's/<user_id>/<_range>/<order>',
+    endpoint='sessions_list')
 class Sessions(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id, _range=None, order="ascending"):

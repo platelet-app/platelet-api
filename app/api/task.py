@@ -15,24 +15,24 @@ taskSchema = schemas.TaskSchema()
 TASK = models.Objects.TASK
 
 
-@ns.route('/<uuid>', endpoint="task_detail")
+@ns.route('/<task_id>', endpoint="task_detail")
 class Task(Resource):
     @flask_praetorian.auth_required
-    def get(self, uuid):
-        if not uuid:
+    def get(self, task_id):
+        if not task_id:
             return not_found(TASK)
 
-        task = get_object(TASK, uuid)
+        task = get_object(TASK, task_id)
 
         if (task):
             return jsonify(taskSchema.dump(task).data)
         else:
-            return not_found(TASK, uuid)
+            return not_found(TASK, task_id)
 
     @flask_praetorian.roles_required('admin')
-    def delete(self, _id):
+    def delete(self, task_id):
         try:
-            task = get_object(TASK, _id)
+            task = get_object(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK)
         return add_item_to_delete_queue(task)

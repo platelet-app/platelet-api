@@ -15,26 +15,26 @@ VEHICLE = models.Objects.VEHICLE
 vehicleSchema = schemas.VehicleSchema()
 
 
-@ns.route('/<uuid>', endpoint='vehicle_detail')
+@ns.route('/<vehicle_id>', endpoint='vehicle_detail')
 class Vehicle(Resource):
     @flask_praetorian.auth_required
-    def get(self, _id):
-        if not _id:
+    def get(self, vehicle_id):
+        if not vehicle_id:
             return not_found()
 
-        vehicle = get_object(VEHICLE, _id)
+        vehicle = get_object(VEHICLE, vehicle_id)
 
         if (vehicle):
             return jsonify(vehicleSchema.dump(vehicle).data)
         else:
-            return not_found(_id)
+            return not_found(vehicle_id)
 
     @flask_praetorian.roles_required('admin')
-    def delete(self, _id):
+    def delete(self, vehicle_id):
         try:
-            vehicle = get_object(VEHICLE, _id)
+            vehicle = get_object(VEHICLE, vehicle_id)
         except ObjectNotFoundError:
-            return not_found("vehicle", _id)
+            return not_found("vehicle", vehicle_id)
 
         return add_item_to_delete_queue(vehicle)
 

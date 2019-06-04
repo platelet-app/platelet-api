@@ -14,26 +14,26 @@ DELIVERABLE = models.Objects.DELIVERABLE
 deliverableSchema = schemas.DeliverableSchema()
 
 
-@ns.route('/<_id>')
+@ns.route('/<deliverable_id>')
 class Deliverable(Resource):
     @flask_praetorian.auth_required
-    def get(self, _id):
-        if not _id:
+    def get(self, deliverable_id):
+        if not deliverable_id:
             return not_found("deliverable")
 
-        note = get_object(DELIVERABLE, _id)
+        note = get_object(DELIVERABLE, deliverable_id)
 
         if note:
             return jsonify(deliverableSchema.dump(note).data)
         else:
-            return not_found(_id)
+            return not_found(deliverable_id)
 
     @flask_praetorian.roles_required('admin')
-    def delete(self, _id):
+    def delete(self, deliverable_id):
         try:
-            note = get_object(DELIVERABLE, _id)
+            note = get_object(DELIVERABLE, deliverable_id)
         except ObjectNotFoundError:
-            return not_found("deliverable", _id)
+            return not_found("deliverable", deliverable_id)
 
         return add_item_to_delete_queue(note)
 

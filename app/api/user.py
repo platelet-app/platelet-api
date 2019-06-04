@@ -14,43 +14,64 @@ USER = models.Objects.USER
 
 user_dump_schema = schemas.UserSchema(exclude=("password",))
 user_schema = schemas.UserSchema()
-users_schema = schemas.UserSchema(many=True, exclude=('address', 'dob', 'email', 'notes', 'password', 'name', 'roles', 'patch'))
+users_schema = schemas.UserSchema(many=True, exclude=('address',
+                                                      'dob',
+                                                      'email',
+                                                      'notes',
+                                                      'password',
+                                                      'name',
+                                                      'roles',
+                                                      'patch'))
 address_schema = schemas.AddressSchema()
-user_username_schema = schemas.UserUsernameSchema()
-user_address_schema = schemas.UserAddressSchema()
+user_username_schema = schemas.UserSchema(exclude=('address',
+                                                   'dob',
+                                                   'email',
+                                                   'notes',
+                                                   'password',
+                                                   'name',
+                                                   'roles',
+                                                   'patch',
+                                                   'links',
+                                                   ))
+user_address_schema = schemas.UserSchema(exclude=('username',
+                                                   'dob',
+                                                   'email',
+                                                   'notes',
+                                                   'password',
+                                                   'name',
+                                                   'roles',
+                                                   'patch',
+                                                   'links',
+                                                   ))
 
 
 @ns.route(
-    '/<uuid>',
+    '/<user_id>',
     endpoint='user')
 class User(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def get(self, uuid):
+    def get(self, user_id):
         try:
-            user = get_object(USER, uuid)
+            user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", uuid)
+            return not_found("user", user_id)
         except:
             raise
-
         return jsonify(user_dump_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def delete(self, uuid):
+    def delete(self, user_id):
         try:
-            user = get_object(USER, uuid)
+            user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", uuid)
+            return not_found("user", user_id)
 
         return add_item_to_delete_queue(user)
 
 
-
-
 @ns.route(
-    '',
     's',
     endpoint='users')
 class Users(Resource):
@@ -78,28 +99,28 @@ class Users(Resource):
 
 
 
-@ns.route('/<uuid>/username')
+@ns.route('/<user_id>/username')
 class UserNameField(Resource):
     @flask_praetorian.auth_required
-    def get(self, uuid):
+    def get(self, user_id):
         try:
-            user = get_object(USER, uuid)
+            user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", uuid)
+            return not_found("user", user_id)
 
         return jsonify(user_username_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def put(self, uuid):
+    def put(self, user_id):
 
         parser = reqparse.RequestParser()
         parser.add_argument('username')
         args = parser.parse_args()
         try:
-            user = get_object(USER, uuid)
+            user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", uuid)
+            return not_found("user", user_id)
 
         if args['username']:
             user.username = args['username']
@@ -117,27 +138,26 @@ class UserNameField(Resource):
 
 
 
-@ns.route('/<uuid>/address')
+@ns.route('/<user_id>/address')
 class UserAddressField(Resource):
     @flask_praetorian.auth_required
-    def get(self, uuid):
+    def get(self, user_id):
         try:
-            user = get_object(USER, uuid)
+            user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", uuid)
+            return not_found("user", user_id)
 
         return jsonify(user_address_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def put(self, uuid):
+    def put(self, user_id):
         try:
-            user = get_object(USER, uuid)
+            user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", uuid)
+            return not_found("user", user_id)
 
         try:
-            #user.address = load_request_into_object(USER).address
             user = load_request_into_object(USER)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
