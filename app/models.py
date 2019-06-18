@@ -13,6 +13,7 @@ class Objects(IntEnum):
     VEHICLE = auto()
     NOTE = auto()
     DELIVERABLE = auto()
+    LOCATION = auto()
 
 
 class Note(db.Model):
@@ -58,7 +59,7 @@ class Task(db.Model):
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
-    session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
 
@@ -145,12 +146,12 @@ class DeleteFlags(db.Model):
     object_type = db.Column(db.Integer)
     active = db.Column(db.Boolean, default=True)
 
-class SavedLocations(Address, db.Model):
+class Location(Address, db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64))
     contact = db.Column(db.String(64))
-    phoneNumber = db.Column(db.Integer())
+    phone_number = db.Column(db.Integer())
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
     address = db.relationship("Address", foreign_keys=[address_id])

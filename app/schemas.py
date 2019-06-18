@@ -9,7 +9,7 @@ class NoteSchema(ma.Schema):
         model = models.Note
         fields = ('uuid', 'subject', 'body',
                   'task', 'vehicle', 'session',
-                  'user', 'deliverable')
+                  'user', 'deliverable', 'location')
 
     @post_load
     def make_note(self, data):
@@ -21,7 +21,7 @@ class DeliverableSchema(ma.Schema):
         model = models.Deliverable
         fields = ('uuid', 'name', 'task', 'notes')
 
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'vehicle', 'session'))
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'vehicle', 'session', 'location'))
 
     @post_load
     def make_deliverable(self, data):
@@ -53,7 +53,7 @@ class UserSchema(ma.Schema):
     dob = ma.DateTime(format='%d/%m/%Y')
     address = fields.fields.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session'))
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location'))
 
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
@@ -85,14 +85,14 @@ class TaskSchema(ma.Schema):
     class Meta:
         model = models.Task
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
-                  'contact_number', 'priority', 'session', 'timestamp', 'deliverables', 'notes', 'links')
+                  'contact_number', 'priority', 'session_id', 'timestamp', 'deliverables', 'notes', 'links')
 
     contactNumber = ma.Int()
 
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'session'))
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'session', 'location'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
@@ -110,8 +110,8 @@ class SessionSchema(ma.Schema):
         fields = ('uuid', 'user_id',
                   'timestamp', 'tasks',
                   'notes')
-    tasks = fields.fields.Nested(TaskSchema, many=True, exclude=('notes', 'deliverables', 'links:self'))
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'task'))
+    tasks = fields.fields.Nested(TaskSchema, many=True, exclude=('notes', 'deliverables'))
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('vehicle', 'user', 'deliverable', 'task', 'location'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('session_detail', session_id='<uuid>'),
@@ -130,10 +130,10 @@ class VehicleSchema(ma.Schema):
         fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
                   'registration_number', 'notes', 'links')
 
-    dateOfManufacture = ma.DateTime(format='%d/%m/%Y')
-    dateOfRegistration = ma.DateTime(format='%d/%m/%Y')
-    registrationNumber = ma.Function(lambda obj: obj.registrationNumber.upper())
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'deliverable', 'session'))
+    date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
+    date_of_registration = ma.DateTime(format='%d/%m/%Y')
+    registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'deliverable', 'session', 'location'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('vehicle_detail', vehicle_id='<uuid>'),
@@ -143,4 +143,21 @@ class VehicleSchema(ma.Schema):
     @post_load
     def make_vehicle(self, data):
         return models.Vehicle(**data)
+
+class SavedLocationSchema(ma.Schema):
+    class Meta:
+        model = models.SavedLocation
+        fields = ('name', 'contact', 'phone_number', 'address', 'notes', 'links')
+
+    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'deliverable', 'session', 'vehicle'))
+    address = fields.fields.Nested(AddressSchema)
+
+    links = ma.Hyperlinks({
+        'self': ma.URLFor('location_detail', location_id='<uuid>'),
+        'collection': ma.URLFor('location_list')
+    })
+
+    @post_load
+    def make_saved_location(self, data):
+        return models.SavedLocation(**data)
 
