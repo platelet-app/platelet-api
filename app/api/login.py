@@ -9,7 +9,6 @@ parser.add_argument('password')
 
 @ns.route('')
 class Login(Resource):
-
     def post(self):
 
         args = parser.parse_args()

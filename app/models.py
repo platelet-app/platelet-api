@@ -149,10 +149,9 @@ class DeleteFlags(db.Model):
 class Location(Address, db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    name = db.Column(db.String(64))
+    name = db.Column(db.String(64), unique=True)
     contact = db.Column(db.String(64))
     phone_number = db.Column(db.Integer())
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
     address = db.relationship("Address", foreign_keys=[address_id])
-

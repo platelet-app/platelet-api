@@ -118,7 +118,6 @@ class SessionSchema(ma.Schema):
         'collection': ma.URLFor('sessions_list')
     })
 
-
     @post_load
     def make_session(self, data):
         return models.Session(**data)
@@ -144,6 +143,7 @@ class VehicleSchema(ma.Schema):
     def make_vehicle(self, data):
         return models.Vehicle(**data)
 
+
 class LocationSchema(ma.Schema):
     class Meta:
         model = models.Location
@@ -160,4 +160,3 @@ class LocationSchema(ma.Schema):
     @post_load
     def make_location(self, data):
         return models.Location(**data)
-

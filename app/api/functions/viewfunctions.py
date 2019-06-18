@@ -17,6 +17,7 @@ user_username_schema = schemas.UserUsernameSchema()
 user_address_schema = schemas.UserAddressSchema()
 deliverable_schema = schemas.DeliverableSchema()
 note_schema = schemas.NoteSchema()
+location_schema = schemas.LocationSchema()
 
 
 def user_id_match_or_admin(func):
@@ -48,6 +49,8 @@ def load_request_into_object(model_enum):
         return deliverable_schema.load(request_json).data
     if model_enum is models.Objects.NOTE:
         return note_schema.load(request_json).data
+    if model_enum is models.Objects.LOCATION:
+        return location_schema.load(request_json).data
 
 
 def get_all_users():

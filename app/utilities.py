@@ -3,6 +3,7 @@ from app.api.functions.userfunctions import get_user_object, get_all_users
 from app.api.functions.sessionfunctions import get_session_object, get_all_sessions
 from app.api.functions.taskfunctions import get_task_object, get_all_tasks
 from app.api.functions.vehiclefunctions import get_vehicle_object, get_all_vehicles
+from app.api.functions.locationfunctions import get_location_object, get_all_locations
 from app.api.functions.notefunctions import get_note_object
 from app.api.functions.deliverablefunctions import get_deliverable_object
 from app.api.functions.errors import already_flagged_for_deletion_error
@@ -45,14 +46,14 @@ def get_object_enum(item):
         raise ValueError("No corresponding enum to this object")
 
 def object_type_to_string(type):
-
     switch = {
         models.Objects.SESSION: "session",
         models.Objects.USER: "user",
         models.Objects.TASK: "task",
         models.Objects.VEHICLE: "vehicle",
         models.Objects.NOTE: "note",
-        models.Objects.DELIVERABLE: "deliverable"
+        models.Objects.DELIVERABLE: "deliverable",
+        models.Objects.LOCATION: "location"
     }
 
     return switch.get(type, lambda: None)
@@ -73,6 +74,8 @@ def get_object(type, _id):
             return get_note_object(_id)
         elif type == models.Objects.DELIVERABLE:
             return get_deliverable_object(_id)
+        elif type == models.Objects.LOCATION:
+            return get_location_object(_id)
 
     except ObjectNotFoundError:
         raise
@@ -84,7 +87,8 @@ def get_all_objects(type):
         models.Objects.SESSION: get_all_sessions(),
         models.Objects.USER: get_all_users(),
         models.Objects.TASK: get_all_tasks(),
-        models.Objects.VEHICLE: get_all_vehicles()
+        models.Objects.VEHICLE: get_all_vehicles(),
+        models.Objects.LOCATION: get_all_locations()
     }
 
     obj = switch.get(type, lambda: None)

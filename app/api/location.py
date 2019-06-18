@@ -40,7 +40,7 @@ class Location(Resource):
 
 
 @ns.route('s', endpoint='location_list')
-class Vehicles(Resource):
+class Locations(Resource):
     @flask_praetorian.roles_accepted('admin')
     def post(self):
         try:
@@ -52,4 +52,3 @@ class Vehicles(Resource):
         db.session.commit()
 
         return {'uuid': str(location.uuid), 'message': 'Location {} created'.format(str(location.uuid))}, 201
-
