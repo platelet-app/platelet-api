@@ -9,7 +9,8 @@ else
     echo "Postgres found. Creating database. You may need to provide your sudo password."
 fi
 
-sudo su - postgres -c 'psql -c "create database bloodbike_dev"'
+sudo -u postgres createuser "$(whoami)"
+sudo -u postgres createdb -O "$(whoami)" bloodbike_dev
 
 python3 -m venv venv
 
