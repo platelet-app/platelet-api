@@ -2,7 +2,7 @@ from flask import jsonify
 from app import schemas, models
 from flask_restplus import Resource
 import flask_praetorian
-from app import vehicle_ns as ns
+from app import location_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error
 from app.utilities import get_object, add_item_to_delete_queue
@@ -12,48 +12,44 @@ from app import db
 
 LOCATION = models.Objects.LOCATION
 
-vehicleSchema = schemas.VehicleSchema()
+locationSchema = schemas.LocationSchema()
 
 
 @ns.route('/<location_id>', endpoint='location_detail')
 class Location(Resource):
     @flask_praetorian.auth_required
-    def get(self, vehicle_id):
-        if not vehicle_id:
-            return not_found()
+    def get(self, location_id):
+        if not location_id:
+            return not_found("location", location_id)
 
-        vehicle = get_object(VEHICLE, vehicle_id)
+        location = get_object(LOCATION, location_id)
 
-        if (vehicle):
-            return jsonify(vehicleSchema.dump(vehicle).data)
+        if (location):
+            return jsonify(locationSchema.dump(location).data)
         else:
-            return not_found(vehicle_id)
+            return not_found(location_id)
 
     @flask_praetorian.roles_required('admin')
-    def delete(self, vehicle_id):
+    def delete(self, location_id):
         try:
-            vehicle = get_object(VEHICLE, vehicle_id)
+            location = get_object(LOCATION, location_id)
         except ObjectNotFoundError:
-            return not_found("vehicle", vehicle_id)
+            return not_found("location", location_id)
 
-        return add_item_to_delete_queue(vehicle)
+        return add_item_to_delete_queue(location)
 
 
-@ns.route('s', endpoint='vehicle_list')
+@ns.route('s', endpoint='location_list')
 class Vehicles(Resource):
-    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    @flask_praetorian.roles_accepted('admin')
     def post(self):
-
         try:
-            vehicle = load_request_into_object(VEHICLE)
+            location = load_request_into_object(LOCATION)
         except Exception as e:
             return internal_error(e)
 
-        if vehicle.dateOfManufacture > vehicle.dateOfRegistration:
-            return forbidden_error("date of registration cannot be before date of manufacture")
-
-        db.session.add(vehicle)
+        db.session.add(location)
         db.session.commit()
 
-        return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} created'.format(str(vehicle.uuid))}, 201
+        return {'uuid': str(location.uuid), 'message': 'Location {} created'.format(str(location.uuid))}, 201
 

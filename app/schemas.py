@@ -144,9 +144,9 @@ class VehicleSchema(ma.Schema):
     def make_vehicle(self, data):
         return models.Vehicle(**data)
 
-class SavedLocationSchema(ma.Schema):
+class LocationSchema(ma.Schema):
     class Meta:
-        model = models.SavedLocation
+        model = models.Location
         fields = ('name', 'contact', 'phone_number', 'address', 'notes', 'links')
 
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'user', 'deliverable', 'session', 'vehicle'))
@@ -158,6 +158,6 @@ class SavedLocationSchema(ma.Schema):
     })
 
     @post_load
-    def make_saved_location(self, data):
-        return models.SavedLocation(**data)
+    def make_location(self, data):
+        return models.Location(**data)
 

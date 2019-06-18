@@ -45,6 +45,7 @@ task_ns = api.namespace('api/{}/task'.format(api_version), description='Task ope
 vehicle_ns = api.namespace('api/{}/vehicle'.format(api_version), description='Vehicle operations')
 note_ns = api.namespace('api/{}/note'.format(api_version), description='Note operations')
 deliverable_ns = api.namespace('api/{}/deliverable'.format(api_version), description='Deliverable operations')
+location_ns = api.namespace('api/{}/location'.format(api_version), description='Saved location operations')
 
 ## flask_restplus stuff
 
@@ -63,7 +64,7 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note
+from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location
 
 
 guard.init_app(app, models.User)
