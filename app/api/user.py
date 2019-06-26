@@ -70,6 +70,23 @@ class User(Resource):
 
         return add_item_to_delete_queue(user)
 
+    @flask_praetorian.auth_required
+    @user_id_match_or_admin
+    def put(self, user_id):
+        try:
+            user = get_object(USER, user_id)
+        except ObjectNotFoundError:
+            return not_found("user", user_id)
+
+        new_data = load_request_into_object(USER)
+        # load_request_into_dict function to use here?
+        print(new_data)
+        models.User.query.filter_by(uuid=user_id).update(new_data)
+        db.session.commit()
+
+        #print(user_dump_schema.dump(new_data).data
+
+
 
 @ns.route(
     's',
