@@ -38,6 +38,18 @@ class Vehicle(Resource):
 
         return add_item_to_delete_queue(vehicle)
 
+    @flask_praetorian.roles_required('admin')
+    def put(self, vehicle_id):
+        try:
+            vehicle = get_object(VEHICLE, vehicle_id)
+        except ObjectNotFoundError:
+            return not_found(VEHICLE, vehicle_id)
+
+        new_data = load_request_into_object(VEHICLE)
+        models.Session.query.filter_by(uuid=vehicle_id).update(new_data)
+        db.session.commit()
+        return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} updated.'.format(vehicle.uuid)}, 200
+
 
 @ns.route('s', endpoint='vehicle_list')
 class Vehicles(Resource):

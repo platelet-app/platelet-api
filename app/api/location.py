@@ -38,6 +38,18 @@ class Location(Resource):
 
         return add_item_to_delete_queue(location)
 
+    @flask_praetorian.roles_required('admin', 'coordinator')
+    def put(self, location_id):
+        try:
+            location = get_object(LOCATION, location_id)
+        except ObjectNotFoundError:
+            return not_found(LOCATION, location_id)
+
+        new_data = load_request_into_object(LOCATION)
+        models.Session.query.filter_by(uuid=location_id).update(new_data)
+        db.session.commit()
+        return {'uuid': str(location.uuid), 'message': 'Location {} updated.'.format(location.uuid)}, 200
+
 
 @ns.route('s', endpoint='location_list')
 class Locations(Resource):

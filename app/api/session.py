@@ -42,6 +42,19 @@ class Session(Resource):
 
         return add_item_to_delete_queue(session)
 
+    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    @session_id_match_or_admin
+    def put(self, session_id):
+        try:
+            session = get_object(SESSION, session_id)
+        except ObjectNotFoundError:
+            return not_found(SESSION, session_id)
+
+        new_data = load_request_into_object(SESSION)
+        models.Session.query.filter_by(uuid=session_id).update(new_data)
+        db.session.commit()
+        return {'uuid': str(session.uuid), 'message': 'Session {} updated.'.format(session.uuid)}, 200
+
 
 @ns.route(
     's',

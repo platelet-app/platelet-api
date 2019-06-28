@@ -37,6 +37,18 @@ class Note(Resource):
 
         return add_item_to_delete_queue(note)
 
+    @flask_praetorian.roles_required('admin', 'coordinator')
+    def put(self, note_id):
+        try:
+            note = get_object(NOTE, note_id)
+        except ObjectNotFoundError:
+            return not_found(NOTE, note_id)
+
+        new_data = load_request_into_object(NOTE)
+        models.Session.query.filter_by(uuid=note_id).update(new_data)
+        db.session.commit()
+        return {'uuid': str(note.uuid), 'message': 'Note {} updated.'.format(note.uuid)}, 200
+
 
 @ns.route('s')
 class Notes(Resource):

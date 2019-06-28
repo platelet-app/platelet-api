@@ -37,6 +37,18 @@ class Task(Resource):
             return not_found(TASK)
         return add_item_to_delete_queue(task)
 
+    @flask_praetorian.roles_required('admin', 'coordinator')
+    def put(self, task_id):
+        try:
+            task = get_object(TASK, task_id)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_id)
+
+        new_data = load_request_into_object(TASK)
+        models.Session.query.filter_by(uuid=task_id).update(new_data)
+        db.session.commit()
+        return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+
 
 @ns.route('s', endpoint="tasks_list")
 class Tasks(Resource):

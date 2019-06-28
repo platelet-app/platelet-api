@@ -55,7 +55,7 @@ class User(Resource):
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(USER, user_id)
         except:
             raise
         return jsonify(user_dump_schema.dump(user).data)
@@ -66,7 +66,7 @@ class User(Resource):
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(USER, user_id)
 
         return add_item_to_delete_queue(user)
 
@@ -76,13 +76,17 @@ class User(Resource):
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(USER, user_id)
+        except:
+            raise
 
         new_data = load_request_into_object(USER)
         # load_request_into_dict function to use here?
-        print(new_data)
+        # might just do that anyway with incomplete data
         models.User.query.filter_by(uuid=user_id).update(new_data)
         db.session.commit()
+
+        return {'uuid': str(user.uuid), 'message': 'User {} updated.'.format(user.username)}, 200
 
         #print(user_dump_schema.dump(new_data).data
 
@@ -123,7 +127,7 @@ class UserNameField(Resource):
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(USER, user_id)
 
         return jsonify(user_username_schema.dump(user).data)
 
@@ -137,7 +141,7 @@ class UserNameField(Resource):
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(USER, user_id)
 
         if args['username']:
             user.username = args['username']
@@ -162,7 +166,7 @@ class UserAddressField(Resource):
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(USER, user_id)
 
         return jsonify(user_address_schema.dump(user).data)
 
@@ -172,7 +176,7 @@ class UserAddressField(Resource):
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(USER, user_id)
 
         try:
             user = load_request_into_object(USER)

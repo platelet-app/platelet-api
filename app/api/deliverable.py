@@ -19,7 +19,7 @@ class Deliverable(Resource):
     @flask_praetorian.auth_required
     def get(self, deliverable_id):
         if not deliverable_id:
-            return not_found("deliverable")
+            return not_found(DELIVERABLE)
 
         note = get_object(DELIVERABLE, deliverable_id)
 
@@ -33,9 +33,21 @@ class Deliverable(Resource):
         try:
             note = get_object(DELIVERABLE, deliverable_id)
         except ObjectNotFoundError:
-            return not_found("deliverable", deliverable_id)
+            return not_found(DELIVERABLE, deliverable_id)
 
         return add_item_to_delete_queue(note)
+
+    @flask_praetorian.roles_required('admin', 'coordinator')
+    def put(self, deliverable_id):
+        try:
+            deliverable = get_object(DELIVERABLE, deliverable_id)
+        except ObjectNotFoundError:
+            return not_found(DELIVERABLE, deliverable_id)
+
+        new_data = load_request_into_object(DELIVERABLE)
+        models.Session.query.filter_by(uuid=deliverable_id).update(new_data)
+        db.session.commit()
+        return {'uuid': str(deliverable.uuid), 'message': 'Deliverable {} updated.'.format(deliverable.uuid)}, 200
 
 
 @ns.route('s')
