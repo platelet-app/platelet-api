@@ -12,7 +12,7 @@ from app import db
 
 VEHICLE = models.Objects.VEHICLE
 
-vehicleSchema = schemas.VehicleSchema()
+vehicle_schema = schemas.VehicleSchema()
 
 
 @ns.route('/<vehicle_id>', endpoint='vehicle_detail')
@@ -25,7 +25,7 @@ class Vehicle(Resource):
         vehicle = get_object(VEHICLE, vehicle_id)
 
         if (vehicle):
-            return jsonify(vehicleSchema.dump(vehicle).data)
+            return jsonify(vehicle_schema.dump(vehicle).data)
         else:
             return not_found(vehicle_id)
 

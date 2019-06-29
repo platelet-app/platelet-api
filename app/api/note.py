@@ -11,7 +11,7 @@ from app import db
 
 NOTE = models.Objects.NOTE
 
-noteSchema = schemas.NoteSchema()
+note_schema = schemas.NoteSchema()
 
 
 @ns.route('/<_id>')
@@ -24,7 +24,7 @@ class Note(Resource):
         note = get_object(NOTE, _id)
 
         if note:
-            return jsonify(noteSchema.dump(note).data)
+            return jsonify(note_schema.dump(note).data)
         else:
             return not_found(_id)
 

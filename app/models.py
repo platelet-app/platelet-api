@@ -26,11 +26,19 @@ class Note(db.Model):
     vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
     deliverable = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
 
+    @property
+    def object_type(self):
+        return Objects.NOTE
+
 class Deliverable(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
     name = db.Column(db.String(64))
     task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
+
+    @property
+    def object_type(self):
+        return Objects.DELIVERABLE
 
 class Address(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
@@ -40,7 +48,6 @@ class Address(db.Model):
     county = db.Column(db.String(64))
     country = db.Column(db.String(64))
     postcode = db.Column(db.String(64))
-
 
 class Task(db.Model):
     uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
@@ -63,6 +70,10 @@ class Task(db.Model):
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
 
+    @property
+    def object_type(self):
+        return Objects.TASK
+
     def __repr__(self):
         return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp), str(self.priority))
 
@@ -77,6 +88,10 @@ class Vehicle(db.Model):
     registration_number = db.Column(db.String(10))
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='vehicle_parent', lazy='dynamic')
+
+    @property
+    def object_type(self):
+        return Objects.VEHICLE
 
     def __repr__(self):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)
@@ -121,6 +136,10 @@ class User(db.Model):
         except Exception:
             return []
 
+    @property
+    def object_type(self):
+        return Objects.USER
+
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
@@ -132,6 +151,10 @@ class Session(db.Model):
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='session_parent', lazy='dynamic')
+
+    @property
+    def object_type(self):
+        return Objects.SESSION
 
     def __repr__(self):
         return '<Session {} {}>'.format(self.uuid, self.timestamp)
@@ -156,3 +179,7 @@ class Location(Address, db.Model):
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
     address = db.relationship("Address", foreign_keys=[address_id])
+
+    @property
+    def object_type(self):
+        return Objects.LOCATION

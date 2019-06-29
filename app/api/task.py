@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restplus import reqparse, Resource
+from flask_restplus import Resource
 import flask_praetorian
 from app import task_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
@@ -10,7 +10,7 @@ from app.exceptions import ObjectNotFoundError
 
 from app import db
 
-taskSchema = schemas.TaskSchema()
+task_schema = schemas.TaskSchema()
 
 TASK = models.Objects.TASK
 
@@ -25,7 +25,7 @@ class Task(Resource):
         task = get_object(TASK, task_id)
 
         if (task):
-            return jsonify(taskSchema.dump(task).data)
+            return jsonify(task_schema.dump(task).data)
         else:
             return not_found(TASK, task_id)
 

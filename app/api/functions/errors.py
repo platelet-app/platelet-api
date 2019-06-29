@@ -43,7 +43,8 @@ def object_type_to_string(type):
         Objects.SESSION: "session",
         Objects.USER: "user",
         Objects.TASK: "task",
-        Objects.VEHICLE: "vehicle"
+        Objects.VEHICLE: "vehicle",
+        None: "no type"
     }
 
     return switch.get(type, lambda: None)

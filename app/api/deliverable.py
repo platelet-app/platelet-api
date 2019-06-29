@@ -11,7 +11,7 @@ from app import db
 
 DELIVERABLE = models.Objects.DELIVERABLE
 
-deliverableSchema = schemas.DeliverableSchema()
+deliverable_schema = schemas.DeliverableSchema()
 
 
 @ns.route('/<deliverable_id>')
@@ -24,7 +24,7 @@ class Deliverable(Resource):
         note = get_object(DELIVERABLE, deliverable_id)
 
         if note:
-            return jsonify(deliverableSchema.dump(note).data)
+            return jsonify(deliverable_schema.dump(note).data)
         else:
             return not_found(deliverable_id)
 
