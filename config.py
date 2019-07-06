@@ -14,3 +14,5 @@ class Config(object):
     JWT_REFRESH_LIFESPAN = {'days': 30}
 
     DEFAULT_DELETE_TIME = 10
+
+    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')

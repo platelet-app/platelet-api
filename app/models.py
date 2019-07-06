@@ -2,6 +2,7 @@ from app import db
 from datetime import datetime
 from enum import IntEnum, auto
 from sqlalchemy_utils import EmailType
+from app.search import add_to_index, remove_from_index, query_index
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -15,6 +16,47 @@ class Objects(IntEnum):
     DELIVERABLE = auto()
     LOCATION = auto()
 
+
+class SearchableMixin(object):
+    @classmethod
+    def search(cls, expression, page, per_page):
+        ids, total = query_index(cls.__tablename__, expression, page, per_page)
+        if total == 0:
+            return cls.query.filter_by(id=0), 0
+        when = []
+        for i in range(len(ids)):
+            when.append((ids[i], i))
+        return cls.query.filter(cls.id.in_(ids)).order_by(
+            db.case(when, value=cls.id)), total
+
+    @classmethod
+    def before_commit(cls, session):
+        session._changes = {
+            'add': list(session.new),
+            'update': list(session.dirty),
+            'delete': list(session.deleted)
+        }
+
+    @classmethod
+    def after_commit(cls, session):
+        for obj in session._changes['add']:
+            if isinstance(obj, SearchableMixin):
+                add_to_index(obj.__tablename__, obj)
+        for obj in session._changes['update']:
+            if isinstance(obj, SearchableMixin):
+                add_to_index(obj.__tablename__, obj)
+        for obj in session._changes['delete']:
+            if isinstance(obj, SearchableMixin):
+                remove_from_index(obj.__tablename__, obj)
+        session._changes = None
+
+    @classmethod
+    def reindex(cls):
+        for obj in cls.query:
+            add_to_index(cls.__tablename__, obj)
+
+db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
+db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,7 +94,7 @@ class Address(db.Model):
     country = db.Column(db.String(64))
     postcode = db.Column(db.String(64))
 
-class Task(db.Model):
+class Task(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -73,8 +115,9 @@ class Task(db.Model):
     session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
-
     assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+
+    __searchable__ = ['pickup_address', 'contact_name', 'contact_number', 'session_id', 'assigned_rider']
 
     @property
     def object_type(self):
@@ -84,7 +127,7 @@ class Task(db.Model):
         return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp), str(self.priority))
 
 
-class Vehicle(db.Model):
+class Vehicle(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -96,6 +139,8 @@ class Vehicle(db.Model):
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='vehicle_parent', lazy='dynamic')
 
+    __searchable__ = ['manufacturer', 'model', 'registration_number']
+
     @property
     def object_type(self):
         return Objects.VEHICLE
@@ -104,7 +149,7 @@ class Vehicle(db.Model):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)
 
 
-class User(db.Model):
+class User(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
@@ -127,7 +172,7 @@ class User(db.Model):
 
     tasks = db.relationship('Task', backref='tasks', lazy='dynamic')
 
-    __searchable__ = ['username']
+    __searchable__ = ['username', 'roles', 'patch', 'name', 'email']
 
     @classmethod
     def lookup(cls, username):
@@ -156,7 +201,7 @@ class User(db.Model):
         return '<User {}>'.format(self.username)
 
 
-class Session(db.Model):
+class Session(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -164,6 +209,8 @@ class Session(db.Model):
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='session_parent', lazy='dynamic')
+
+    __searchable__ = ['user_id']
 
     @property
     def object_type(self):
@@ -173,7 +220,7 @@ class Session(db.Model):
         return '<Session {} {}>'.format(self.uuid, self.timestamp)
     
 
-class DeleteFlags(db.Model):
+class DeleteFlags(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     object_uuid = db.Column(UUID(as_uuid=True))
@@ -183,8 +230,9 @@ class DeleteFlags(db.Model):
     object_type = db.Column(db.Integer)
     active = db.Column(db.Boolean, default=True)
 
+    __searchable__ = ['object_uuid', 'object_type', 'active']
 
-class Location(Address, db.Model):
+class Location(SearchableMixin, Address, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -194,6 +242,8 @@ class Location(Address, db.Model):
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
+
+    __searchable__ = ['name', 'contact', 'phone_number', 'address']
 
     @property
     def object_type(self):
