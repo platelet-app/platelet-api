@@ -21,11 +21,11 @@ class Note(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
     subject = db.Column(db.String(200))
-    task = db.Column(db.Integer, db.ForeignKey('task.id'))
-    user = db.Column(db.Integer, db.ForeignKey('user.id'))
-    session = db.Column(db.Integer, db.ForeignKey('session.id'))
-    vehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
-    deliverable = db.Column(db.Integer, db.ForeignKey('deliverable.id'))
+    task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    user = db.Column(UUID(as_uuid=True),  db.ForeignKey('user.uuid'))
+    session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
+    deliverable = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
 
     @property
     def object_type(self):
@@ -70,11 +70,11 @@ class Task(db.Model):
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
-    session_id = db.Column(db.Integer, db.ForeignKey('session.id'))
+    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
 
-    assigned_rider = db.Column(db.Integer, db.ForeignKey('user.id'))
+    assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
 
     @property
     def object_type(self):
@@ -117,7 +117,7 @@ class User(db.Model):
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
-    assigned_vehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
+    assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
     patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
     flagged_for_deletion = db.Column(db.Boolean, default=False)

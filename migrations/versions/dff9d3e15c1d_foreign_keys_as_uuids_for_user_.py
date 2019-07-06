@@ -1,8 +1,8 @@
-"""ints for keys and uuids for lookups
+"""foreign keys as uuids for user specified foreign keys
 
-Revision ID: b79b198bf4b9
+Revision ID: dff9d3e15c1d
 Revises: 
-Create Date: 2019-07-06 15:44:20.768990
+Create Date: 2019-07-06 20:20:44.770575
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 import sqlalchemy_utils
 
 # revision identifiers, used by Alembic.
-revision = 'b79b198bf4b9'
+revision = 'dff9d3e15c1d'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -84,14 +84,14 @@ def upgrade():
     sa.Column('password', sa.String(), nullable=True),
     sa.Column('name', sa.String(length=64), nullable=True),
     sa.Column('dob', sa.Date(), nullable=True),
-    sa.Column('assigned_vehicle', sa.Integer(), nullable=True),
+    sa.Column('assigned_vehicle', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('patch', sa.String(length=64), nullable=True),
     sa.Column('status', sa.String(length=64), nullable=True),
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
     sa.Column('roles', sa.String(), nullable=True),
     sa.Column('is_active', sa.Boolean(), server_default='true', nullable=True),
     sa.ForeignKeyConstraint(['address_id'], ['address.id'], ),
-    sa.ForeignKeyConstraint(['assigned_vehicle'], ['vehicle.id'], ),
+    sa.ForeignKeyConstraint(['assigned_vehicle'], ['vehicle.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username'),
     sa.UniqueConstraint('uuid')
@@ -121,10 +121,12 @@ def upgrade():
     sa.Column('final_duration', sa.Time(), nullable=True),
     sa.Column('miles', sa.Integer(), nullable=True),
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
-    sa.Column('session_id', sa.Integer(), nullable=True),
+    sa.Column('session_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('assigned_rider', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.ForeignKeyConstraint(['assigned_rider'], ['user.uuid'], ),
     sa.ForeignKeyConstraint(['dropoff_address_id'], ['address.id'], ),
     sa.ForeignKeyConstraint(['pickup_address_id'], ['address.id'], ),
-    sa.ForeignKeyConstraint(['session_id'], ['session.id'], ),
+    sa.ForeignKeyConstraint(['session_id'], ['session.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
     )
@@ -143,16 +145,16 @@ def upgrade():
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('body', sa.String(length=10000), nullable=True),
     sa.Column('subject', sa.String(length=200), nullable=True),
-    sa.Column('task', sa.Integer(), nullable=True),
-    sa.Column('user', sa.Integer(), nullable=True),
-    sa.Column('session', sa.Integer(), nullable=True),
-    sa.Column('vehicle', sa.Integer(), nullable=True),
-    sa.Column('deliverable', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['deliverable'], ['deliverable.id'], ),
-    sa.ForeignKeyConstraint(['session'], ['session.id'], ),
-    sa.ForeignKeyConstraint(['task'], ['task.id'], ),
-    sa.ForeignKeyConstraint(['user'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['vehicle'], ['vehicle.id'], ),
+    sa.Column('task', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('user', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('session', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('vehicle', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('deliverable', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.ForeignKeyConstraint(['deliverable'], ['deliverable.uuid'], ),
+    sa.ForeignKeyConstraint(['session'], ['session.uuid'], ),
+    sa.ForeignKeyConstraint(['task'], ['task.uuid'], ),
+    sa.ForeignKeyConstraint(['user'], ['user.uuid'], ),
+    sa.ForeignKeyConstraint(['vehicle'], ['vehicle.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
     )
