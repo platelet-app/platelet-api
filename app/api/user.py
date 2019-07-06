@@ -12,36 +12,38 @@ from app import guard
 
 USER = models.Objects.USER
 
-user_dump_schema = schemas.UserSchema(exclude=("password",))
+user_dump_schema = schemas.UserSchema(exclude=("password",
+                                               "tasks"))
 user_schema = schemas.UserSchema()
-users_schema = schemas.UserSchema(many=True, exclude=('address',
-                                                      'dob',
-                                                      'email',
-                                                      'notes',
-                                                      'password',
-                                                      'name',
-                                                      'roles',
-                                                      'patch'))
+users_schema = schemas.UserSchema(many=True, exclude=("address",
+                                                      "dob",
+                                                      "email",
+                                                      "notes",
+                                                      "password",
+                                                      "name",
+                                                      "roles",
+                                                      "patch",
+                                                      "tasks"))
 address_schema = schemas.AddressSchema()
-user_username_schema = schemas.UserSchema(exclude=('address',
-                                                   'dob',
-                                                   'email',
-                                                   'notes',
-                                                   'password',
-                                                   'name',
-                                                   'roles',
-                                                   'patch',
-                                                   'links',
+user_username_schema = schemas.UserSchema(exclude=("address",
+                                                   "dob",
+                                                   "email",
+                                                   "notes",
+                                                   "password",
+                                                   "name",
+                                                   "roles",
+                                                   "patch",
+                                                   "links",
                                                    ))
-user_address_schema = schemas.UserSchema(exclude=('username',
-                                                   'dob',
-                                                   'email',
-                                                   'notes',
-                                                   'password',
-                                                   'name',
-                                                   'roles',
-                                                   'patch',
-                                                   'links',
+user_address_schema = schemas.UserSchema(exclude=("username",
+                                                   "dob",
+                                                   "email",
+                                                   "notes",
+                                                   "password",
+                                                   "name",
+                                                   "roles",
+                                                   "patch",
+                                                   "links",
                                                    ))
 
 

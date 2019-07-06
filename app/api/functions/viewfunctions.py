@@ -44,6 +44,8 @@ def load_request_into_object(model_enum):
     if model_enum is models.Objects.SESSION:
         return session_schema.load(request_json).data
     if model_enum is models.Objects.TASK:
+        user = models.User.query.filter_by(uuid=request_json['assigned_rider'])
+        request_json['assigned_rider'] = user.id
         return task_schema.load(request_json).data
     if model_enum is models.Objects.VEHICLE:
         return vehicle_schema.load(request_json).data

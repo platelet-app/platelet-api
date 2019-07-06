@@ -74,6 +74,8 @@ class Task(db.Model):
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
 
+    assigned_rider = db.Column(db.Integer, db.ForeignKey('user.id'))
+
     @property
     def object_type(self):
         return Objects.TASK
@@ -122,6 +124,9 @@ class User(db.Model):
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
     notes = db.relationship('Note', backref='user_parent', lazy='dynamic')
+
+    tasks = db.relationship('Task', backref='tasks', lazy='dynamic')
+
     __searchable__ = ['username']
 
     @classmethod
