@@ -13,7 +13,6 @@ import flask_cors
 import _thread
 import time
 from flask_buzz import FlaskBuzz
-from elasticsearch import Elasticsearch
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
 logger = logging.getLogger()
@@ -26,9 +25,6 @@ logger.setLevel(logging.DEBUG)
 
 app = Flask(__name__)
 app.config.from_object(Config)
-
-app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
-        if app.config['ELASTICSEARCH_URL'] else None
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
