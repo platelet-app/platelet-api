@@ -17,23 +17,25 @@ class Objects(IntEnum):
 
 
 class Note(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
     subject = db.Column(db.String(200))
-    task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
-    user = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
-    vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
-    deliverable = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
+    task = db.Column(db.Integer, db.ForeignKey('task.id'))
+    user = db.Column(db.Integer, db.ForeignKey('user.id'))
+    session = db.Column(db.Integer, db.ForeignKey('session.id'))
+    vehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
+    deliverable = db.Column(db.Integer, db.ForeignKey('deliverable.id'))
 
     @property
     def object_type(self):
         return Objects.NOTE
 
 class Deliverable(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     name = db.Column(db.String(64))
-    task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    task = db.Column(db.Integer, db.ForeignKey('task.id'))
     notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
 
     @property
@@ -41,7 +43,8 @@ class Deliverable(db.Model):
         return Objects.DELIVERABLE
 
 class Address(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     line1 = db.Column(db.String(64))
     line2 = db.Column(db.String(64))
     town = db.Column(db.String(64))
@@ -50,11 +53,12 @@ class Address(db.Model):
     postcode = db.Column(db.String(64))
 
 class Task(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 
-    pickup_address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
-    dropoff_address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
+    pickup_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
+    dropoff_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
 
     pickup_address = db.relationship("Address", foreign_keys=[pickup_address_id])
     dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
@@ -66,7 +70,7 @@ class Task(db.Model):
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
-    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    session_id = db.Column(db.Integer, db.ForeignKey('session.id'))
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
 
@@ -79,7 +83,8 @@ class Task(db.Model):
 
 
 class Vehicle(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     manufacturer = db.Column(db.String(64))
     model = db.Column(db.String(64))
@@ -98,8 +103,9 @@ class Vehicle(db.Model):
 
 
 class User(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
-    address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
 
     address = db.relationship("Address", foreign_keys=[address_id])
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
@@ -109,25 +115,26 @@ class User(db.Model):
     name = db.Column(db.String(64))
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
-    assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
+    assigned_vehicle = db.Column(db.Integer, db.ForeignKey('vehicle.id'))
     patch = db.Column(db.String(64))
     status = db.Column(db.String(64))
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
     notes = db.relationship('Note', backref='user_parent', lazy='dynamic')
+    __searchable__ = ['username']
 
     @classmethod
     def lookup(cls, username):
         return cls.query.filter_by(username=username).one_or_none()
 
     @classmethod
-    def identify(cls, uuid):
-        return cls.query.get(uuid)
+    def identify(cls, _id):
+        return cls.query.get(_id)
 
     @property
     def identity(self):
-        return self.uuid
+        return self.id
 
     @property
     def rolenames(self):
@@ -145,9 +152,10 @@ class User(db.Model):
 
 
 class Session(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='session_parent', lazy='dynamic')
@@ -161,7 +169,8 @@ class Session(db.Model):
     
 
 class DeleteFlags(db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     object_uuid = db.Column(UUID(as_uuid=True))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     time_to_delete = db.Column(db.Integer)
@@ -171,13 +180,14 @@ class DeleteFlags(db.Model):
 
 
 class Location(Address, db.Model):
-    uuid = db.Column(UUID(as_uuid=True), primary_key=True, unique=True, nullable=False, default=uuid.uuid4)
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64), unique=True)
     contact = db.Column(db.String(64))
     phone_number = db.Column(db.Integer())
     flagged_for_deletion = db.Column(db.Boolean, default=False)
-    address_id = db.Column(UUID(as_uuid=True), db.ForeignKey('address.uuid'))
+    address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
 
     @property

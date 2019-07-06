@@ -25,10 +25,12 @@ def user_id_match_or_admin(func):
     def wrapper(self, user_id):
         if 'admin' in utilities.current_rolenames():
             return func(self, user_id)
-        if utilities.current_user_id() == user_id:
+        user_int_id = models.User.query.filter_by(uuid=user_id).first().id
+        if utilities.current_user_id() == user_int_id:
             return func(self, user_id)
         else:
-            return forbidden_error("Object not owned by user: user id:".format(user_id))
+            print(user_id)
+            return forbidden_error("Object not owned by user: user id: {}".format(user_id))
     return wrapper
 
 

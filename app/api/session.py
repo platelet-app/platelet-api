@@ -7,7 +7,7 @@ from app import session_ns as ns
 from app.exceptions import InvalidRangeError, ObjectNotFoundError, SchemaValidationError
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.viewfunctions import get_range
-from app.api.functions.userfunctions import get_user_object, is_user_present
+from app.api.functions.userfunctions import get_user_object, is_user_present, get_user_object_by_int_id
 from app.api.functions.sessionfunctions import session_id_match_or_admin
 from app.api.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error, schema_validation_error
 from app.utilities import get_object
@@ -101,10 +101,12 @@ class Sessions(Resource):
                 return forbidden_error("cannot create a session for a non-existent user")
             session.user_id = user
         else:
-            session.user_id = uuid.UUID(utilities.current_user_id())
+            session.user_id = utilities.current_user_id()
 
         db.session.add(session)
         db.session.commit()
 
-        return {'uuid': str(session.uuid), 'user_uuid': str(session.user_id), 'message': 'Session {} created'.format(str(session.uuid))}, 201
+        user_obj = get_user_object_by_int_id(session.user_id)
+
+        return {'uuid': str(session.uuid), 'user_uuid': str(user_obj.uuid), 'message': 'Session {} created'.format(str(session.uuid))}, 201
 
