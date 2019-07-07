@@ -12,7 +12,7 @@ from app import db
 
 LOCATION = models.Objects.LOCATION
 
-locationSchema = schemas.LocationSchema()
+location_schema = schemas.LocationSchema()
 
 
 @ns.route('/<location_id>', endpoint='location_detail')
@@ -25,7 +25,7 @@ class Location(Resource):
         location = get_object(LOCATION, location_id)
 
         if (location):
-            return jsonify(locationSchema.dump(location).data)
+            return jsonify(location_schema.dump(location).data)
         else:
             return not_found(location_id)
 
