@@ -51,6 +51,7 @@ note_ns = api.namespace('api/{}/note'.format(api_version), description='Note ope
 deliverable_ns = api.namespace('api/{}/deliverable'.format(api_version), description='Deliverable operations')
 location_ns = api.namespace('api/{}/location'.format(api_version), description='Saved location operations')
 any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Lookup for any object')
+search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch functions')
 
 ## flask_restplus stuff
 
@@ -69,7 +70,7 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup
+from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup, search
 
 
 guard.init_app(app, models.User)

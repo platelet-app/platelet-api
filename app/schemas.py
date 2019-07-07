@@ -162,3 +162,7 @@ class LocationSchema(ma.Schema):
     @post_load
     def make_location(self, data):
         return models.Location(**data)
+
+class SearchSchema(ma.Schema):
+    class Meta:
+        fields = ('query', 'type', 'page')
