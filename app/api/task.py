@@ -11,6 +11,7 @@ from app.exceptions import ObjectNotFoundError, InvalidRangeError
 from app import db
 
 task_schema = schemas.TaskSchema()
+tasks_schema = schemas.TaskSchema(many=True, exclude=('contact_name', 'contact_number', 'deliverables', 'dropoff_address', 'notes', 'pickup_address'))
 
 TASK = models.Objects.TASK
 
@@ -68,7 +69,7 @@ class Tasks(Resource):
         except Exception as e:
             return internal_error(e)
 
-        return task_schema.jsonify(items)
+        return tasks_schema.jsonify(items)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):

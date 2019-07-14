@@ -159,7 +159,9 @@ Retrieves a list of all users.
 
 ####  Payload:
 
-{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles}
+{ username, { address: { country, county, line1, line2, postcode, town },
+ password, name, email, dob, patch, roles }
+
 
 #### Returns:
 
@@ -191,13 +193,12 @@ status code 200 on success
 
 Retrieves details about a user.
 
-<start\>-<end\> and <order\> are optional.
-
 *PUT*
 
 ####  Payload:
 
-{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles }
+{ username, { address: { country, county, line1, line2, postcode, town },
+ password, name, email, dob, patch, roles }
 
 #### Returns:
 
@@ -215,6 +216,7 @@ Edits an existing user.
 *GET*
 
 #### Header:
+
 Authorization: Bearer <token\>
 
 #### Payload:
@@ -231,13 +233,17 @@ status code 200 on success
 
 Retrieves a list of all tasks for a specific session.
 
-### /api/v0.1/users
+### /api/v0.1/tasks
 
 *POST*
 
 ####  Payload:
 
-{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles}
+{ pickup_address: { country, county, line1, line2, postcode, town },
+ dropoff_address: { country, county, line1, line2, postcode, town },
+ patch, contact_name, contact_number, priority, session_id, timestamp,
+ assigned_rider }
+
 
 #### Returns:
 
@@ -245,9 +251,9 @@ Status code 200 on success.
 
 #### Description:
 
-Add a new user.
+Add a new task.
 
-### /api/v0.1/user/<user_id>
+### /api/v0.1/task/<task_id>
 
 *GET*
 
@@ -263,19 +269,23 @@ None
 
 status code 200 on success
 
-{ address: { country, county, line1, line2, postcode, town } dob, email, links: { collection, self }, name, [ notes: { body, subject } ], patch, roles, username, uuid }
+{ address: { country, county, line1, line2, postcode, town }
+ dob, email, links: { collection, self },
+ name, [ notes: { body, subject } ], patch,
+ roles, username, uuid }
 
 #### Description:
 
-Retrieves details about a user.
-
-<start\>-<end\> and <order\> are optional.
+Retrieves details about a task.
 
 *PUT*
 
 ####  Payload:
 
-{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles }
+{ pickup_address: { country, county, line1, line2, postcode, town },
+ dropoff_address: { country, county, line1, line2, postcode, town },
+ patch, contact_name, contact_number, priority, session_id, timestamp,
+ assigned_rider }
 
 #### Returns:
 
@@ -283,4 +293,4 @@ Status code 200 on success.
 
 #### Description:
 
-Edits an existing user.
+Edits an existing task.
