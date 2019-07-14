@@ -18,8 +18,6 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 
-#cp api_jwt.py venv/lib/python3.*/site-packages/jwt
-
 flask db upgrade
 
 python setup.py $pswd
