@@ -41,6 +41,7 @@ class AddressSchema(ma.Schema):
     def make_address(self, data):
         return models.Address(**data)
 
+
 class TaskSchema(ma.Schema):
     class Meta:
         model = models.Task
@@ -134,8 +135,8 @@ class SessionSchema(ma.Schema):
         fields = ('uuid', 'user_id',
                   'timestamp', 'tasks',
                   'notes')
-    tasks = fields.fields.Nested(TaskSchema, many=True, exclude=('notes', 'deliverables'))
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True, exclude=('notes', 'deliverables', 'pickup_address', 'dropoff_address'))
+    notes = fields.fields.Nested(NoteSchema, dump_only=True, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('session_detail', session_id='<uuid>'),

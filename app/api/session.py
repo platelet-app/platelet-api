@@ -1,22 +1,21 @@
 from flask import jsonify, request
 from app import schemas, db, models, utilities
-from flask_restplus import reqparse, Resource
+from flask_restplus import Resource
 import flask_praetorian
 from flask_praetorian import utilities
 from app import session_ns as ns
 from app.exceptions import InvalidRangeError, ObjectNotFoundError, SchemaValidationError
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.viewfunctions import get_range
 from app.api.functions.userfunctions import get_user_object, is_user_present, get_user_object_by_int_id
 from app.api.functions.sessionfunctions import session_id_match_or_admin
 from app.api.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error, schema_validation_error
-from app.utilities import get_object
+from app.utilities import get_object, get_range
 from app.utilities import add_item_to_delete_queue
 
 SESSION = models.Objects.SESSION
 
 session_schema = schemas.SessionSchema()
-sessions_schema = schemas.SessionSchema(many=True)
+sessions_schema = schemas.SessionSchema(many=True, exclude=('tasks',))
 
 
 @ns.route('/<session_id>',
@@ -67,7 +66,7 @@ class Sessions(Resource):
         try:
             user = get_user_object(user_id)
         except ObjectNotFoundError:
-            return not_found("user", user_id)
+            return not_found(models.Objects.USER, user_id)
 
         try:
             items = get_range(user.sessions.all(), _range, order)

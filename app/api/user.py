@@ -6,9 +6,8 @@ from flask_restplus import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
 from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, internal_error
-from app.api.functions.viewfunctions import get_range
 from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError
-from app.utilities import add_item_to_delete_queue, get_object, get_all_objects
+from app.utilities import add_item_to_delete_queue, get_object, get_all_objects, get_range
 from app import guard
 
 USER = models.Objects.USER

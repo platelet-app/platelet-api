@@ -7,7 +7,7 @@ from app.api.functions.locationfunctions import get_location_object, get_all_loc
 from app.api.functions.notefunctions import get_note_object
 from app.api.functions.deliverablefunctions import get_deliverable_object
 from app.api.functions.errors import already_flagged_for_deletion_error
-from app.exceptions import ObjectNotFoundError
+from app.exceptions import ObjectNotFoundError, InvalidRangeError
 
 
 def add_item_to_delete_queue(item):
@@ -97,3 +97,32 @@ def get_all_objects(type):
         return obj
     else:
         raise ObjectNotFoundError("There is no object of this type")
+
+
+def get_range(items, _range="0-100", order="descending"):
+
+    start = 0
+    end = 100
+
+    if _range:
+        between = _range.split('-')
+
+        if between[0].isdigit() and between[1].isdigit():
+            start = int(between[0])
+            end = int(between[1])
+        else:
+            raise InvalidRangeError("invalid range")
+
+    if start > end:
+        raise InvalidRangeError("invalid range")
+
+    if end - start > 1000:
+        raise InvalidRangeError("range too large")
+
+    if order == "descending":
+        items.reverse()
+
+    result = [i for i in items if not i.flagged_for_deletion]
+
+
+    return result[start:end]

@@ -153,6 +153,8 @@ Retrieves a list of all users.
 
 <start\>-<end\> and <order\> are optional.
 
+### /api/v0.1/users
+
 *POST*
 
 ####  Payload:
@@ -195,7 +197,85 @@ Retrieves details about a user.
 
 ####  Payload:
 
+{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles }
+
+#### Returns:
+
+Status code 200 on success.
+
+#### Description:
+
+Edits an existing user.
+
+
+## Task
+
+### /api/v0.1/tasks/<session_id\>
+
+*GET*
+
+#### Header:
+Authorization: Bearer <token\>
+
+#### Payload:
+
+None
+
+#### Returns:
+
+status code 200 on success
+
+[ { id, username, links { collection, self } } ]
+
+#### Description:
+
+Retrieves a list of all tasks for a specific session.
+
+### /api/v0.1/users
+
+*POST*
+
+####  Payload:
+
 { username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles}
+
+#### Returns:
+
+Status code 200 on success.
+
+#### Description:
+
+Add a new user.
+
+### /api/v0.1/user/<user_id>
+
+*GET*
+
+#### Header:
+
+Authorization: Bearer <token\>
+
+#### Payload:
+
+None
+
+#### Returns:
+
+status code 200 on success
+
+{ address: { country, county, line1, line2, postcode, town } dob, email, links: { collection, self }, name, [ notes: { body, subject } ], patch, roles, username, uuid }
+
+#### Description:
+
+Retrieves details about a user.
+
+<start\>-<end\> and <order\> are optional.
+
+*PUT*
+
+####  Payload:
+
+{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles }
 
 #### Returns:
 

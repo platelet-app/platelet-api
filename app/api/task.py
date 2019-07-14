@@ -4,9 +4,9 @@ from flask_restplus import Resource
 import flask_praetorian
 from app import task_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import internal_error, not_found
-from app.utilities import add_item_to_delete_queue, get_object
-from app.exceptions import ObjectNotFoundError
+from app.api.functions.errors import internal_error, not_found, forbidden_error
+from app.utilities import add_item_to_delete_queue, get_object, get_range
+from app.exceptions import ObjectNotFoundError, InvalidRangeError
 
 from app import db
 
@@ -50,8 +50,26 @@ class Task(Resource):
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
 
-@ns.route('s', endpoint="tasks_list")
+@ns.route('s',
+          's/<session_id>',
+          endpoint="tasks_list")
 class Tasks(Resource):
+    @flask_praetorian.auth_required
+    def get(self, session_id, _range=None, order="ascending"):
+        try:
+            session = get_object(models.Objects.SESSION, session_id)
+        except ObjectNotFoundError:
+            return not_found("session", session_id)
+
+        try:
+            items = get_range(session.tasks.all(), _range, order)
+        except InvalidRangeError as e:
+            return forbidden_error(e)
+        except Exception as e:
+            return internal_error(e)
+
+        return task_schema.jsonify(items)
+
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
         task = None
@@ -60,9 +78,9 @@ class Tasks(Resource):
         except Exception as e:
             internal_error(e)
 
+        print(task.session_id)
+
         db.session.add(task)
         db.session.commit()
 
         return {'uuid': str(task.uuid), 'message': 'Task {} created'.format(task.uuid)}, 201
-
-

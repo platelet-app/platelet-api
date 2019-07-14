@@ -55,34 +55,3 @@ def load_request_into_object(model_enum):
         return location_schema.load(request_json).data
 
 
-def get_all_users():
-    return models.User.query.all()
-
-
-def get_range(items, _range="0-100", order="descending"):
-
-    start = 0
-    end = 100
-
-    if _range:
-        between = _range.split('-')
-
-        if between[0].isdigit() and between[1].isdigit():
-            start = int(between[0])
-            end = int(between[1])
-        else:
-            raise InvalidRangeError("invalid range")
-
-    if start > end:
-        raise InvalidRangeError("invalid range")
-
-    if end - start > 1000:
-        raise InvalidRangeError("range too large")
-
-    if order == "descending":
-        items.reverse()
-
-    result = [i for i in items if not i.flagged_for_deletion]
-
-
-    return result[start:end]
