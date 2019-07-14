@@ -16,10 +16,12 @@ username, password
 
 ####  Returns:
 status code 200 on success
-access_token
+
+{ access_token }
 
 status code 401 on failure
-error, message, status_code
+
+{ error, message, status_code }
 
 ## Sessions
 
@@ -32,20 +34,26 @@ Authorization: Bearer <token\>
 Content-Type: application/json (optional)
 
 ####  Payload:
-user (as integer id) (optional)
+{ user (optional), timestamp }
 
 ####  Returns:
 status code 200 on success
-id, user_id, message
+
+{ uuid, user_uuid, message }
 
 status code 403 on failure
-message
+
+{ message }
 
 ####  Description:
 
-Creates a new session for the currently logged in user. If the user is an admin, they can specify creating a session for another user with user: id in the json payload.
+Creates a new session for the currently logged in user. If the user is an admin, they can specify creating a session for another user with user: uuid in the json payload.
 
 *GET*
+
+None
+
+*PUT*
 
 None
 
@@ -62,8 +70,10 @@ None
 
 ####  Returns:
 status code 200 on success
+
 sessions
--id, timestamp, username
+
+-uuid, timestamp, username
 
 ####  Description:
 
@@ -84,8 +94,10 @@ Authorization: Bearer <token\>
 None
 
 ####  Returns:
+
 status code 200 on success
-id, timestamp, user_id
+
+{ id, timestamp, user_id }
 
 ####  Description:
 
@@ -104,15 +116,22 @@ None
 
 #### Returns:
 status code 202 on success
-id, message
+
+{id, message}
 
 #### Description:
 
 Puts session <session_id\> in a queue for deletion.
 
+*PUT*
+
+#### Payload:
+
+user (as uuid), timestamp
+
 ## User
 
-### /api/v0.1/users
+### /api/v0.1/users/<start\>-<end\>/<order\>
 
 *GET*
 
@@ -125,9 +144,63 @@ None
 
 #### Returns:
 status code 200 on success
-users
--id, username
+
+[{id, username, links {collection, self}}]
 
 #### Description:
 
-Puts session <session_id\> in a queue for deletion.
+Retrieves a list of all users.
+
+<start\>-<end\> and <order\> are optional.
+
+*POST*
+
+####  Payload:
+
+{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles}
+
+#### Returns:
+
+Status code 200 on success.
+
+#### Description:
+
+Add a new user.
+
+### /api/v0.1/user/<user_id>
+
+*GET*
+
+#### Header:
+
+Authorization: Bearer <token\>
+
+#### Payload:
+
+None
+
+#### Returns:
+
+status code 200 on success
+
+{ address: { country, county, line1, line2, postcode, town } dob, email, links: { collection, self }, name, [ notes: { body, subject } ], patch, roles, username, uuid }
+
+#### Description:
+
+Retrieves details about a user.
+
+<start\>-<end\> and <order\> are optional.
+
+*PUT*
+
+####  Payload:
+
+{ username, { address: { country, county, line1, line2, postcode, town }, password, name, email, dob, patch, roles}
+
+#### Returns:
+
+Status code 200 on success.
+
+#### Description:
+
+Edits an existing user.

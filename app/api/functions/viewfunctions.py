@@ -59,10 +59,10 @@ def get_all_users():
     return models.User.query.all()
 
 
-def get_range(items, _range="0-50", order="descending"):
+def get_range(items, _range="0-100", order="descending"):
 
     start = 0
-    end = 50
+    end = 100
 
     if _range:
         between = _range.split('-')
@@ -82,8 +82,7 @@ def get_range(items, _range="0-50", order="descending"):
     if order == "descending":
         items.reverse()
 
-    for i in items[:]:
-        if i.flagged_for_deletion:
-            items.remove(i)
+    result = [i for i in items if not i.flagged_for_deletion]
 
-    return items[start:end]
+
+    return result[start:end]

@@ -5,8 +5,9 @@ from app import user_ns as ns
 from flask_restplus import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
-from app.api.functions.errors import not_found, schema_validation_error, not_unique_error
-from app.exceptions import ObjectNotFoundError, SchemaValidationError
+from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, internal_error
+from app.api.functions.viewfunctions import get_range
+from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError
 from app.utilities import add_item_to_delete_queue, get_object, get_all_objects
 from app import guard
 
@@ -96,14 +97,20 @@ class User(Resource):
 
 @ns.route(
     's',
+    's/<_range>',
+    's/<_range>/<order>',
     endpoint='users')
 class Users(Resource):
     @flask_praetorian.roles_accepted('admin')
-    def get(self):
-        #TODO: Any need to restrict this to a range?
-        users = get_all_objects(USER)
+    def get(self, _range=None, order="ascending"):
+        try:
+            items = get_range(get_all_objects(USER), _range, order)
+        except InvalidRangeError as e:
+            return forbidden_error(e)
+        except Exception as e:
+            return internal_error(e)
 
-        return jsonify(users_schema.dump(users).data)
+        return jsonify(users_schema.dump(items).data)
 
     def post(self):
         try:

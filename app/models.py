@@ -117,7 +117,7 @@ class Task(SearchableMixin, db.Model):
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
     assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
 
-    __searchable__ = ['pickup_address', 'contact_name', 'contact_number', 'session_id', 'assigned_rider']
+    __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
 
     @property
     def object_type(self):
@@ -131,6 +131,7 @@ class Vehicle(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    name = db.Column(db.String(64), unique=True)
     manufacturer = db.Column(db.String(64))
     model = db.Column(db.String(64))
     date_of_manufacture = db.Column(db.Date)
@@ -139,7 +140,7 @@ class Vehicle(SearchableMixin, db.Model):
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='vehicle_parent', lazy='dynamic')
 
-    __searchable__ = ['manufacturer', 'model', 'registration_number']
+    __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
 
     @property
     def object_type(self):
@@ -205,12 +206,12 @@ class Session(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='session_parent', lazy='dynamic')
 
-    __searchable__ = ['user_id']
+    __searchable__ = ['timestamp']
 
     @property
     def object_type(self):

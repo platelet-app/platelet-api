@@ -1,8 +1,8 @@
-"""foreign keys as uuids for user specified foreign keys
+"""session foreign key now uuid
 
-Revision ID: dff9d3e15c1d
+Revision ID: c82263779142
 Revises: 
-Create Date: 2019-07-06 20:20:44.770575
+Create Date: 2019-07-13 22:44:26.679725
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 import sqlalchemy_utils
 
 # revision identifiers, used by Alembic.
-revision = 'dff9d3e15c1d'
+revision = 'c82263779142'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -101,9 +101,9 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
     )
