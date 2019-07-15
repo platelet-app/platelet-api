@@ -11,6 +11,7 @@ fi
 
 sudo -u postgres createuser "$(whoami)"
 sudo -u postgres createdb -O "$(whoami)" bloodbike_dev
+sudo -u postgres createdb -O "$(whoami)" bloodbike_test
 
 python3 -m venv venv
 

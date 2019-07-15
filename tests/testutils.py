@@ -11,6 +11,8 @@ jwtKey = ""
 authHeader = {}
 authJsonHeader = {}
 
+def print_response(r):
+    print("Status Code: {}, Payload: {}".format(r.status_code,json.loads(r.data)))
 
 def is_json(js):
     try:

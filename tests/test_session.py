@@ -1,5 +1,5 @@
 import json
-from tests.testutils import is_json, session_url, login_as, find_user, is_valid_uuid
+from tests.testutils import is_json, session_url, login_as, find_user, is_valid_uuid, print_response
 import tests.testutils
 from app import models
 
@@ -17,10 +17,11 @@ def create_session(client, other_user_id=None):
 
 def create_session_success(client, other_user_id=None):
     r = create_session(client, other_user_id)
+    print_response(r)
     assert(r.status_code == 201)
-    assert(is_json(r.data))
-
     data = json.loads(r.data)
+
+
     assert(is_valid_uuid(data['user_uuid']))
     assert(is_valid_uuid(data['uuid']))
     return data['uuid']
@@ -28,6 +29,7 @@ def create_session_success(client, other_user_id=None):
 
 def create_session_fail(client, other_user_id=None):
     r = create_session(client, other_user_id)
+    print_response(r)
     assert(r.status_code == 403)
 
 
@@ -37,8 +39,8 @@ def delete_session(client, session_id):
 
 def delete_session_success(client, session_id):
     r = delete_session(client, session_id)
+    print_response(r)
     assert(r.status_code == 202)
-    assert(is_json(r.data))
 
     session = models.Session.query.filter_by(uuid=session_id).first()
     assert session.flagged_for_deletion
@@ -50,6 +52,7 @@ def delete_session_success(client, session_id):
 
 def delete_session_fail(client, session_id):
     r = delete_session(client, session_id)
+    print_response(r)
     assert(r.status_code == 403)
 
 
@@ -67,7 +70,7 @@ def test_coordinator_create_session(client):
     coordinator_session_id = create_session_success(client)
 
 
-def test_rider_create_session(client):  # fails because of https://trello.com/c/pm9xGcvK/15-unauthorized-access-causes-server-error
+def test_rider_create_session(client):
     login_as(client, "rider")
     create_session_fail(client)
 
@@ -82,12 +85,12 @@ def test_coordinator_create_session_other_user(client):
     create_session_fail(client, find_user("admin"))
 
 
-def test_rider_create_session_other_user(client):  # fails because of https://trello.com/c/pm9xGcvK/15-unauthorized-access-causes-server-error
+def test_rider_create_session_other_user(client):
     login_as(client, "rider")
     create_session_fail(client, find_user("coordinator"))
 
 
-def test_rider_delete_session_other_user(client):  # fails because of https://trello.com/c/pm9xGcvK/15-unauthorized-access-causes-server-error
+def test_rider_delete_session_other_user(client):
     login_as(client, "rider")
     delete_session_fail(client, coordinator_session_id)
 

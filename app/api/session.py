@@ -79,26 +79,19 @@ class Sessions(Resource):
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
-        user = None
-
         if request.get_json():
             try:
                 session = load_request_into_object(SESSION)
+                if session.user_id != utilities.current_user_id():
+                    if 'admin' not in utilities.current_rolenames():
+                        return forbidden_error("only admins can create sessions for other users")
+                    if not is_user_present(session.user_id):
+                        return forbidden_error("cannot create a session for a non-existent user")
             except SchemaValidationError as e:
                 return schema_validation_error(str(e))
 
-            user = session.user_id
-
         else:
             session = models.Session()
-
-        if user:
-            if 'admin' not in utilities.current_rolenames():
-                return unauthorised_error("only admins can create sessions for other users")
-            if not is_user_present(user):
-                return forbidden_error("cannot create a session for a non-existent user")
-            session.user_id = user
-        else:
             session.user_id = get_user_object_by_int_id(utilities.current_user_id()).uuid
 
         db.session.add(session)
