@@ -9,11 +9,13 @@ Install postgresql and elasticsearch.
 Edit the line:
 
 `# IPv4 local connections:`
+
 `host    all             all             127.0.0.1/32            md5`
 
 to:
 
 `# IPv4 local connections:`
+
 `host    all             all             127.0.0.1/32            trust`
 
 ##### This will allow unauthenticated connections on localhost
