@@ -28,7 +28,7 @@ host    all             all             127.0.0.1/32            trust
 ```
 **This will allow unauthenticated connections on localhost**
 
-##### Start the services
+##### Start the services:
 `sudo systemctl start postgresql && sudo systemctl start elasticsearch`
 
 ##### Run the setup script:
@@ -36,7 +36,7 @@ host    all             all             127.0.0.1/32            trust
 
 
 ## Run
-##### Make sure the services are active
+##### Make sure the services are active:
 `sudo systemctl start postgresql && sudo systemctl start elasticsearch`
 
 ##### Source the environment:
