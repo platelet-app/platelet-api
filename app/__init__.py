@@ -1,7 +1,4 @@
-import os
-from flask_login import LoginManager
 from flask import Flask
-#from flask_restful import Api
 from flask_restplus import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -10,8 +7,6 @@ import flask_praetorian
 import logging
 from config import Config
 import flask_cors
-import _thread
-import time
 from flask_buzz import FlaskBuzz
 from elasticsearch import Elasticsearch
 

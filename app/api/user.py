@@ -53,6 +53,7 @@ user_address_schema = schemas.UserSchema(exclude=("username",
 class User(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
+    @ns.doc(params={'user_id': 'ID for the user'})
     def get(self, user_id):
         try:
             user = get_object(USER, user_id)

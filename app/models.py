@@ -1,6 +1,6 @@
 from app import db
 from datetime import datetime
-from enum import IntEnum, auto
+from enum import IntEnum
 from sqlalchemy_utils import EmailType
 from app.search import add_to_index, remove_from_index, query_index
 from sqlalchemy.dialects.postgresql import UUID
@@ -8,13 +8,13 @@ import uuid
 
 
 class Objects(IntEnum):
-    USER = auto()
-    SESSION = auto()
-    TASK = auto()
-    VEHICLE = auto()
-    NOTE = auto()
-    DELIVERABLE = auto()
-    LOCATION = auto()
+    USER = 0
+    SESSION = 1
+    TASK = 2
+    VEHICLE = 3
+    NOTE = 4
+    DELIVERABLE = 5
+    LOCATION = 6
 
 
 class SearchableMixin(object):
