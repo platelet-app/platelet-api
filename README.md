@@ -18,7 +18,7 @@ Install elasticsearch:
 
 Configure postgresql:
 
-`sudo nano /etc/postgresql/9.5/main/pg_hba.conf`
+`sudo nano /etc/postgresql/10/main/pg_hba.conf`
 
 Edit the line:
 
