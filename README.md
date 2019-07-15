@@ -1,8 +1,22 @@
 ### Install
 
-Install postgresql and elasticsearch.
+Install needed packages:
 
-`sudo apt install postgresql elasticsearch postgresql-server-dev-9.5`
+`sudo apt install postgresql postgresql-server-dev-10 python3-virtualenv python3-dev`
+
+Install elasticsearch:
+
+`sudo apt-get install apt-transport-https`
+
+`wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -`
+
+`sudo add-apt-repository "deb https://artifacts.elastic.co/packages/7.x/apt stable main"`
+
+`sudo apt-get update`
+
+`sudo apt-get install elasticsearch`
+
+Configure postgresql:
 
 `sudo nano /etc/postgresql/9.5/main/pg_hba.conf`
 
