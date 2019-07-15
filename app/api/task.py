@@ -22,7 +22,7 @@ class Task(Resource):
     @flask_praetorian.auth_required
     def get(self, task_id):
         try:
-            task = get_object(task_id)
+            task = get_object(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
