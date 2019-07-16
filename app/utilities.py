@@ -77,7 +77,7 @@ def get_all_objects(type):
 
     obj = switch.get(type, lambda: None)
 
-    if obj:
+    if obj is not None:
         return obj
     else:
         raise ObjectNotFoundError("There is no object of this type")
