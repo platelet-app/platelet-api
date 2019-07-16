@@ -3,15 +3,15 @@
 `sudo apt install postgresql postgresql-server-dev-10 python3-virtualenv python3-dev`
 
 ##### Install elasticsearch:
-`sudo apt-get install apt-transport-https`
+`sudo apt install apt-transport-https`
 
 `wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -`
 
 `sudo add-apt-repository "deb https://artifacts.elastic.co/packages/7.x/apt stable main"`
 
-`sudo apt-get update`
+`sudo apt update`
 
-`sudo apt-get install elasticsearch`
+`sudo apt install elasticsearch`
 
 ##### Configure postgresql:
 `sudo nano /etc/postgresql/10/main/pg_hba.conf`
