@@ -10,7 +10,7 @@ address = models.Address(line1="123 Fake Street",
                          town="Asgard",
                          county="Oknuj",
                          country="Azeroth",
-                         postcode="B00B569")
+                         postcode="BS105ND")
 
 user = models.User(username="admin",
                    email="asdf@asdf.com",

@@ -9,6 +9,10 @@ else
     echo "Postgres found. Creating database. You may need to provide your sudo password."
 fi
 
+if ! systemctl list-units | grep -q -i elasticsearch; then
+    echo "Elasticsearch service is not running. Search will not be available. You should edit the elasticsearch url 'http://localhost:9200' in config.py to None if you don't intend to use it."
+fi
+
 sudo -u postgres createuser "$(whoami)"
 sudo -u postgres createdb -O "$(whoami)" bloodbike_dev
 sudo -u postgres createdb -O "$(whoami)" bloodbike_test
