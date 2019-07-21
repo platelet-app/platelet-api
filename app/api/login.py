@@ -16,4 +16,3 @@ class Login(Resource):
         user = guard.authenticate(args['username'], args['password'])
         ret = {'access_token': guard.encode_jwt_token(user)}
         return ret, 200
-
