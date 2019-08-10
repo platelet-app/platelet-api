@@ -146,7 +146,7 @@ class SessionSchema(ma.Schema):
         model = models.Session
         fields = ('uuid', 'user_id',
                   'timestamp', 'tasks',
-                  'notes')
+                  'notes', 'links')
     tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True, exclude=('notes', 'deliverables', 'pickup_address', 'dropoff_address'))
     notes = fields.fields.Nested(NoteSchema, dump_only=True, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
