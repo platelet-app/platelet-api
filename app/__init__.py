@@ -76,3 +76,9 @@ app.register_blueprint(testing_views.mod)
 #app.register_blueprint(encoder.mod)
 
 #app.run(host='0.0.0.0', debug=True)
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
+
