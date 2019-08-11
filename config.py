@@ -14,5 +14,6 @@ class Config(object):
 
     DEFAULT_DELETE_TIME = 10
 
-    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') or \
-        'http://localhost:9200'
+    ELASTICSEARCH_URL = None
+    #ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL') or \
+    #    'http://localhost:9200'
