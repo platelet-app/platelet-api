@@ -47,6 +47,7 @@ deliverable_ns = api.namespace('api/{}/deliverable'.format(api_version), descrip
 location_ns = api.namespace('api/{}/location'.format(api_version), description='Saved location operations')
 any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Lookup for any object')
 search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch functions')
+root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
 ## flask_restplus stuff
 

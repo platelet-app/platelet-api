@@ -2,7 +2,6 @@ import functools
 from flask_praetorian import utilities
 from flask import request
 from app import models
-from app.exceptions import InvalidRangeError
 from app.exceptions import SchemaValidationError
 from app.api.functions.errors import forbidden_error
 from app import schemas

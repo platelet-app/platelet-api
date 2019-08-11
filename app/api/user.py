@@ -2,13 +2,16 @@ from flask import jsonify
 from sqlalchemy import exc as sqlexc
 from app import schemas, db, models
 from app import user_ns as ns
+from app import root_ns
 from flask_restplus import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
+from app.api.functions.userfunctions import get_user_object_by_int_id
 from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, internal_error
 from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError
 from app.utilities import add_item_to_delete_queue, get_object, get_all_objects, get_range
 from app import guard
+from flask_praetorian import utilities as prae_util
 
 USER = models.Objects.USER
 
@@ -46,6 +49,20 @@ user_address_schema = schemas.UserSchema(exclude=("username",
                                                    "links",
                                                    ))
 
+
+@root_ns.route(
+    '/whoami',
+    endpoint='myself')
+class Myself(Resource):
+    @flask_praetorian.auth_required
+    def get(self):
+        try:
+            user = get_user_object_by_int_id(prae_util.current_user_id())
+        except ObjectNotFoundError:
+            return not_found(USER, None)
+        except:
+            raise
+        return jsonify(user_dump_schema.dump(user).data)
 
 @ns.route(
     '/<user_id>',
