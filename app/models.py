@@ -77,7 +77,7 @@ class Deliverable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     name = db.Column(db.String(64))
-    task = db.Column(db.Integer, db.ForeignKey('task.id'))
+    task_id = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
 
     @property

@@ -21,21 +21,21 @@ class Deliverable(Resource):
         if not deliverable_id:
             return not_found(DELIVERABLE)
 
-        note = get_object(DELIVERABLE, deliverable_id)
+        deliverable = get_object(DELIVERABLE, deliverable_id)
 
-        if note:
-            return jsonify(deliverable_schema.dump(note).data)
+        if deliverable:
+            return jsonify(deliverable_schema.dump(deliverable).data)
         else:
             return not_found(deliverable_id)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, deliverable_id):
         try:
-            note = get_object(DELIVERABLE, deliverable_id)
+            deliverable = get_object(DELIVERABLE, deliverable_id)
         except ObjectNotFoundError:
             return not_found(DELIVERABLE, deliverable_id)
 
-        return add_item_to_delete_queue(note)
+        return add_item_to_delete_queue(deliverable)
 
     @flask_praetorian.roles_required('admin', 'coordinator')
     def put(self, deliverable_id):
@@ -54,7 +54,6 @@ class Deliverable(Resource):
 class Deliverables(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
-
         try:
             deliverable = load_request_into_object(DELIVERABLE)
         except Exception as e:
@@ -64,4 +63,3 @@ class Deliverables(Resource):
         db.session.commit()
 
         return {'uuid': str(deliverable.uuid), 'message': 'Deliverable {} created'.format(deliverable.uuid)}, 201
-

@@ -22,7 +22,7 @@ class NoteSchema(ma.Schema):
 class DeliverableSchema(ma.Schema):
     class Meta:
         model = models.Deliverable
-        fields = ('uuid', 'name', 'task', 'notes')
+        fields = ('uuid', 'name', 'task_id', 'notes')
 
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
