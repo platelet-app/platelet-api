@@ -50,7 +50,7 @@ class TaskSchema(ma.Schema):
         model = models.Task
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
                   'contact_number', 'priority', 'session_id', 'timestamp', 'deliverables',
-                  'notes', 'links', 'assigned_rider')
+                  'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time')
 
     contactNumber = ma.Int()
 
