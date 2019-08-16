@@ -36,6 +36,9 @@ host    all             all             127.0.0.1/32            trust
 
 
 ## Run
+
+### API
+
 ##### Make sure the services are active:
 `sudo systemctl start postgresql && sudo systemctl start elasticsearch`
 
@@ -51,8 +54,23 @@ host    all             all             127.0.0.1/32            trust
 `pytest --disable-pytest-warnings`
 
 ##### Visit root to see the swagger API documentation:
-http://localhost:5000/
+http://localhost:5000
 
+### React
+
+cd into the react_app directory.
+
+`cd react_app`
+
+Install packages.
+
+`yarn install`
+
+Start the React development server.
+
+`npm start`
+
+It'll likely load up the page in your default browser. If not, navigate to http://localhost:3000
 
 ## Development
 ##### Libraries
