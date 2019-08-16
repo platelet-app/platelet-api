@@ -39,6 +39,27 @@ def load_request_into_object(model_enum):
         raise SchemaValidationError("No json input data provided")
 
     if model_enum is models.Objects.USER:
+        return models.User(**user_schema.load(request_json).data)
+    if model_enum is models.Objects.SESSION:
+        return models.Session(**session_schema.load(request_json).data)
+    if model_enum is models.Objects.TASK:
+        return models.Task(**task_schema.load(request_json).data)
+    if model_enum is models.Objects.VEHICLE:
+        return models.Vehicle(**vehicle_schema.load(request_json).data)
+    if model_enum is models.Objects.DELIVERABLE:
+        return models.Deliverable(**deliverable_schema.load(request_json).data)
+    if model_enum is models.Objects.NOTE:
+        return models.Note(**note_schema.load(request_json).data)
+    if model_enum is models.Objects.LOCATION:
+        return models.Location(**location_schema.load(request_json).data)
+
+
+def load_request_into_dict(model_enum):
+    request_json = request.get_json()
+    if not request_json:
+        raise SchemaValidationError("No json input data provided")
+
+    if model_enum is models.Objects.USER:
         return user_schema.load(request_json).data
     if model_enum is models.Objects.SESSION:
         return session_schema.load(request_json).data
@@ -52,5 +73,4 @@ def load_request_into_object(model_enum):
         return note_schema.load(request_json).data
     if model_enum is models.Objects.LOCATION:
         return location_schema.load(request_json).data
-
 

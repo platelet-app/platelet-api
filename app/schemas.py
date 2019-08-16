@@ -14,7 +14,7 @@ class NoteSchema(ma.Schema):
                   'task', 'vehicle', 'session',
                   'user', 'deliverable', 'location')
 
-    @post_load
+    #@post_load
     def make_note(self, data):
         return models.Note(**data)
 
@@ -26,7 +26,7 @@ class DeliverableSchema(ma.Schema):
 
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
-    @post_load
+    #@post_load
     def make_deliverable(self, data):
         return models.Deliverable(**data)
 
@@ -58,13 +58,15 @@ class TaskSchema(ma.Schema):
     dropoff_address = fields.fields.Nested(AddressSchema)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
     notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    pickup_time = fields.fields.DateTime()
+    dropoff_time = fields.fields.DateTime()
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
         'collection': ma.URLFor('tasks_list')
     })
 
-    @post_load
+    #@post_load
     def make_task(self, data):
         return models.Task(**data)
 
@@ -85,7 +87,7 @@ class VehicleSchema(ma.Schema):
         'collection': ma.URLFor('vehicle_list')
     })
 
-    @post_load
+    #@post_load
     def make_vehicle(self, data):
         return models.Vehicle(**data)
 
@@ -118,7 +120,7 @@ class UserSchema(ma.Schema):
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
     )
 
-    @post_load
+    #@post_load
     def make_user(self, data):
         return models.User(**data)
 
@@ -155,7 +157,7 @@ class SessionSchema(ma.Schema):
         'collection': ma.URLFor('sessions_list')
     })
 
-    @post_load
+    #@post_load
     def make_session(self, data):
         return models.Session(**data)
 
@@ -173,7 +175,7 @@ class LocationSchema(ma.Schema):
         'collection': ma.URLFor('location_list')
     })
 
-    @post_load
+    #@post_load
     def make_location(self, data):
         return models.Location(**data)
 

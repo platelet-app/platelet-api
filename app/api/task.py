@@ -3,12 +3,13 @@ from app import schemas, models
 from flask_restplus import Resource
 import flask_praetorian
 from app import task_ns as ns
-from app.api.functions.viewfunctions import load_request_into_object
+from app.api.functions.viewfunctions import load_request_into_object, load_request_into_dict
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error
 from app.utilities import add_item_to_delete_queue, get_object, get_range
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError
 
 from app import db
+from flask import request
 
 task_schema = schemas.TaskSchema()
 tasks_schema = schemas.TaskSchema(many=True, exclude=('contact_name', 'contact_number', 'deliverables', 'dropoff_address', 'notes', 'pickup_address'))
@@ -44,8 +45,8 @@ class Task(Resource):
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
-        new_data = load_request_into_object(TASK)
-        models.Session.query.filter_by(uuid=task_id).update(new_data)
+        new_data = load_request_into_dict(TASK)
+        models.Task.query.filter_by(uuid=task_id).update(new_data)
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
@@ -76,7 +77,7 @@ class Tasks(Resource):
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
-
+        print(task.pickup_address)
         db.session.add(task)
         db.session.commit()
 
