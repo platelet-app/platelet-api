@@ -1,37 +1,28 @@
 from marshmallow import ValidationError
-
 from app import ma
 from marshmallow_sqlalchemy import fields, field_for
-from marshmallow import post_load
 from app import models
 import datetime
 
 
-class NoteSchema(ma.Schema):
+class NoteSchema(ma.ModelSchema):
     class Meta:
         model = models.Note
         fields = ('subject', 'body',
                   'task', 'vehicle', 'session',
                   'user', 'deliverable', 'location')
 
-    #@post_load
-    def make_note(self, data):
-        return models.Note(**data)
 
-
-class DeliverableSchema(ma.Schema):
+class DeliverableSchema(ma.ModelSchema):
     class Meta:
         model = models.Deliverable
         fields = ('uuid', 'name', 'task_id', 'notes')
 
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
-
-    #@post_load
-    def make_deliverable(self, data):
-        return models.Deliverable(**data)
+    notes = fields.fields.Nested(NoteSchema, many=True,
+                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
 
-class AddressSchema(ma.Schema):
+class AddressSchema(ma.ModelSchema):
     class Meta:
         model = models.Address
 
@@ -40,12 +31,8 @@ class AddressSchema(ma.Schema):
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
 
-    @post_load
-    def make_address(self, data):
-        return models.Address(**data)
 
-
-class TaskSchema(ma.Schema):
+class TaskSchema(ma.ModelSchema):
     class Meta:
         model = models.Task
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
@@ -57,7 +44,8 @@ class TaskSchema(ma.Schema):
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    notes = fields.fields.Nested(NoteSchema, many=True,
+                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
     pickup_time = fields.fields.DateTime()
     dropoff_time = fields.fields.DateTime()
 
@@ -66,12 +54,8 @@ class TaskSchema(ma.Schema):
         'collection': ma.URLFor('tasks_list')
     })
 
-    #@post_load
-    def make_task(self, data):
-        return models.Task(**data)
 
-
-class VehicleSchema(ma.Schema):
+class VehicleSchema(ma.ModelSchema):
     class Meta:
         model = models.Task
         fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
@@ -80,16 +64,14 @@ class VehicleSchema(ma.Schema):
     date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
     registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    notes = fields.fields.Nested(NoteSchema, many=True,
+                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('vehicle_detail', vehicle_id='<uuid>'),
         'collection': ma.URLFor('vehicle_list')
     })
 
-    #@post_load
-    def make_vehicle(self, data):
-        return models.Vehicle(**data)
 
 def validate_date_of_registration(obj):
     try:
@@ -101,7 +83,7 @@ def validate_date_of_registration(obj):
         raise ValidationError("date of registration cannot be before date of manufacture")
 
 
-class UserSchema(ma.Schema):
+class UserSchema(ma.ModelSchema):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
@@ -112,7 +94,8 @@ class UserSchema(ma.Schema):
     dob = ma.DateTime(format='%d/%m/%Y')
     address = fields.fields.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    notes = fields.fields.Nested(NoteSchema, many=True,
+                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
     tasks = fields.fields.Nested(TaskSchema, many=True)
     vehicle = fields.fields.Nested(VehicleSchema, dump_only=True)
 
@@ -120,12 +103,8 @@ class UserSchema(ma.Schema):
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
     )
 
-    #@post_load
-    def make_user(self, data):
-        return models.User(**data)
 
-
-class UserUsernameSchema(ma.Schema):
+class UserUsernameSchema(ma.ModelSchema):
     class Meta:
         model = models.User
         fields = ('uuid', 'username')
@@ -133,7 +112,7 @@ class UserUsernameSchema(ma.Schema):
     username = ma.Str(required=True)
 
 
-class UserAddressSchema(ma.Schema):
+class UserAddressSchema(ma.ModelSchema):
     class Meta:
         model = models.User
         fields = ('uuid', 'name', 'address')
@@ -142,32 +121,31 @@ class UserAddressSchema(ma.Schema):
     address = fields.fields.Nested(AddressSchema)
 
 
-
-class SessionSchema(ma.Schema):
+class SessionSchema(ma.ModelSchema):
     class Meta:
         model = models.Session
         fields = ('uuid', 'user_id',
                   'timestamp', 'tasks',
                   'notes', 'links')
-    tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True, exclude=('notes', 'deliverables', 'pickup_address', 'dropoff_address'))
-    notes = fields.fields.Nested(NoteSchema, dump_only=True, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+
+    tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True,
+                                 exclude=('notes', 'deliverables', 'pickup_address', 'dropoff_address'))
+    notes = fields.fields.Nested(NoteSchema, dump_only=True, many=True,
+                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('session_detail', session_id='<uuid>'),
         'collection': ma.URLFor('sessions_list')
     })
 
-    #@post_load
-    def make_session(self, data):
-        return models.Session(**data)
 
-
-class LocationSchema(ma.Schema):
+class LocationSchema(ma.ModelSchema):
     class Meta:
         model = models.Location
         fields = ('name', 'contact', 'phone_number', 'address', 'notes', 'links')
 
-    notes = fields.fields.Nested(NoteSchema, many=True, exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    notes = fields.fields.Nested(NoteSchema, many=True,
+                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
     address = fields.fields.Nested(AddressSchema)
 
     links = ma.Hyperlinks({
@@ -175,10 +153,7 @@ class LocationSchema(ma.Schema):
         'collection': ma.URLFor('location_list')
     })
 
-    #@post_load
-    def make_location(self, data):
-        return models.Location(**data)
 
-class SearchSchema(ma.Schema):
+class SearchSchema(ma.ModelSchema):
     class Meta:
         fields = ('query', 'type', 'page')
