@@ -97,8 +97,6 @@ class User(Resource):
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
-        except:
-            raise
 
         load_request_into_object(USER, instance=user)
         db.session.commit()

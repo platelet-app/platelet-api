@@ -44,7 +44,7 @@ class Deliverable(Resource):
         except ObjectNotFoundError:
             return not_found(DELIVERABLE, deliverable_id)
 
-        load_request_into_object(DELIVERABLE, deliverable)
+        load_request_into_object(DELIVERABLE, instance=deliverable)
         db.session.commit()
         return {'uuid': str(deliverable.uuid), 'message': 'Deliverable {} updated.'.format(deliverable.uuid)}, 200
 
