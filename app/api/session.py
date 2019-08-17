@@ -48,8 +48,7 @@ class Session(Resource):
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
 
-        new_data = load_request_into_object(SESSION)
-        models.Session.query.filter_by(uuid=session_id).update(new_data)
+        load_request_into_object(SESSION, instance=session)
         db.session.commit()
         return {'uuid': str(session.uuid), 'message': 'Session {} updated.'.format(session.uuid)}, 200
 

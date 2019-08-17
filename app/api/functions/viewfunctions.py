@@ -33,25 +33,25 @@ def user_id_match_or_admin(func):
     return wrapper
 
 
-def load_request_into_object(model_enum):
+def load_request_into_object(model_enum, instance=None):
     request_json = request.get_json()
     if not request_json:
         raise SchemaValidationError("No json input data provided")
 
     if model_enum is models.Objects.USER:
-        return user_schema.load(request_json).data
+        return user_schema.load(request_json, instance=instance if instance else None).data
     if model_enum is models.Objects.SESSION:
-        return session_schema.load(request_json).data
+        return session_schema.load(request_json, instance=instance if instance else None).data
     if model_enum is models.Objects.TASK:
-        return task_schema.load(request_json).data
+        return task_schema.load(request_json, instance=instance if instance else None).data
     if model_enum is models.Objects.VEHICLE:
-        return vehicle_schema.load(request_json).data
+        return vehicle_schema.load(request_json, instance=instance if instance else None).data
     if model_enum is models.Objects.DELIVERABLE:
-        return deliverable_schema.load(request_json).data
+        return deliverable_schema.load(request_json, instance=instance if instance else None).data
     if model_enum is models.Objects.NOTE:
-        return note_schema.load(request_json).data
+        return note_schema.load(request_json, instance=instance if instance else None).data
     if model_enum is models.Objects.LOCATION:
-        return location_schema.load(request_json).data
+        return location_schema.load(request_json, instance=instance if instance else None).data
 
     # if model_enum is models.Objects.USER:
     #     return models.User(**user_schema.load(request_json).data)
@@ -75,17 +75,17 @@ def load_request_into_dict(model_enum):
         raise SchemaValidationError("No json input data provided")
 
     if model_enum is models.Objects.USER:
-        return user_schema.load(request_json).data
+        return user_schema.load(request_json)
     if model_enum is models.Objects.SESSION:
-        return session_schema.load(request_json).data
+        return session_schema.load(request_json)
     if model_enum is models.Objects.TASK:
-        return task_schema.load(request_json).data
+        return task_schema.load(request_json)
     if model_enum is models.Objects.VEHICLE:
-        return vehicle_schema.load(request_json).data
+        return vehicle_schema.load(request_json)
     if model_enum is models.Objects.DELIVERABLE:
-        return deliverable_schema.load(request_json).data
+        return deliverable_schema.load(request_json)
     if model_enum is models.Objects.NOTE:
-        return note_schema.load(request_json).data
+        return note_schema.load(request_json)
     if model_enum is models.Objects.LOCATION:
-        return location_schema.load(request_json).data
+        return location_schema.load(request_json)
 

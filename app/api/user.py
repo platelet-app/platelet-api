@@ -100,15 +100,10 @@ class User(Resource):
         except:
             raise
 
-        new_data = load_request_into_object(USER)
-        # load_request_into_dict function to use here?
-        # might just do that anyway with incomplete data
-        models.User.query.filter_by(uuid=user_id).update(new_data)
+        load_request_into_object(USER, instance=user)
         db.session.commit()
 
         return {'uuid': str(user.uuid), 'message': 'User {} updated.'.format(user.username)}, 200
-
-        #print(user_dump_schema.dump(new_data).data
 
 
 
@@ -157,33 +152,6 @@ class UserNameField(Resource):
 
         return jsonify(user_username_schema.dump(user).data)
 
-    @flask_praetorian.auth_required
-    @user_id_match_or_admin
-    def put(self, user_id):
-
-        parser = reqparse.RequestParser()
-        parser.add_argument('username')
-        args = parser.parse_args()
-        try:
-            user = get_object(USER, user_id)
-        except ObjectNotFoundError:
-            return not_found(USER, user_id)
-
-        if args['username']:
-            user.username = args['username']
-
-        else:
-            return schema_validation_error("No data")
-
-        try:
-            db.session.add(user)
-            db.session.commit()
-        except sqlexc.IntegrityError:
-            return not_unique_error("username", str(user.uuid))
-
-        return {'uuid': str(user.uuid), 'message': 'User {} updated'.format(user.username)}, 200
-
-
 
 @ns.route('/<user_id>/address')
 class UserAddressField(Resource):
@@ -195,25 +163,4 @@ class UserAddressField(Resource):
             return not_found(USER, user_id)
 
         return jsonify(user_address_schema.dump(user).data)
-
-    @flask_praetorian.auth_required
-    @user_id_match_or_admin
-    def put(self, user_id):
-        try:
-            user = get_object(USER, user_id)
-        except ObjectNotFoundError:
-            return not_found(USER, user_id)
-
-        try:
-            user = load_request_into_object(USER)
-        except SchemaValidationError as e:
-            return schema_validation_error(str(e))
-
-        try:
-            db.session.add(user)
-            db.session.commit()
-        except sqlexc.IntegrityError:
-            return not_unique_error("username", str(user.uuid))
-
-        return {'uuid': str(user.uuid), 'message': 'User {} updated'.format(user.username)}, 200
 

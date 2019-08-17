@@ -43,8 +43,7 @@ class Vehicle(Resource):
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)
 
-        new_data = load_request_into_object(VEHICLE)
-        models.Session.query.filter_by(uuid=vehicle_id).update(new_data)
+        load_request_into_object(VEHICLE, instance=vehicle)
         db.session.commit()
         return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} updated.'.format(vehicle.uuid)}, 200
 

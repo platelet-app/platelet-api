@@ -45,8 +45,7 @@ class Task(Resource):
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
-        new_data = load_request_into_dict(TASK)
-        models.Task.query.filter_by(uuid=task_id).update(new_data)
+        load_request_into_object(TASK, instance=task)
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
@@ -77,7 +76,7 @@ class Tasks(Resource):
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
-        print(task.pickup_address)
+        print(dir(task))
         db.session.add(task)
         db.session.commit()
 

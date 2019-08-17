@@ -44,8 +44,7 @@ class Note(Resource):
         except ObjectNotFoundError:
             return not_found(NOTE, note_id)
 
-        new_data = load_request_into_object(NOTE)
-        models.Session.query.filter_by(uuid=note_id).update(new_data)
+        load_request_into_object(NOTE, instance=note)
         db.session.commit()
         return {'uuid': str(note.uuid), 'message': 'Note {} updated.'.format(note.uuid)}, 200
 

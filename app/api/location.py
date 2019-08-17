@@ -45,8 +45,7 @@ class Location(Resource):
         except ObjectNotFoundError:
             return not_found(LOCATION, location_id)
 
-        new_data = load_request_into_object(LOCATION)
-        models.Session.query.filter_by(uuid=location_id).update(new_data)
+        load_request_into_object(LOCATION, instance=location)
         db.session.commit()
         return {'uuid': str(location.uuid), 'message': 'Location {} updated.'.format(location.uuid)}, 200
 

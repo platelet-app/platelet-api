@@ -44,8 +44,7 @@ class Deliverable(Resource):
         except ObjectNotFoundError:
             return not_found(DELIVERABLE, deliverable_id)
 
-        new_data = load_request_into_object(DELIVERABLE)
-        models.Session.query.filter_by(uuid=deliverable_id).update(new_data)
+        load_request_into_object(DELIVERABLE, deliverable)
         db.session.commit()
         return {'uuid': str(deliverable.uuid), 'message': 'Deliverable {} updated.'.format(deliverable.uuid)}, 200
 
