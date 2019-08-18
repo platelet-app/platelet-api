@@ -98,7 +98,10 @@ class User(Resource):
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 
-        load_request_into_object(USER, instance=user)
+        new_user = load_request_into_object(USER, instance=user)
+        if new_user.password:
+            new_user.password = guard.encrypt_password(new_user.password)
+
         db.session.commit()
 
         return {'uuid': str(user.uuid), 'message': 'User {} updated.'.format(user.username)}, 200

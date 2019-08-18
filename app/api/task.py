@@ -76,8 +76,7 @@ class Tasks(Resource):
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
-        print(dir(task))
         db.session.add(task)
         db.session.commit()
 
-        return {'uuid': str(task.uuid), 'message': 'Task {} created'.format(task.uuid)}, 201
+        return {'uuid': str(task.uuid), 'timestamp': str(task.timestamp), 'message': 'Task {} created'.format(task.uuid)}, 201
