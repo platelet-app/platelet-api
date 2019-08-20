@@ -142,7 +142,7 @@ class SessionSchema(ma.ModelSchema):
 class LocationSchema(ma.ModelSchema):
     class Meta:
         model = models.Location
-        fields = ('name', 'contact', 'phone_number', 'address', 'notes', 'links')
+        fields = ('uuid', 'name', 'contact', 'phone_number', 'address', 'notes', 'links')
 
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))

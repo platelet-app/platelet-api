@@ -11,3 +11,6 @@ venv/
 # bloodbike
 app.db
 test.db
+
+react_app/build
+site

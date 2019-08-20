@@ -5,14 +5,15 @@ import flask_praetorian
 from app import location_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error
-from app.utilities import get_object, add_item_to_delete_queue
-from app.exceptions import ObjectNotFoundError
+from app.utilities import get_object, add_item_to_delete_queue, get_all_objects, get_range
+from app.exceptions import ObjectNotFoundError, InvalidRangeError
 
 from app import db
 
 LOCATION = models.Objects.LOCATION
 
 location_schema = schemas.LocationSchema()
+locations_schema = schemas.LocationSchema(many=True)
 
 
 @ns.route('/<location_id>', endpoint='location_detail')
@@ -52,6 +53,15 @@ class Location(Resource):
 
 @ns.route('s', endpoint='location_list')
 class Locations(Resource):
+    def get(self, _range=None, order="ascending"):
+        try:
+            items = get_range(get_all_objects(LOCATION), _range, order)
+        except InvalidRangeError as e:
+            return forbidden_error(e)
+        except Exception as e:
+            return internal_error(e)
+
+        return jsonify(locations_schema.dump(items).data)
     @flask_praetorian.roles_accepted('admin')
     def post(self):
         try:
