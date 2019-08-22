@@ -237,11 +237,12 @@ class DeleteFlags(SearchableMixin, db.Model):
 
     __searchable__ = ['object_uuid', 'object_type', 'active']
 
-class Location(SearchableMixin, Address, db.Model):
+class Location(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64), unique=True)
+    ward = db.Column(db.String(64))
     contact = db.Column(db.String(64))
     phone_number = db.Column(db.Integer())
     flagged_for_deletion = db.Column(db.Boolean, default=False)
