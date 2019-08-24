@@ -87,6 +87,7 @@ class Deliverable(db.Model):
 class Address(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    ward = db.Column(db.String(64))
     line1 = db.Column(db.String(64))
     line2 = db.Column(db.String(64))
     town = db.Column(db.String(64))
@@ -242,7 +243,6 @@ class Location(SearchableMixin, db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64), unique=True)
-    ward = db.Column(db.String(64))
     contact = db.Column(db.String(64))
     phone_number = db.Column(db.Integer())
     flagged_for_deletion = db.Column(db.Boolean, default=False)

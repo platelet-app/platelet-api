@@ -26,7 +26,7 @@ class AddressSchema(ma.ModelSchema):
     class Meta:
         model = models.Address
 
-        fields = ('line1', 'line2', 'town',
+        fields = ('ward', 'line1', 'line2', 'town',
                   'county', 'country', 'postcode')
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
@@ -118,7 +118,7 @@ class UserAddressSchema(ma.ModelSchema):
         fields = ('uuid', 'name', 'address')
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
-    address = fields.fields.Nested(AddressSchema)
+    address = fields.fields.Nested(AddressSchema, exclude=("ward",))
 
 
 class SessionSchema(ma.ModelSchema):
@@ -129,7 +129,7 @@ class SessionSchema(ma.ModelSchema):
                   'notes', 'links')
 
     tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True,
-                                 exclude=('notes', 'deliverables', 'pickup_address', 'dropoff_address'))
+                                 exclude=('notes', 'deliverables'))
     notes = fields.fields.Nested(NoteSchema, dump_only=True, many=True,
                                  exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
 
@@ -142,7 +142,7 @@ class SessionSchema(ma.ModelSchema):
 class LocationSchema(ma.ModelSchema):
     class Meta:
         model = models.Location
-        fields = ('uuid', 'name', 'contact', 'phone_number', 'address', 'notes', 'links', 'ward')
+        fields = ('uuid', 'name', 'contact', 'phone_number', 'address', 'notes', 'links')
 
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
