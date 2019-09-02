@@ -176,7 +176,7 @@ class User(SearchableMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True, server_default='true')
     notes = db.relationship('Note', backref='user_parent', lazy='dynamic')
 
-    tasks = db.relationship('Task', backref='tasks', lazy='dynamic')
+    tasks = db.relationship('Task', backref='rider', lazy='dynamic')
 
     __searchable__ = ['username', 'roles', 'patch', 'name', 'email']
 

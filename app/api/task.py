@@ -9,7 +9,6 @@ from app.utilities import add_item_to_delete_queue, get_object, get_range
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError
 
 from app import db
-from flask import request
 
 task_schema = schemas.TaskSchema()
 tasks_schema = schemas.TaskSchema(many=True, exclude=('contact_name', 'contact_number', 'deliverables', 'dropoff_address', 'notes', 'pickup_address'))

@@ -32,28 +32,6 @@ class AddressSchema(ma.ModelSchema):
     postcode = ma.Function(lambda obj: obj.postcode.upper())
 
 
-class TaskSchema(ma.ModelSchema):
-    class Meta:
-        model = models.Task
-        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
-                  'contact_number', 'priority', 'session_id', 'timestamp', 'deliverables',
-                  'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time')
-
-    contactNumber = ma.Int()
-
-    pickup_address = fields.fields.Nested(AddressSchema)
-    dropoff_address = fields.fields.Nested(AddressSchema)
-    deliverables = fields.fields.Nested(DeliverableSchema, many=True)
-    notes = fields.fields.Nested(NoteSchema, many=True,
-                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
-    pickup_time = fields.fields.DateTime()
-    dropoff_time = fields.fields.DateTime()
-
-    links = ma.Hyperlinks({
-        'self': ma.URLFor('task_detail', task_id='<uuid>'),
-        'collection': ma.URLFor('tasks_list')
-    })
-
 
 class VehicleSchema(ma.ModelSchema):
     class Meta:
@@ -87,7 +65,7 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
-                  'dob', 'patch', 'roles', 'notes', 'links', 'tasks', 'vehicle')
+                  'dob', 'patch', 'roles', 'notes', 'links', 'vehicle')
 
     username = ma.Str(required=True)
     email = ma.Email()
@@ -96,12 +74,35 @@ class UserSchema(ma.ModelSchema):
     uuid = field_for(models.User, 'uuid', dump_only=True)
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
-    tasks = fields.fields.Nested(TaskSchema, many=True)
+    #tasks = fields.fields.Nested(TaskSchema, many=True)
     vehicle = fields.fields.Nested(VehicleSchema, dump_only=True)
 
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
     )
+
+class TaskSchema(ma.ModelSchema):
+    class Meta:
+        model = models.Task
+        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
+                  'contact_number', 'priority', 'session_id', 'timestamp', 'deliverables',
+                  'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time', 'rider')
+
+    contact_number = ma.Int()
+
+    pickup_address = fields.fields.Nested(AddressSchema)
+    dropoff_address = fields.fields.Nested(AddressSchema)
+    rider = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'notes'))
+    deliverables = fields.fields.Nested(DeliverableSchema, many=True)
+    notes = fields.fields.Nested(NoteSchema, many=True,
+                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    pickup_time = fields.fields.DateTime()
+    dropoff_time = fields.fields.DateTime()
+
+    links = ma.Hyperlinks({
+        'self': ma.URLFor('task_detail', task_id='<uuid>'),
+        'collection': ma.URLFor('tasks_list')
+    })
 
 
 class UserUsernameSchema(ma.ModelSchema):
