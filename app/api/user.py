@@ -23,7 +23,6 @@ users_schema = schemas.UserSchema(many=True, exclude=("address",
                                                       "email",
                                                       "notes",
                                                       "password",
-                                                      "patch",
                                                       "tasks"))
 address_schema = schemas.AddressSchema()
 user_username_schema = schemas.UserSchema(exclude=("address",
