@@ -1,10 +1,21 @@
 #!/bin/bash
 
+if [[ $1 ]];
+then
+  if [[ -e $1 ]];
+  then
+    echo "Data found and exists."
+  else
+    echo "$1 does not exist."
+    exit 1
+  fi
+fi
+
 read -s -p "Please set a password for the admin user: " pswd
 
 if ! systemctl list-units | grep -q -i postgres; then
     echo "Please install and start the postgresql database server (sudo systemctl start postgresql)"
-    exit
+    exit 1
 else
     echo "Postgres found. Creating database. You may need to provide your sudo password."
 fi
@@ -25,6 +36,6 @@ pip install -r requirements.txt
 
 flask db upgrade
 
-python setup.py $pswd
+python setup.py $pswd $1
 
 echo "Completed setup"

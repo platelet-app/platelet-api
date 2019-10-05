@@ -14,3 +14,5 @@ test.db
 
 react_app/build
 site
+
+dev_data.json

@@ -1,6 +1,43 @@
 from app import db, models, guard
 import datetime
 import sys
+import sys
+import json
+
+insert_data = None
+
+if sys.argv[2]:
+    with open(sys.argv[2]) as f:
+        insert_data = json.loads(f.read())
+
+
+for user in insert_data['users']:
+    existing = models.User.query.filter_by(username=user['username']).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+
+    user['name'] = user['firstname'] + " " + user['secondname']
+    user['dob'] = datetime.datetime.strptime(user['dob'], '%d/%m/%Y').date()
+    user['address'] = models.Address(**user['address'])
+    del user['firstname']
+    del user['secondname']
+    user_model = models.User(**user)
+
+    db.session.add(user_model)
+    db.session.commit()
+
+for loc in insert_data['savedlocations']:
+    existing = models.User.query.filter_by(name=loc['name']).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+    loc['address'] = models.Address(**loc['address'])
+    location_model = models.Location(**loc)
+
+    db.session.add(location_model)
+    db.session.commit()
+
 
 date = datetime.datetime.strptime('01/01/1980', '%d/%m/%Y').date()
 
