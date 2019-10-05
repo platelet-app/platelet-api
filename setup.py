@@ -12,7 +12,11 @@ if sys.argv[2]:
 
 
 for user in insert_data['users']:
-    existing = models.User.query.filter_by(username=user['username']).first()
+    existing = None
+    try:
+        existing = models.User.query.filter_by(username=user['username']).first()
+    except:
+        pass
     if existing:
         db.session.delete(existing)
         db.session.commit()
@@ -28,7 +32,11 @@ for user in insert_data['users']:
     db.session.commit()
 
 for loc in insert_data['savedlocations']:
-    existing = models.User.query.filter_by(name=loc['name']).first()
+    existing = None
+    try:
+        existing = models.User.query.filter_by(name=loc['name']).first()
+    except:
+        pass
     if existing:
         db.session.delete(existing)
         db.session.commit()
@@ -56,7 +64,8 @@ user = models.User(username="admin",
                    name="Someone Person",
                    dob=date,
                    roles="admin,coordinator,rider",
-                   is_active=True)
+                   is_active=True,
+                   patch="North")
 
 db.session.add(user)
 db.session.commit()

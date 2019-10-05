@@ -1,8 +1,8 @@
-"""session foreign key now uuid
+"""initial
 
-Revision ID: c82263779142
+Revision ID: ae14b053ee90
 Revises: 
-Create Date: 2019-07-13 22:44:26.679725
+Create Date: 2019-10-05 22:09:40.553885
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 import sqlalchemy_utils
 
 # revision identifiers, used by Alembic.
-revision = 'c82263779142'
+revision = 'ae14b053ee90'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,6 +22,7 @@ def upgrade():
     op.create_table('address',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
+    sa.Column('ward', sa.String(length=64), nullable=True),
     sa.Column('line1', sa.String(length=64), nullable=True),
     sa.Column('line2', sa.String(length=64), nullable=True),
     sa.Column('town', sa.String(length=64), nullable=True),
@@ -49,6 +50,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
+    sa.Column('name', sa.String(length=64), nullable=True),
     sa.Column('manufacturer', sa.String(length=64), nullable=True),
     sa.Column('model', sa.String(length=64), nullable=True),
     sa.Column('date_of_manufacture', sa.Date(), nullable=True),
@@ -56,6 +58,7 @@ def upgrade():
     sa.Column('registration_number', sa.String(length=10), nullable=True),
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name'),
     sa.UniqueConstraint('uuid')
     )
     op.create_index(op.f('ix_vehicle_timestamp'), 'vehicle', ['timestamp'], unique=False)
@@ -123,6 +126,8 @@ def upgrade():
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
     sa.Column('session_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('assigned_rider', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('pickup_time', sa.DateTime(), nullable=True),
+    sa.Column('dropoff_time', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['assigned_rider'], ['user.uuid'], ),
     sa.ForeignKeyConstraint(['dropoff_address_id'], ['address.id'], ),
     sa.ForeignKeyConstraint(['pickup_address_id'], ['address.id'], ),
@@ -135,8 +140,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=True),
-    sa.Column('task', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['task'], ['task.id'], ),
+    sa.Column('task_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.ForeignKeyConstraint(['task_id'], ['task.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
     )

@@ -118,8 +118,8 @@ class Task(SearchableMixin, db.Model):
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
     assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
 
-    pickup_time = db.Column(db.Time)
-    dropoff_time = db.Column(db.Time)
+    pickup_time = db.Column(db.DateTime)
+    dropoff_time = db.Column(db.DateTime)
 
 
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
