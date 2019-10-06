@@ -34,6 +34,10 @@ host    all             all             127.0.0.1/32            trust
 ##### Run the setup script:
 `./setup.sh`
 
+Optionally input a json file with premade data to insert into the database.
+
+`./setup.sh dev_data.json`
+
 
 ## Run
 
@@ -64,7 +68,7 @@ cd into the react_app directory.
 
 Install packages.
 
-`yarn install`
+`npm install`
 
 Start the React development server.
 
