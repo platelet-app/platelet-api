@@ -219,6 +219,10 @@ class Session(SearchableMixin, db.Model):
     __searchable__ = ['timestamp']
 
     @property
+    def task_count(self):
+        return len(self.tasks.all())
+
+    @property
     def object_type(self):
         return Objects.SESSION
 
