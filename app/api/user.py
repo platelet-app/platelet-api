@@ -97,6 +97,7 @@ class User(Resource):
             return not_found(USER, user_id)
 
         new_user = load_request_into_object(USER, instance=user)
+        print(new_user)
         if new_user.password:
             new_user.password = guard.encrypt_password(new_user.password)
 

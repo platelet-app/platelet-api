@@ -7,6 +7,7 @@ from app.api.functions.viewfunctions import load_request_into_object, load_reque
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error
 from app.utilities import add_item_to_delete_queue, get_object, get_range
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError
+from app.api.functions.taskfunctions import check_rider_match
 
 from app import db
 
@@ -37,7 +38,8 @@ class Task(Resource):
 
         return add_item_to_delete_queue(task)
 
-    @flask_praetorian.roles_required('admin', 'coordinator')
+    @flask_praetorian.auth_required
+    @check_rider_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
