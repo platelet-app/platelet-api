@@ -61,7 +61,7 @@ class Session(Resource):
     endpoint='sessions_list')
 class Sessions(Resource):
     @flask_praetorian.auth_required
-    def get(self, user_id, _range=None, order="ascending"):
+    def get(self, user_id, _range=None, order="descending"):
         try:
             user = get_user_object(user_id)
         except ObjectNotFoundError:
