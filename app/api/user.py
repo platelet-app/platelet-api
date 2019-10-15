@@ -45,6 +45,7 @@ user_address_schema = schemas.UserSchema(exclude=("username",
                                                    "patch",
                                                    "links",
                                                    ))
+tasks_schema = schemas.TaskSchema(many=True)
 
 
 @root_ns.route(
@@ -111,7 +112,7 @@ class User(Resource):
     's/<_range>/<order>',
     endpoint='users')
 class Users(Resource):
-    @flask_praetorian.roles_accepted('admin')
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
     def get(self, _range=None, order="ascending"):
         try:
             items = get_range(get_all_objects(USER), _range, order)
@@ -136,6 +137,21 @@ class Users(Resource):
             return not_unique_error("username")
 
         return {'uuid': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
+
+
+
+@ns.route('/<user_id>/tasks')
+class AssignedTasksList(Resource):
+    @flask_praetorian.auth_required
+    def get(self, user_id):
+        try:
+            user = get_object(USER, user_id)
+        except ObjectNotFoundError:
+            return not_found(USER, user_id)
+
+        return jsonify(tasks_schema.dump(user.tasks).data)
+
+
 
 
 
