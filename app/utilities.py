@@ -4,6 +4,7 @@ from app.api.functions.sessionfunctions import get_session_object, get_all_sessi
 from app.api.functions.taskfunctions import get_task_object, get_all_tasks
 from app.api.functions.vehiclefunctions import get_vehicle_object, get_all_vehicles
 from app.api.functions.locationfunctions import get_location_object, get_all_locations
+from app.api.functions.priorityfunctions import get_all_priorities
 from app.api.functions.notefunctions import get_note_object
 from app.api.functions.deliverablefunctions import get_deliverable_object
 from app.api.functions.errors import already_flagged_for_deletion_error
@@ -72,7 +73,8 @@ def get_all_objects(type):
         models.Objects.USER: get_all_users(),
         models.Objects.TASK: get_all_tasks(),
         models.Objects.VEHICLE: get_all_vehicles(),
-        models.Objects.LOCATION: get_all_locations()
+        models.Objects.LOCATION: get_all_locations(),
+        models.Objects.PRIORITY: get_all_priorities()
     }
 
     obj = switch.get(type, lambda: None)

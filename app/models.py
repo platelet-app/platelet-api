@@ -15,6 +15,7 @@ class Objects(IntEnum):
     NOTE = auto()
     DELIVERABLE = auto()
     LOCATION = auto()
+    PRIORITY = auto()
 
 
 class SearchableMixin(object):
@@ -95,6 +96,10 @@ class Address(db.Model):
     country = db.Column(db.String(64))
     postcode = db.Column(db.String(64))
 
+class Priority(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String(64))
+
 class Task(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
@@ -109,11 +114,12 @@ class Task(SearchableMixin, db.Model):
     patch = db.Column(db.String(64))
     contact_name = db.Column(db.String(64))
     contact_number = db.Column(db.Integer)
-    priority = db.Column(db.Integer)
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
+    priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
     assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
@@ -241,6 +247,7 @@ class DeleteFlags(SearchableMixin, db.Model):
     active = db.Column(db.Boolean, default=True)
 
     __searchable__ = ['object_uuid', 'object_type', 'active']
+
 
 class Location(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)

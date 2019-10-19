@@ -1,4 +1,4 @@
-from marshmallow import ValidationError
+from marshmallow import ValidationError, pre_load
 from app import ma
 from marshmallow_sqlalchemy import fields, field_for
 from app import models
@@ -81,6 +81,11 @@ class UserSchema(ma.ModelSchema):
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
     )
 
+class PrioritySchema(ma.ModelSchema):
+    class Meta:
+        model = models.Priority
+        fields = ('id', 'label')
+
 class TaskSchema(ma.ModelSchema):
     class Meta:
         model = models.Task
@@ -98,11 +103,17 @@ class TaskSchema(ma.ModelSchema):
                                  exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
     pickup_time = fields.fields.DateTime()
     dropoff_time = fields.fields.DateTime()
+    priority = fields.fields.Nested(PrioritySchema, only="label")
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
         'collection': ma.URLFor('tasks_list')
     })
+
+#    @pre_load
+#    def set_urgency(self, data, **kwargs):
+#        if "priority" in data:
+
 
 
 class UserUsernameSchema(ma.ModelSchema):
