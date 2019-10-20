@@ -27,7 +27,8 @@ class AddressSchema(ma.ModelSchema):
         model = models.Address
 
         fields = ('ward', 'line1', 'line2', 'town',
-                  'county', 'country', 'postcode')
+                  'county', 'country', 'postcode',
+                  'what3words')
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
 

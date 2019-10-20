@@ -95,10 +95,11 @@ class Address(db.Model):
     county = db.Column(db.String(64))
     country = db.Column(db.String(64))
     postcode = db.Column(db.String(64))
+    what3words = db.Column(db.String(64))
 
 class Priority(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(64), unique=True)
 
 class Task(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
