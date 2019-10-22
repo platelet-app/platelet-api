@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, Blueprint, render_template
 from flask_restplus import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -19,7 +19,10 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="site/static", template_folder="site")
+@app.route("/")
+def react():
+    return render_template('index.html',api_url="http://localhost:5000")
 app.config.from_object(Config)
 
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
@@ -49,16 +52,6 @@ any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Loo
 search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch functions')
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
-## flask_restplus stuff
-
-#loginApi = Api(app, prefix='/api/{}/login'.format(apiVersion), catch_all_404s=True)
-#sessionApi = Api(app, prefix='/api/{}/session'.format(apiVersion), catch_all_404s=True)
-#taskApi = Api(app, prefix='/api/{}/task'.format(apiVersion), catch_all_404s=True)
-#vehicleApi = Api(app, prefix='/api/{}/vehicle'.format(apiVersion), catch_all_404s=True)
-#noteApi = Api(app, prefix='/api/{}/note'.format(apiVersion), catch_all_404s=True)
-#deliverableApi = Api(app, prefix='/api/{}/deliverable'.format(apiVersion), catch_all_404s=True)
-
-##
 
 FlaskBuzz.register_error_handler_with_flask_restplus(api)
 
@@ -68,15 +61,12 @@ migrate = Migrate(app, db)
 from app import models
 from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup, search, priority
 
+site_blueprint = Blueprint('site', __name__, url_prefix='/')
 
 guard.init_app(app, models.User)
-#app.register_blueprint(task.mod)
-app.register_blueprint(site.mod)
+app.register_blueprint(site_blueprint)
 app.register_blueprint(testing_views.mod)
-#app.register_blueprint(decoder.mod)
-#app.register_blueprint(encoder.mod)
 
-#app.run(host='0.0.0.0', debug=True)
 
 @app.after_request
 def after_request(response):
