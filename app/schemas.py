@@ -72,7 +72,7 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
-                  'dob', 'patch', 'roles', 'notes', 'links', 'vehicle')
+                  'dob', 'patch', 'roles', 'notes', 'links', 'vehicle', 'display_name')
 
     username = ma.Str(required=True)
     email = ma.Email()
