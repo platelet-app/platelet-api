@@ -173,6 +173,7 @@ class User(SearchableMixin, db.Model):
     email = db.Column(EmailType)
     password = db.Column(db.String())
     name = db.Column(db.String(64))
+    display_name = db.Column(db.String(64))
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
     assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
@@ -266,3 +267,8 @@ class Location(SearchableMixin, db.Model):
     @property
     def object_type(self):
         return Objects.LOCATION
+
+
+class Patch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String, unique=True)

@@ -20,9 +20,11 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 app = Flask(__name__, static_folder="site/static", template_folder="site")
+
+
 @app.route("/")
 def react():
-    return render_template('index.html',api_url="http://localhost:5000")
+    return render_template('index.html', api_url="http://localhost:5000")
 app.config.from_object(Config)
 
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \

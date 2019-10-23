@@ -6,7 +6,7 @@ import json
 
 insert_data = None
 
-if sys.argv[2]:
+if len(sys.argv) > 1:
     with open(sys.argv[2]) as f:
         insert_data = json.loads(f.read())
 
@@ -20,6 +20,7 @@ for user in insert_data['users']:
     if existing:
         db.session.delete(existing)
         db.session.commit()
+        db.session.flush()
 
     user['name'] = user['firstname'] + " " + user['secondname']
     user['dob'] = datetime.datetime.strptime(user['dob'], '%d/%m/%Y').date()
@@ -40,12 +41,43 @@ for loc in insert_data['savedlocations']:
     if existing:
         db.session.delete(existing)
         db.session.commit()
+        db.session.flush()
     loc['address'] = models.Address(**loc['address'])
     location_model = models.Location(**loc)
 
     db.session.add(location_model)
     db.session.commit()
 
+for patch in insert_data['patches']:
+    existing = None
+    try:
+        existing = models.Patch.query.filter_by(label=patch['label']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        db.session.flush()
+    patch_model = models.Patch(**patch)
+
+    db.session.add(patch_model)
+    db.session.commit()
+
+
+for priority in insert_data['priorities']:
+    existing = None
+    try:
+        existing = models.Patch.query.filter_by(label=priority['label']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        db.session.flush()
+    priority_model = models.Priority(**priority)
+
+    db.session.add(priority_model)
+    db.session.commit()
 
 date = datetime.datetime.strptime('01/01/1980', '%d/%m/%Y').date()
 
