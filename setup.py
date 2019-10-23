@@ -10,6 +10,20 @@ if len(sys.argv) > 1:
     with open(sys.argv[2]) as f:
         insert_data = json.loads(f.read())
 
+for patch in insert_data['patches']:
+    existing = None
+    try:
+        existing = models.Patch.query.filter_by(label=patch['label']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        db.session.flush()
+    patch_model = models.Patch(**patch)
+
+    db.session.add(patch_model)
+    db.session.commit()
 
 for user in insert_data['users']:
     existing = None
@@ -48,21 +62,6 @@ for loc in insert_data['savedlocations']:
     db.session.add(location_model)
     db.session.commit()
 
-for patch in insert_data['patches']:
-    existing = None
-    try:
-        existing = models.Patch.query.filter_by(label=patch['label']).first()
-    except:
-        pass
-    if existing:
-        db.session.delete(existing)
-        db.session.commit()
-        db.session.flush()
-    patch_model = models.Patch(**patch)
-
-    db.session.add(patch_model)
-    db.session.commit()
-
 
 for priority in insert_data['priorities']:
     existing = None
@@ -97,7 +96,7 @@ user = models.User(username="admin",
                    dob=date,
                    roles="admin,coordinator,rider",
                    is_active=True,
-                   patch="North")
+                   patch_id=1)
 
 db.session.add(user)
 db.session.commit()

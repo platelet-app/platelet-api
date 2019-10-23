@@ -62,6 +62,12 @@ def validate_date_of_registration(obj):
         raise ValidationError("date of registration cannot be before date of manufacture")
 
 
+class PatchSchema(ma.ModelSchema):
+    class Meta:
+        model = models.Patch
+        fields = ('id', 'label')
+
+
 class UserSchema(ma.ModelSchema):
     class Meta:
         model = models.User
@@ -81,6 +87,9 @@ class UserSchema(ma.ModelSchema):
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
     )
+
+    patch = fields.fields.Nested(PatchSchema, only="label")
+
 
 class PrioritySchema(ma.ModelSchema):
     class Meta:

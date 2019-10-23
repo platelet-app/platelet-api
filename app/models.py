@@ -177,7 +177,10 @@ class User(SearchableMixin, db.Model):
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
     assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
-    patch = db.Column(db.String(64))
+
+    patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
+    patch = db.relationship("Patch", foreign_keys=[patch_id])
+
     status = db.Column(db.String(64))
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     roles = db.Column(db.String())
@@ -186,7 +189,7 @@ class User(SearchableMixin, db.Model):
 
     tasks = db.relationship('Task', backref='rider', lazy='dynamic')
 
-    __searchable__ = ['username', 'roles', 'patch', 'name', 'email']
+    __searchable__ = ['username', 'roles', 'name', 'email']
 
     @classmethod
     def lookup(cls, username):
