@@ -13,13 +13,20 @@ class NoteSchema(ma.ModelSchema):
                   'user', 'deliverable', 'location')
 
 
+class DeliverableTypeSchema(ma.ModelSchema):
+    class Meta:
+        model = models.DeliverableType
+        fields = ('id', 'name')
+
+
 class DeliverableSchema(ma.ModelSchema):
     class Meta:
         model = models.Deliverable
-        fields = ('uuid', 'name', 'task_id', 'notes')
+        fields = ('uuid', 'task_id', 'notes', 'type', 'type_id')
 
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+    type = fields.fields.Nested(DeliverableTypeSchema, only="name")
 
 
 class AddressSchema(ma.ModelSchema):
@@ -95,12 +102,6 @@ class PrioritySchema(ma.ModelSchema):
     class Meta:
         model = models.Priority
         fields = ('id', 'label')
-
-
-class DeliverableTypeSchema(ma.ModelSchema):
-    class Meta:
-        model = models.DeliverableType
-        fields = ('id', 'name')
 
 
 class TaskSchema(ma.ModelSchema):
