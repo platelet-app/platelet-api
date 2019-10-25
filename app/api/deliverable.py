@@ -5,13 +5,24 @@ import flask_praetorian
 from app import deliverable_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error
-from app.utilities import get_object, add_item_to_delete_queue
+from app.utilities import get_object, add_item_to_delete_queue, get_all_objects
 from app.exceptions import ObjectNotFoundError
 from app import db
 
 DELIVERABLE = models.Objects.DELIVERABLE
+DELIVERABLE_TYPE = models.Objects.DELIVERABLE_TYPE
 
 deliverable_schema = schemas.DeliverableSchema()
+deliverable_types_schema = schemas.DeliverableTypeSchema(many=True)
+
+
+@ns.route('s/available')
+class DeliverableType(Resource):
+    @flask_praetorian.auth_required
+    def get(self):
+        deliverable_types = get_all_objects(DELIVERABLE_TYPE)
+        return jsonify(deliverable_types_schema.dump(deliverable_types).data)
+
 
 
 @ns.route('/<deliverable_id>')

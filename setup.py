@@ -78,6 +78,21 @@ for priority in insert_data['priorities']:
     db.session.add(priority_model)
     db.session.commit()
 
+for deliverable in insert_data['deliverables']:
+    existing = None
+    try:
+        existing = models.DeliverableType.query.filter_by(name=deliverable['name']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        db.session.flush()
+    deliverable_type_model = models.DeliverableType(**deliverable)
+
+    db.session.add(deliverable_type_model)
+    db.session.commit()
+
 date = datetime.datetime.strptime('01/01/1980', '%d/%m/%Y').date()
 
 password = guard.encrypt_password(sys.argv[1])

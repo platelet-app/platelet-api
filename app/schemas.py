@@ -96,6 +96,13 @@ class PrioritySchema(ma.ModelSchema):
         model = models.Priority
         fields = ('id', 'label')
 
+
+class DeliverableTypeSchema(ma.ModelSchema):
+    class Meta:
+        model = models.DeliverableType
+        fields = ('id', 'name')
+
+
 class TaskSchema(ma.ModelSchema):
     class Meta:
         model = models.Task

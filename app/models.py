@@ -14,8 +14,10 @@ class Objects(IntEnum):
     VEHICLE = auto()
     NOTE = auto()
     DELIVERABLE = auto()
+    DELIVERABLE_TYPE = auto()
     LOCATION = auto()
     PRIORITY = auto()
+    PATCH = auto()
 
 
 class SearchableMixin(object):
@@ -74,11 +76,22 @@ class Note(db.Model):
     def object_type(self):
         return Objects.NOTE
 
+
+class DeliverableType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
+
+    @property
+    def object_type(self):
+        return Objects.DELIVERABLE_TYPE
+
+
 class Deliverable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    name = db.Column(db.String(64))
     task_id = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    type_id = db.Column(db.Integer, db.ForeignKey('deliverable_type.id'))
+    type = db.relationship("DeliverableType", foreign_keys=[type_id])
     notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
 
     @property
@@ -100,6 +113,10 @@ class Address(db.Model):
 class Priority(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(64), unique=True)
+
+    @property
+    def object_type(self):
+        return Objects.PRIORITY
 
 class Task(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -275,3 +292,7 @@ class Location(SearchableMixin, db.Model):
 class Patch(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String, unique=True)
+
+    @property
+    def object_type(self):
+        return Objects.PATCH

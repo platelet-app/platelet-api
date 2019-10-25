@@ -6,7 +6,7 @@ from app.api.functions.vehiclefunctions import get_vehicle_object, get_all_vehic
 from app.api.functions.locationfunctions import get_location_object, get_all_locations
 from app.api.functions.priorityfunctions import get_all_priorities
 from app.api.functions.notefunctions import get_note_object
-from app.api.functions.deliverablefunctions import get_deliverable_object
+from app.api.functions.deliverablefunctions import get_deliverable_object, get_all_deliverable_types
 from app.api.functions.errors import already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, InvalidRangeError
 
@@ -74,7 +74,8 @@ def get_all_objects(type):
         models.Objects.TASK: get_all_tasks(),
         models.Objects.VEHICLE: get_all_vehicles(),
         models.Objects.LOCATION: get_all_locations(),
-        models.Objects.PRIORITY: get_all_priorities()
+        models.Objects.PRIORITY: get_all_priorities(),
+        models.Objects.DELIVERABLE_TYPE: get_all_deliverable_types()
     }
 
     obj = switch.get(type, lambda: None)
