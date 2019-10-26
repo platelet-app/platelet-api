@@ -8,7 +8,7 @@ import datetime
 class NoteSchema(ma.ModelSchema):
     class Meta:
         model = models.Note
-        fields = ('subject', 'body',
+        fields = ('uuid', 'subject', 'body',
                   'task', 'vehicle', 'session',
                   'user', 'deliverable', 'location')
 

@@ -38,11 +38,12 @@ class Note(Resource):
         return add_item_to_delete_queue(note)
 
     @flask_praetorian.roles_required('admin', 'coordinator')
-    def put(self, note_id):
+    def put(self, _id):
         try:
-            note = get_object(NOTE, note_id)
+            note = get_object(NOTE, _id)
         except ObjectNotFoundError:
-            return not_found(NOTE, note_id)
+            return not_found(NOTE, _id)
+
 
         load_request_into_object(NOTE, instance=note)
         db.session.commit()
