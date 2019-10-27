@@ -5,6 +5,7 @@ from app import app, db, models, guard
 from app.api.functions.userfunctions import is_username_present
 import datetime
 
+app.run()
 
 @pytest.fixture(scope="session")
 def client():

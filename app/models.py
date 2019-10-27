@@ -66,11 +66,11 @@ class Note(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
     subject = db.Column(db.String(200))
-    task = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
-    user = db.Column(UUID(as_uuid=True),  db.ForeignKey('user.uuid'))
-    session = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
-    vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
-    deliverable = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
+    task_id = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    user_id = db.Column(UUID(as_uuid=True),  db.ForeignKey('user.uuid'))
+    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    vehicle_id = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
+    deliverable_id = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
 
     @property
     def object_type(self):

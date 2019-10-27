@@ -9,8 +9,8 @@ class NoteSchema(ma.ModelSchema):
     class Meta:
         model = models.Note
         fields = ('uuid', 'subject', 'body',
-                  'task', 'vehicle', 'session',
-                  'user', 'deliverable', 'location')
+                  'task_id', 'vehicle_id', 'session_id',
+                  'user_id', 'deliverable_id', 'location_id')
 
 
 class DeliverableTypeSchema(ma.ModelSchema):
@@ -25,7 +25,7 @@ class DeliverableSchema(ma.ModelSchema):
         fields = ('uuid', 'task_id', 'notes', 'type', 'type_id')
 
     notes = fields.fields.Nested(NoteSchema, many=True,
-                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+                                 exclude=('task_id', 'deliverable_id', 'vehicle_id', 'session_id', 'location_id', 'user_id'))
     type = fields.fields.Nested(DeliverableTypeSchema, only="name")
 
 
@@ -51,7 +51,7 @@ class VehicleSchema(ma.ModelSchema):
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
     registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
     notes = fields.fields.Nested(NoteSchema, many=True,
-                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+                                 exclude=('task_id', 'deliverable_id', 'vehicle_id', 'session_id', 'location_id', 'user_id'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('vehicle_detail', vehicle_id='<uuid>'),
@@ -87,7 +87,7 @@ class UserSchema(ma.ModelSchema):
     address = fields.fields.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
     notes = fields.fields.Nested(NoteSchema, many=True,
-                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+                                 exclude=('task_id', 'deliverable_id', 'vehicle_id', 'session_id', 'location_id', 'user_id'))
     #tasks = fields.fields.Nested(TaskSchema, many=True)
     vehicle = fields.fields.Nested(VehicleSchema, dump_only=True)
 
@@ -119,7 +119,7 @@ class TaskSchema(ma.ModelSchema):
     rider = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'notes'))
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
     notes = fields.fields.Nested(NoteSchema, many=True,
-                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+                                 exclude=('task_id', 'deliverable_id', 'vehicle_id', 'session_id', 'location_id', 'user_id'))
     pickup_time = fields.fields.DateTime()
     dropoff_time = fields.fields.DateTime()
     priority = fields.fields.Nested(PrioritySchema, only="label")
@@ -162,7 +162,7 @@ class SessionSchema(ma.ModelSchema):
     tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True,
                                  exclude=('notes', 'deliverables'))
     notes = fields.fields.Nested(NoteSchema, dump_only=True, many=True,
-                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+                                 exclude=('task_id', 'deliverable_id', 'vehicle_id', 'session_id', 'location_id', 'user_id'))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('session_detail', session_id='<uuid>'),
@@ -176,7 +176,7 @@ class LocationSchema(ma.ModelSchema):
         fields = ('uuid', 'name', 'contact', 'phone_number', 'address', 'notes', 'links')
 
     notes = fields.fields.Nested(NoteSchema, many=True,
-                                 exclude=('task', 'deliverable', 'vehicle', 'session', 'location', 'user'))
+                                 exclude=('task_id', 'deliverable_id', 'vehicle_id', 'session_id', 'location_id', 'user_id'))
     address = fields.fields.Nested(AddressSchema)
 
     links = ma.Hyperlinks({
