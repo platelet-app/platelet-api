@@ -3,6 +3,7 @@ import random
 import string
 from app import models
 from uuid import UUID
+from haikunator import Haikunator
 
 login_url = 'http://localhost:5000/api/v0.1/login'
 user_url = 'http://localhost:5000/api/v0.1/user'
@@ -11,6 +12,10 @@ jwtKey = ""
 authHeader = {}
 authJsonHeader = {}
 
+
+def generate_name():
+    haik = Haikunator()
+    return haik.haikunate()
 
 def attr_check(data, obj, exclude=[]):
     for key in data:
@@ -27,11 +32,6 @@ def attr_check(data, obj, exclude=[]):
                                 if key_third not in exclude:
                                     if not isinstance(data[key][key_second][key_third], dict):
                                         assert getattr(getattr(getattr(obj, key), key_second), key_third) == data[key][key_second][key_third]
-                                    else:
-                                        for key_fourth in data[key][key_second][key_third]:
-                                            if key_fourth not in exclude:
-                                                if not isinstance(data[key][key_second][key_third][key_fourth], dict):
-                                                    assert getattr(getattr(getattr(getattr(obj, key), key_second), key_third), key_fourth) == data[key][key_second][key_third][key_fourth]
 
 
 def get_test_json():
@@ -55,8 +55,27 @@ def get_user_id(js):
     return json.loads(js)['uuid']
 
 
-def random_string(length = 10):
+def random_string(length=10):
     return ''.join(random.choice(string.ascii_letters) for m in range(length))
+
+
+def get_object(type, _id):
+    if type == models.Objects.SESSION:
+        return models.Session.query.filter_by(uuid=_id).first()
+    elif type == models.Objects.USER:
+        return models.User.query.filter_by(uuid=_id).first()
+    elif type == models.Objects.TASK:
+        return models.Task.query.filter_by(uuid=_id).first()
+    elif type == models.Objects.VEHICLE:
+        return models.Vehicle.query.filter_by(uuid=_id).first()
+    elif type == models.Objects.NOTE:
+        return models.Note.query.filter_by(uuid=_id).first()
+    elif type == models.Objects.DELIVERABLE:
+        return models.Deliverable.query.filter_by(uuid=_id).first()
+    elif type == models.Objects.LOCATION:
+        return models.Location.query.filter_by(uuid=_id).first()
+    else:
+        return None
 
 
 def login_as(client, user_type):
