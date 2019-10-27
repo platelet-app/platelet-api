@@ -4,7 +4,7 @@ from config import basedir
 from app import app, db, models, guard, schemas
 from app.api.functions.userfunctions import is_username_present
 import datetime
-from tests.testutils import test_json
+from tests.testutils import get_test_json
 import json
 from haikunator import Haikunator
 
@@ -12,7 +12,7 @@ def generate_name():
     haik = Haikunator()
     return haik.haikunate()
 
-json_data = test_json()
+json_data = get_test_json()
 
 app.config['TESTING'] = True
 app.config['WTF_CSRF_ENABLED'] = False
@@ -56,8 +56,37 @@ def login_header():
 
 @pytest.fixture(scope="session")
 def user_coordinator():
-    res = dict(**json_data['users']['coordinator'], password=None, username=generate_name(), display_name=generate_name())
+    res = dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name())
     return res
+
+
+@pytest.fixture(scope="session")
+def user_uuid():
+    schema = schemas.UserSchema()
+    user = schema.load(dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())).data
+    db.session.add(user)
+    db.session.commit()
+    db.session.flush()
+    yield user.uuid
+    db.session.delete(user)
+    db.session.commit()
+
+@pytest.fixture(scope="session")
+def all_user_uuids():
+    schema = schemas.UserSchema()
+    users = []
+    for key in json_data['users']:
+        user = schema.load(dict(**json_data['users'][key], password="somepass", username=generate_name(), display_name=generate_name())).data
+        db.session.add(user)
+        db.session.commit()
+        db.session.flush()
+        users.append(user)
+
+    yield [str(i.uuid) for i in users]
+    for user in users:
+        db.session.delete(user)
+    db.session.commit()
+
 
 
 @pytest.fixture(scope="session")

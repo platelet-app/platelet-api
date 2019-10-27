@@ -1,7 +1,8 @@
 import json
-from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response
+from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, attribute_check
 import tests.testutils
 from app import models, db
+from datetime import datetime
 
 user_id = -1
 username = "test_user"
@@ -45,24 +46,34 @@ def test_add_valid_user(client, user_coordinator, login_header):
 
 
 
-
-def test_get_user(client):
-    r = client.get('{}/{}'.format(user_url, user_id), headers=tests.testutils.authHeader)
+def test_get_user(client, user_uuid, login_header):
+    r = client.get('{}/{}'.format(user_url, user_uuid), headers=login_header)
     print_response(r)
     assert(r.status_code == 200)
 
     data = json.loads(r.data)
-    assert(data['uuid'] == user_id)
-    assert(data['username'] == username)
+    user_model = models.User.query.filter_by(uuid=user_uuid).first()
+
+    #assert datetime(data['dob']) == user_model.dob
+
+    attribute_check(data, user_model, exclude=["password", "id", "dob", "links", "notes", "uuid"])
 
 
-def test_get_users(client):
-    r = client.get('{}s'.format(user_url),  headers=tests.testutils.authHeader)
+def test_get_users(client, all_user_uuids, login_header):
+    r = client.get('{}s'.format(user_url),  headers=login_header)
     print_response(r)
     assert(r.status_code == 200)
 
     data = json.loads(r.data)
+
     users = models.User.query.all()
+
+    for user in users:
+        if str(user.uuid) in all_user_uuids:
+            for i in data:
+                if i['uuid'] == str(user.uuid):
+                    attribute_check(i, user, exclude=["password", "id", "dob", "links", "notes", "uuid", "email"])
+
     assert(len(data) == len(users))
 
 

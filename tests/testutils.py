@@ -11,7 +11,30 @@ jwtKey = ""
 authHeader = {}
 authJsonHeader = {}
 
-def test_json():
+
+def attribute_check(data, obj, exclude=[]):
+    for key in data:
+        if key not in exclude:
+            if not isinstance(data[key], dict):
+                assert getattr(obj, key) == data[key]
+            else:
+                for key_second in data[key]:
+                    if key_second not in exclude:
+                        if not isinstance(data[key][key_second], dict):
+                            assert getattr(getattr(obj, key), key_second) == data[key][key_second]
+                        else:
+                            for key_third in data[key][key_second]:
+                                if key_third not in exclude:
+                                    if not isinstance(data[key][key_second][key_third], dict):
+                                        assert getattr(getattr(getattr(obj, key), key_second), key_third) == data[key][key_second][key_third]
+                                    else:
+                                        for key_fourth in data[key][key_second][key_third]:
+                                            if key_fourth not in exclude:
+                                                if not isinstance(data[key][key_second][key_third][key_fourth], dict):
+                                                    assert getattr(getattr(getattr(getattr(obj, key), key_second), key_third), key_fourth) == data[key][key_second][key_third][key_fourth]
+
+
+def get_test_json():
     with open("test_data.json") as f:
         json_data = json.load(f)
     return json_data
