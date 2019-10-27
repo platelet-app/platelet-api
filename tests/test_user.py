@@ -1,7 +1,7 @@
 import json
 from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response
 import tests.testutils
-from app import models
+from app import models, db
 
 user_id = -1
 username = "test_user"
@@ -31,15 +31,19 @@ def test_login(client):
     tests.testutils.authHeader = {"Authorization": "Bearer {}".format(data['access_token'])}
 
 
-def test_add_valid_user(client):
-    r = client.post('{}s'.format(user_url), data=json.dumps(payload), headers=tests.testutils.authJsonHeader)
+def test_add_valid_user(client, user_coordinator, login_header):
+    r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header)
     print_response(r)
     assert(r.status_code == 201)
 
     data = json.loads(r.data)
     assert(is_valid_uuid(data['uuid']))
-    global user_id
-    user_id = data['uuid']
+    del_user = models.User.query.filter_by(uuid=data['uuid']).first()
+    assert isinstance(del_user, models.User)
+    db.session.delete(del_user)
+    db.session.commit()
+
+
 
 
 def test_get_user(client):

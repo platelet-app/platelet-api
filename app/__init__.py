@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template
+from flask import Flask, Blueprint, render_template, url_for
 from flask_restplus import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -61,7 +61,7 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup, search, priority
+from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup, search, priority, ping
 
 site_blueprint = Blueprint('site', __name__, url_prefix='/')
 

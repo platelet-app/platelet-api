@@ -11,6 +11,12 @@ jwtKey = ""
 authHeader = {}
 authJsonHeader = {}
 
+def test_json():
+    with open("test_data.json") as f:
+        json_data = json.load(f)
+    return json_data
+
+
 def print_response(r):
     print("Status Code: {}, Payload: {}".format(r.status_code,json.loads(r.data)))
 

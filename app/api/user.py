@@ -130,7 +130,7 @@ class Users(Resource):
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
 
-        user.password = guard.encrypt_password(user.password)
+        user.password = guard.encrypt_password(user.password if user.password else "")
         try:
             db.session.add(user)
             db.session.commit()
