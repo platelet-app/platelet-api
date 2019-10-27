@@ -71,6 +71,27 @@ def login_header_coordinator():
 
 
 @pytest.fixture(scope="session")
+def login_header_rider():
+    schema = schemas.UserSchema()
+    user = schema.load(dict(**json_data['users']['rider'],
+                            username=generate_name(),
+                            display_name=generate_name(),
+                            password=guard.hash_password("somepass")
+                            )).data
+    assert isinstance(user, models.User)
+    db.session.add(user)
+    db.session.commit()
+    res = _client.post("{}login".format(api_url), data={"username": user.username, "password": "somepass"})
+    assert res.status == "200 OK"
+    token = json.loads(res.data)
+    assert "access_token" in token
+    header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
+    yield header
+    db.session.delete(user)
+    db.session.commit()
+
+
+@pytest.fixture(scope="session")
 def user_coordinator():
     res = dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name())
     return res
@@ -114,6 +135,21 @@ def all_user_uuids():
         db.session.delete(user)
     db.session.commit()
 
+@pytest.fixture(scope="session")
+def coordinator_session_uuid():
+    schema = schemas.UserSchema()
+    user = schema.load(dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name())).data
+    db.session.add(user)
+    db.session.commit()
+    db.session.flush()
+    session = models.Session(user_id=user.uuid)
+    db.session.add(session)
+    db.session.commit()
+    db.session.flush()
+    yield str(session.uuid)
+    db.session.delete(session)
+    db.session.delete(user)
+    db.session.commit()
 
 
 @pytest.fixture(scope="session")

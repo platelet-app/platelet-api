@@ -6,17 +6,17 @@ from app import models
 
 # Util functions
 
-def create_session(client, other_user_id=None):
+def create_session(client, header, other_user_id=None):
     if other_user_id:
         data = {"user": str(other_user_id)}
     else:
         data = ""
 
-    return client.post('{}s'.format(session_url), data=json.dumps(data), headers=tests.testutils.authJsonHeader)
+    return client.post('{}s'.format(session_url), data=json.dumps(data), headers=header)
 
 
-def create_session_success(client, other_user_id=None):
-    r = create_session(client, other_user_id)
+def create_session_success(client, header, other_user_id=None):
+    r = create_session(client, header, other_user_id)
     print_response(r)
     assert(r.status_code == 201)
     data = json.loads(r.data)
@@ -27,18 +27,18 @@ def create_session_success(client, other_user_id=None):
     return data['uuid']
 
 
-def create_session_fail(client, other_user_id=None):
-    r = create_session(client, other_user_id)
+def create_session_fail(client, header, other_user_id=None):
+    r = create_session(client, header, other_user_id)
     print_response(r)
     assert(r.status_code == 403)
 
 
-def delete_session(client, session_id):
-    return client.delete('{}/{}'.format(session_url, session_id), headers=tests.testutils.authHeader)
+def delete_session(client, header, session_id):
+    return client.delete('{}/{}'.format(session_url, session_id), headers=header)
 
 
-def delete_session_success(client, session_id):
-    r = delete_session(client, session_id)
+def delete_session_success(client, header, session_id):
+    r = delete_session(client, header, session_id)
     print_response(r)
     assert(r.status_code == 202)
 
@@ -50,68 +50,49 @@ def delete_session_success(client, session_id):
     assert int(queue.object_type) == int(models.Objects.SESSION)
 
 
-def delete_session_fail(client, session_id):
-    r = delete_session(client, session_id)
+def delete_session_fail(client, header, session_id):
+    r = delete_session(client, header, session_id)
     print_response(r)
     assert(r.status_code == 403)
 
 
 # Test functions
 
-def test_admin_create_session(client):
-    login_as(client, "admin")
-    global admin_session_id
-    admin_session_id = create_session_success(client)
+def test_admin_create_session(client, login_header_admin):
+    create_session_success(client, login_header_admin, )
 
 
-def test_coordinator_create_session(client):
-    login_as(client, "coordinator")
-    global coordinator_session_id
-    coordinator_session_id = create_session_success(client)
+def test_coordinator_create_session(client, login_header_coordinator):
+    create_session_success(client, login_header_coordinator)
 
 
-def test_rider_create_session(client):
-    login_as(client, "rider")
-    create_session_fail(client)
+def test_rider_create_session(client, login_header_rider):
+    create_session_fail(client, login_header_rider)
 
 
-def test_admin_create_session_other_user(client):
-    login_as(client, "admin")
-    create_session_success(client)
+def test_admin_create_session_other_user(client, login_header_admin, user_coordinator_uuid):
+    create_session_success(client, login_header_admin, other_user_id=user_coordinator_uuid)
 
 
-def test_coordinator_create_session_other_user(client):
-    login_as(client, "coordinator")
-    create_session_fail(client, find_user("admin"))
+def test_coordinator_create_session_other_user(client, login_header_coordinator, user_coordinator_uuid):
+    create_session_fail(client, login_header_coordinator, other_user_id=user_coordinator_uuid)
 
 
-def test_rider_create_session_other_user(client):
-    login_as(client, "rider")
-    create_session_fail(client, find_user("coordinator"))
+def test_rider_create_session_other_user(client, login_header_rider, user_coordinator_uuid):
+    create_session_fail(client, login_header_rider, user_coordinator_uuid)
 
 
-def test_rider_delete_session_other_user(client):
-    login_as(client, "rider")
-    delete_session_fail(client, coordinator_session_id)
+def test_rider_delete_session_other_user(client, login_header_rider, coordinator_session_uuid):
+    delete_session_fail(client, login_header_rider, coordinator_session_uuid)
 
 
-def test_coordinator_delete_session_other_user(client):
-    login_as(client, "coordinator")
-    delete_session_fail(client, admin_session_id)
+def test_coordinator_delete_session_other_user(client, login_header_coordinator, coordinator_session_uuid):
+    delete_session_fail(client, login_header_coordinator, coordinator_session_uuid)
 
 
-def test_coordinator_delete_session(client):
-    login_as(client, "coordinator")
-    delete_session_success(client, coordinator_session_id)
+def test_coordinator_delete_session(client, login_header_coordinator, coordinator_session_uuid):
+    delete_session_success(client, coordinator_session_uuid)
 
 
-def test_admin_delete_session(client):
-    login_as(client, "admin")
-    delete_session_success(client, admin_session_id)
-
-
-def test_admin_delete_session_other_user(client):
-    login_as(client, "coordinator")
-    other_user_session = create_session_success(client)
-    login_as(client, "admin")
-    delete_session_success(client, other_user_session)
+def test_admin_delete_session_other_user(client, login_header_admin, coordinator_session_uuid):
+    delete_session_success(client, login_header_admin, coordinator_session_uuid)
