@@ -23,17 +23,6 @@ payload['address'] = address
 
 # User and Users
 
-def test_login(client):
-    login_details = {"username": "test_admin", "password": "9409u8fgrejki0"}
-    r = client.post(login_url, data=login_details)
-    print_response(r)
-    assert(r.status_code == 200)
-
-    data = json.loads(r.data)
-    tests.testutils.authJsonHeader = {"Authorization": "Bearer {}".format(data['access_token']), 'content-type': 'application/json'}
-    tests.testutils.authHeader = {"Authorization": "Bearer {}".format(data['access_token'])}
-
-
 def test_add_valid_user(client, user_coordinator, login_header_admin):
     r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
     print_response(r)

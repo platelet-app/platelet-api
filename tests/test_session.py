@@ -90,8 +90,9 @@ def test_coordinator_delete_session_other_user(client, login_header_coordinator,
     delete_session_fail(client, login_header_coordinator, coordinator_session_uuid)
 
 
-def test_coordinator_delete_session(client, login_header_coordinator, coordinator_session_uuid):
-    delete_session_success(client, coordinator_session_uuid)
+def test_coordinator_delete_session(client, login_header_coordinator):
+    session_uuid = create_session_success(client, login_header_coordinator)
+    delete_session_success(client, login_header_coordinator, session_uuid)
 
 
 def test_admin_delete_session_other_user(client, login_header_admin, coordinator_session_uuid):
