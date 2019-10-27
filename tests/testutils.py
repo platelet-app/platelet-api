@@ -12,7 +12,7 @@ authHeader = {}
 authJsonHeader = {}
 
 
-def attribute_check(data, obj, exclude=[]):
+def attr_check(data, obj, exclude=[]):
     for key in data:
         if key not in exclude:
             if not isinstance(data[key], dict):

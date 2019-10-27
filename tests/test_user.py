@@ -1,5 +1,5 @@
 import json
-from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, attribute_check
+from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, attr_check
 import tests.testutils
 from app import models, db
 from datetime import datetime
@@ -56,7 +56,7 @@ def test_get_user(client, user_uuid, login_header):
 
     #assert datetime(data['dob']) == user_model.dob
 
-    attribute_check(data, user_model, exclude=["password", "id", "dob", "links", "notes", "uuid"])
+    attr_check(data, user_model, exclude=["password", "id", "dob", "links", "notes", "uuid"])
 
 
 def test_get_users(client, all_user_uuids, login_header):
@@ -72,7 +72,7 @@ def test_get_users(client, all_user_uuids, login_header):
         if str(user.uuid) in all_user_uuids:
             for i in data:
                 if i['uuid'] == str(user.uuid):
-                    attribute_check(i, user, exclude=["password", "id", "dob", "links", "notes", "uuid", "email"])
+                    attr_check(i, user, exclude=["password", "id", "dob", "links", "notes", "uuid", "email"])
 
     assert(len(data) == len(users))
 
