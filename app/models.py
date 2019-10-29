@@ -129,6 +129,7 @@ class Task(SearchableMixin, db.Model):
     pickup_address = db.relationship("Address", foreign_keys=[pickup_address_id])
     dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
 
+    # TODO: Make this foreign key
     patch = db.Column(db.String(64))
     contact_name = db.Column(db.String(64))
     contact_number = db.Column(db.Integer)

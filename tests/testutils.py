@@ -1,17 +1,31 @@
 import json
 import random
 import string
-from app import models
+from app import models, db
 from uuid import UUID
 from haikunator import Haikunator
 
-login_url = 'http://localhost:5000/api/v0.1/login'
-user_url = 'http://localhost:5000/api/v0.1/user'
-session_url = 'http://localhost:5000/api/v0.1/session'
+root_url = "http://localhost:5000/api/v0.1/"
+login_url = "{}login".format(root_url)
+user_url = "{}user".format(root_url)
+session_url = "{}session".format(root_url)
+task_url = "{}task".format(root_url)
 jwtKey = ""
 authHeader = {}
 authJsonHeader = {}
 
+
+def whoami(client, header):
+    res = client.get("{}whoami".format(root_url), headers=header)
+    return json.loads(res.data)['uuid']
+
+def delete_by_uuid(uuid):
+    for enum in models.Objects:
+        result = get_object(enum, uuid)
+        if result:
+            db.session.delete(result)
+            db.session.commit()
+            return
 
 def generate_name():
     haik = Haikunator()

@@ -163,5 +163,32 @@
     {"name": "Document"},
     {"name": "Milk"},
     {"name": "Other"}
-  ]
+  ],
+  "task_data": {
+    "pickup_address": {
+      "ward": "Accident and Emergency",
+      "line1": "Great Western Hospital",
+      "line2": "Marlborough Road",
+      "town": "Swindon",
+      "county": "Swindon",
+      "country": "UK",
+      "postcode": "SN3 6BB",
+      "what3words": "some.words.yay"
+    },
+    "dropoff_address":
+    {
+      "ward": "Silverpine Unit",
+      "line1": "Callington Road Hospital",
+      "line2": "Marmalade Lane",
+      "town": "Brislington",
+      "county": "Bristol",
+      "country": "UK",
+      "postcode": "BS4 5BJ",
+      "what3words": "other.words.yay"
+    },
+    "patch": "North",
+    "contact_name": "Someone Person",
+    "contact_number": "01234567890",
+    "priority_id": 1
+  }
 }

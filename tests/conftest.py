@@ -153,6 +153,10 @@ def coordinator_session_uuid():
 
 
 @pytest.fixture(scope="session")
+def task_data():
+    return json_data['task_data']
+
+@pytest.fixture(scope="session")
 def user_rider():
     res = dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())
     return res

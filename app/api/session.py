@@ -78,10 +78,11 @@ class Sessions(Resource):
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
+        calling_user = get_user_object_by_int_id(utilities.current_user_id()).uuid
         if request.get_json():
             try:
                 session = load_request_into_object(SESSION)
-                if session.user_id != utilities.current_user_id():
+                if session.user_id != str(calling_user):
                     if 'admin' not in utilities.current_rolenames():
                         return forbidden_error("only admins can create sessions for other users")
                     if not is_user_present(session.user_id):
@@ -91,7 +92,7 @@ class Sessions(Resource):
 
         else:
             session = models.Session()
-            session.user_id = get_user_object_by_int_id(utilities.current_user_id()).uuid
+            session.user_id = calling_user
 
         db.session.add(session)
         db.session.commit()
