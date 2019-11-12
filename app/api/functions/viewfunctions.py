@@ -35,6 +35,7 @@ def user_id_match_or_admin(func):
 
 def load_request_into_object(model_enum, instance=None):
     request_json = request.get_json()
+    print(request_json)
     if not request_json:
         raise SchemaValidationError("No json input data provided")
 
