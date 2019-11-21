@@ -5,14 +5,16 @@ import flask_praetorian
 from app import deliverable_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error
-from app.utilities import get_object, add_item_to_delete_queue, get_all_objects
-from app.exceptions import ObjectNotFoundError
+from app.utilities import get_object, add_item_to_delete_queue, get_all_objects, get_range
+from app.exceptions import ObjectNotFoundError, InvalidRangeError
 from app import db
 
 DELIVERABLE = models.Objects.DELIVERABLE
 DELIVERABLE_TYPE = models.Objects.DELIVERABLE_TYPE
+TASK = models.Objects.TASK
 
 deliverable_schema = schemas.DeliverableSchema()
+deliverables_schema = schemas.DeliverableSchema(many=True, exclude=("flagged_for_deletion",))
 deliverable_types_schema = schemas.DeliverableTypeSchema(many=True)
 
 
@@ -60,7 +62,8 @@ class Deliverable(Resource):
         return {'uuid': str(deliverable.uuid), 'message': 'Deliverable {} updated.'.format(deliverable.uuid)}, 200
 
 
-@ns.route('s')
+@ns.route('s',
+          's/<task_id>')
 class Deliverables(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
@@ -73,3 +76,19 @@ class Deliverables(Resource):
         db.session.commit()
 
         return {'uuid': str(deliverable.uuid), 'message': 'Deliverable {} created'.format(deliverable.uuid)}, 201
+
+    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    def get(self, task_id, _range=None, order="ascending"):
+        try:
+            task = get_object(TASK, task_id)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_id)
+
+        try:
+            items = get_range(task.deliverables.all(), _range, order)
+        except InvalidRangeError as e:
+            return forbidden_error(e)
+        except Exception as e:
+            return internal_error(e)
+
+        return deliverables_schema.jsonify(items)

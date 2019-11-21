@@ -94,6 +94,8 @@ class Deliverable(db.Model):
     type = db.relationship("DeliverableType", foreign_keys=[type_id])
     notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
 
+    flagged_for_deletion = db.Column(db.Boolean, default=False)
+
     @property
     def object_type(self):
         return Objects.DELIVERABLE
