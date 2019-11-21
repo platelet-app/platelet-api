@@ -58,8 +58,10 @@ class SearchableMixin(object):
         for obj in cls.query:
             add_to_index(cls.__tablename__, obj)
 
+
 db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
 db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
+
 
 class Note(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,7 +69,7 @@ class Note(db.Model):
     body = db.Column(db.String(10000))
     subject = db.Column(db.String(200))
     task_id = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
-    user_id = db.Column(UUID(as_uuid=True),  db.ForeignKey('user.uuid'))
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     vehicle_id = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
     deliverable_id = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
@@ -100,6 +102,7 @@ class Deliverable(db.Model):
     def object_type(self):
         return Objects.DELIVERABLE
 
+
 class Address(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
@@ -112,6 +115,7 @@ class Address(db.Model):
     postcode = db.Column(db.String(64))
     what3words = db.Column(db.String(64))
 
+
 class Priority(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(64), unique=True)
@@ -119,6 +123,7 @@ class Priority(db.Model):
     @property
     def object_type(self):
         return Objects.PRIORITY
+
 
 class Task(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -148,7 +153,6 @@ class Task(SearchableMixin, db.Model):
     pickup_time = db.Column(db.DateTime)
     dropoff_time = db.Column(db.DateTime)
 
-
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
 
     @property
@@ -156,7 +160,8 @@ class Task(SearchableMixin, db.Model):
         return Objects.TASK
 
     def __repr__(self):
-        return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp), str(self.priority))
+        return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp),
+                                                                  str(self.priority))
 
 
 class Vehicle(SearchableMixin, db.Model):
@@ -259,7 +264,7 @@ class Session(SearchableMixin, db.Model):
 
     def __repr__(self):
         return '<Session {} {}>'.format(self.uuid, self.timestamp)
-    
+
 
 class DeleteFlags(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
