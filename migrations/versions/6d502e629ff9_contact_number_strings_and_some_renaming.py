@@ -1,8 +1,8 @@
-"""initial
+"""contact number strings and some renaming
 
-Revision ID: ae14b053ee90
+Revision ID: 6d502e629ff9
 Revises: 
-Create Date: 2019-10-05 22:09:40.553885
+Create Date: 2019-11-26 19:37:04.185195
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 import sqlalchemy_utils
 
 # revision identifiers, used by Alembic.
-revision = 'ae14b053ee90'
+revision = '6d502e629ff9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -29,6 +29,7 @@ def upgrade():
     sa.Column('county', sa.String(length=64), nullable=True),
     sa.Column('country', sa.String(length=64), nullable=True),
     sa.Column('postcode', sa.String(length=64), nullable=True),
+    sa.Column('what3words', sa.String(length=64), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
     )
@@ -46,6 +47,24 @@ def upgrade():
     )
     op.create_index(op.f('ix_delete_flags_time_deleted'), 'delete_flags', ['time_deleted'], unique=False)
     op.create_index(op.f('ix_delete_flags_timestamp'), 'delete_flags', ['timestamp'], unique=False)
+    op.create_table('deliverable_type',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('name')
+    )
+    op.create_table('patch',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('label', sa.String(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('label')
+    )
+    op.create_table('priority',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('label', sa.String(length=64), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('label')
+    )
     op.create_table('vehicle',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
@@ -67,8 +86,8 @@ def upgrade():
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.Column('name', sa.String(length=64), nullable=True),
-    sa.Column('contact', sa.String(length=64), nullable=True),
-    sa.Column('phone_number', sa.Integer(), nullable=True),
+    sa.Column('contact_name', sa.String(length=64), nullable=True),
+    sa.Column('contact_number', sa.String(length=64), nullable=True),
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
     sa.Column('address_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['address_id'], ['address.id'], ),
@@ -85,17 +104,21 @@ def upgrade():
     sa.Column('username', sa.String(length=64), nullable=True),
     sa.Column('email', sqlalchemy_utils.types.email.EmailType(length=255), nullable=True),
     sa.Column('password', sa.String(), nullable=True),
+    sa.Column('contact_number', sa.String(length=64), nullable=True),
     sa.Column('name', sa.String(length=64), nullable=True),
+    sa.Column('display_name', sa.String(length=64), nullable=True),
     sa.Column('dob', sa.Date(), nullable=True),
     sa.Column('assigned_vehicle', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('patch', sa.String(length=64), nullable=True),
+    sa.Column('patch_id', sa.Integer(), nullable=True),
     sa.Column('status', sa.String(length=64), nullable=True),
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
     sa.Column('roles', sa.String(), nullable=True),
     sa.Column('is_active', sa.Boolean(), server_default='true', nullable=True),
     sa.ForeignKeyConstraint(['address_id'], ['address.id'], ),
     sa.ForeignKeyConstraint(['assigned_vehicle'], ['vehicle.uuid'], ),
+    sa.ForeignKeyConstraint(['patch_id'], ['patch.id'], ),
     sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('display_name'),
     sa.UniqueConstraint('username'),
     sa.UniqueConstraint('uuid')
     )
@@ -119,18 +142,19 @@ def upgrade():
     sa.Column('dropoff_address_id', sa.Integer(), nullable=True),
     sa.Column('patch', sa.String(length=64), nullable=True),
     sa.Column('contact_name', sa.String(length=64), nullable=True),
-    sa.Column('contact_number', sa.Integer(), nullable=True),
-    sa.Column('priority', sa.Integer(), nullable=True),
+    sa.Column('contact_number', sa.String(length=64), nullable=True),
     sa.Column('final_duration', sa.Time(), nullable=True),
     sa.Column('miles', sa.Integer(), nullable=True),
     sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
     sa.Column('session_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('priority_id', sa.Integer(), nullable=True),
     sa.Column('assigned_rider', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('pickup_time', sa.DateTime(), nullable=True),
     sa.Column('dropoff_time', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['assigned_rider'], ['user.uuid'], ),
     sa.ForeignKeyConstraint(['dropoff_address_id'], ['address.id'], ),
     sa.ForeignKeyConstraint(['pickup_address_id'], ['address.id'], ),
+    sa.ForeignKeyConstraint(['priority_id'], ['priority.id'], ),
     sa.ForeignKeyConstraint(['session_id'], ['session.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
@@ -139,9 +163,11 @@ def upgrade():
     op.create_table('deliverable',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
-    sa.Column('name', sa.String(length=64), nullable=True),
     sa.Column('task_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('type_id', sa.Integer(), nullable=True),
+    sa.Column('flagged_for_deletion', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['task_id'], ['task.uuid'], ),
+    sa.ForeignKeyConstraint(['type_id'], ['deliverable_type.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
     )
@@ -150,16 +176,16 @@ def upgrade():
     sa.Column('uuid', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('body', sa.String(length=10000), nullable=True),
     sa.Column('subject', sa.String(length=200), nullable=True),
-    sa.Column('task', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('user', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('session', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('vehicle', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.Column('deliverable', postgresql.UUID(as_uuid=True), nullable=True),
-    sa.ForeignKeyConstraint(['deliverable'], ['deliverable.uuid'], ),
-    sa.ForeignKeyConstraint(['session'], ['session.uuid'], ),
-    sa.ForeignKeyConstraint(['task'], ['task.uuid'], ),
-    sa.ForeignKeyConstraint(['user'], ['user.uuid'], ),
-    sa.ForeignKeyConstraint(['vehicle'], ['vehicle.uuid'], ),
+    sa.Column('task_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('user_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('session_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('vehicle_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.Column('deliverable_id', postgresql.UUID(as_uuid=True), nullable=True),
+    sa.ForeignKeyConstraint(['deliverable_id'], ['deliverable.uuid'], ),
+    sa.ForeignKeyConstraint(['session_id'], ['session.uuid'], ),
+    sa.ForeignKeyConstraint(['task_id'], ['task.uuid'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.uuid'], ),
+    sa.ForeignKeyConstraint(['vehicle_id'], ['vehicle.uuid'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uuid')
     )
@@ -180,6 +206,9 @@ def downgrade():
     op.drop_table('location')
     op.drop_index(op.f('ix_vehicle_timestamp'), table_name='vehicle')
     op.drop_table('vehicle')
+    op.drop_table('priority')
+    op.drop_table('patch')
+    op.drop_table('deliverable_type')
     op.drop_index(op.f('ix_delete_flags_timestamp'), table_name='delete_flags')
     op.drop_index(op.f('ix_delete_flags_time_deleted'), table_name='delete_flags')
     op.drop_table('delete_flags')

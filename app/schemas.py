@@ -112,7 +112,6 @@ class TaskSchema(ma.ModelSchema):
                   'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time', 'rider',
                   'priority_id')
 
-    contact_number = ma.Int()
 
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)
@@ -173,7 +172,7 @@ class SessionSchema(ma.ModelSchema):
 class LocationSchema(ma.ModelSchema):
     class Meta:
         model = models.Location
-        fields = ('uuid', 'name', 'contact', 'phone_number', 'address', 'notes', 'links')
+        fields = ('uuid', 'name', 'contact_name', 'contact_number', 'address', 'notes', 'links')
 
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_id', 'deliverable_id', 'vehicle_id', 'session_id', 'location_id', 'user_id'))
