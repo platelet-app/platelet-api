@@ -114,5 +114,9 @@ user = models.User(username="admin",
                    is_active=True,
                    patch_id=1)
 
+coorduser = models.User.query.filter_by(username="coordinator").first()
+coorduser.password = guard.encrypt_password(sys.argv[1])
+db.session.add(coorduser)
+
 db.session.add(user)
 db.session.commit()
