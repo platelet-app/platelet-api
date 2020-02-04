@@ -184,7 +184,7 @@ class Vehicle(SearchableMixin, db.Model):
         return Objects.VEHICLE
 
     def __repr__(self):
-        return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registrationNumber)
+        return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registration_number)
 
 
 class User(SearchableMixin, db.Model):

@@ -9,6 +9,7 @@ root_url = "http://localhost:5000/api/v0.1/"
 login_url = "{}login".format(root_url)
 user_url = "{}user".format(root_url)
 session_url = "{}session".format(root_url)
+vehicle_url = "{}vehicle".format(root_url)
 task_url = "{}task".format(root_url)
 jwtKey = ""
 authHeader = {}
@@ -32,6 +33,11 @@ def generate_name():
     return haik.haikunate()
 
 def attr_check(data, obj, exclude=[]):
+    if isinstance(obj, dict):
+        class Struct:
+            def __init__(self, **entries):
+                self.__dict__.update(entries)
+        obj = Struct(**obj)
     for key in data:
         if key not in exclude:
             if not isinstance(data[key], dict):

@@ -21,7 +21,6 @@ def create_session_success(client, header, other_user_id=None):
     assert(r.status_code == 201)
     data = json.loads(r.data)
 
-
     assert(is_valid_uuid(data['user_uuid']))
     assert(is_valid_uuid(data['uuid']))
     return data['uuid']

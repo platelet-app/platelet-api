@@ -3,7 +3,7 @@ import pytest
 from config import basedir
 from app import app, db, models, guard, schemas
 from app.api.functions.userfunctions import is_username_present
-import datetime
+from datetime import datetime
 from tests.testutils import get_test_json, generate_name
 import json
 
@@ -11,7 +11,7 @@ json_data = get_test_json()
 
 app.config['TESTING'] = True
 app.config['WTF_CSRF_ENABLED'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/bloodbike_test'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/bloodbike_dev'
 _client = app.test_client()
 
 db.create_all()
@@ -155,6 +155,14 @@ def coordinator_session_uuid():
 @pytest.fixture(scope="session")
 def task_data():
     return json_data['task_data']
+
+@pytest.fixture(scope="session")
+def vehicle_data():
+    data = json_data['vehicle_data']
+    print(data)
+    #data['date_of_manufacture'] = datetime.strptime(data['date_of_manufacture'], '%d/%m/%Y').date()
+    #data['date_of_registration'] = datetime.strptime(data['date_of_registration'], '%d/%m/%Y').date()
+    return data
 
 @pytest.fixture(scope="session")
 def user_rider():
