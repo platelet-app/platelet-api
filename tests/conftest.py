@@ -152,6 +152,18 @@ def coordinator_session_uuid():
     db.session.commit()
 
 
+@pytest.fixture(scope="function")
+def vehicle_obj():
+    schema = schemas.VehicleSchema()
+    vehicle = schema.load(dict(**json_data['vehicle_data'], name=generate_name())).data
+    db.session.add(vehicle)
+    db.session.commit()
+    db.session.flush()
+    yield vehicle
+    db.session.delete(vehicle)
+    db.session.commit()
+
+
 @pytest.fixture(scope="session")
 def task_data():
     return json_data['task_data']
@@ -159,9 +171,11 @@ def task_data():
 @pytest.fixture(scope="session")
 def vehicle_data():
     data = json_data['vehicle_data']
-    print(data)
-    #data['date_of_manufacture'] = datetime.strptime(data['date_of_manufacture'], '%d/%m/%Y').date()
-    #data['date_of_registration'] = datetime.strptime(data['date_of_registration'], '%d/%m/%Y').date()
+    return data
+
+@pytest.fixture(scope="session")
+def vehicle_data_alternative():
+    data = json_data['vehicle_data_alternative']
     return data
 
 @pytest.fixture(scope="session")
