@@ -164,19 +164,46 @@ def vehicle_obj():
     db.session.commit()
 
 
+@pytest.fixture(scope="function")
+def location_obj():
+    schema = schemas.LocationSchema()
+    location = schema.load(dict(**json_data['location_data'], name=generate_name())).data
+    db.session.add(location)
+    db.session.commit()
+    db.session.flush()
+    yield location
+    db.session.delete(location)
+    db.session.commit()
+
+
 @pytest.fixture(scope="session")
 def task_data():
     return json_data['task_data']
+
 
 @pytest.fixture(scope="session")
 def vehicle_data():
     data = json_data['vehicle_data']
     return data
 
+
 @pytest.fixture(scope="session")
 def vehicle_data_alternative():
     data = json_data['vehicle_data_alternative']
     return data
+
+
+@pytest.fixture(scope="session")
+def location_data():
+    data = json_data['location_data']
+    return data
+
+
+@pytest.fixture(scope="session")
+def location_data_alternative():
+    data = json_data['location_data_alternative']
+    return data
+
 
 @pytest.fixture(scope="session")
 def user_rider():

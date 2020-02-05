@@ -43,7 +43,7 @@ class AddressSchema(ma.ModelSchema):
 
 class VehicleSchema(ma.ModelSchema):
     class Meta:
-        model = models.Task
+        model = models.Vehicle
         fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
                   'registration_number', 'notes', 'links', 'name')
 

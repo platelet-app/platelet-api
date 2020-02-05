@@ -1,5 +1,5 @@
 import json
-from tests.testutils import is_json, is_valid_uuid, session_url, vehicle_url, task_url, login_as, find_user, is_valid_uuid, print_response, whoami, delete_by_uuid, get_object, attr_check
+from tests.testutils import dict_check, is_json, is_valid_uuid, session_url, vehicle_url, task_url, login_as, find_user, is_valid_uuid, print_response, whoami, delete_by_uuid, get_object, attr_check
 from app import db
 import tests.testutils
 from app import models
@@ -49,4 +49,4 @@ def test_get_vehicle(client, login_header_coordinator, vehicle_data, vehicle_obj
     assert r.status_code == 200
     check_data = vehicle_data.copy()
     check_data['name'] = vehicle_obj.name
-    attr_check(r.json, check_data, exclude=["timestamp", "links", "notes"])
+    dict_check(r.json, check_data, exclude=["links", "notes"])

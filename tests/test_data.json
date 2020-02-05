@@ -197,7 +197,7 @@
   "deliver_type_data": {
     "name": "woo"
   },
-  "locations_data": {
+  "location_data": {
     "address": {
       "ward": "Silverpine Unit",
       "line1": "Callington Road Hospital",
@@ -209,8 +209,21 @@
       "what3words": "other.words.yay"
     },
     "contact_name": "someone person",
-    "contact_number": "01234567890",
-    "name": "silverpine callington"
+    "contact_number": "01234567890"
+  },
+  "location_data_alternative": {
+    "address": {
+      "ward": "Blah hospital",
+      "line1": "Some road",
+      "line2": "woop",
+      "town": "Swindon",
+      "county": "Swindon?",
+      "country": "UK",
+      "postcode": "YASSS",
+      "what3words": "asdf.fdsa.eeee"
+    },
+    "contact_name": "someone person",
+    "contact_number": "01234567890"
   },
   "vehicle_data": {
     "manufacturer": "Yamaha",
