@@ -45,7 +45,7 @@ class VehicleSchema(ma.ModelSchema):
     class Meta:
         model = models.Vehicle
         fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
-                  'registration_number', 'notes', 'links', 'name')
+                  'registration_number', 'notes', 'links', 'name', 'uuid')
 
     date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
