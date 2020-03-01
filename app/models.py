@@ -257,7 +257,7 @@ class Session(SearchableMixin, db.Model):
 
     @property
     def task_count(self):
-        return len(self.tasks.all())
+        return len([task for task in self.tasks.all() if not task.flagged_for_deletion])
 
     @property
     def object_type(self):
