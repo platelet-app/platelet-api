@@ -68,11 +68,11 @@ class Note(db.Model):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
     subject = db.Column(db.String(200))
-    task_id = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
-    vehicle_id = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
-    deliverable_id = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
+    task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    session_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    vehicle_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
+    deliverable_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
 
     @property
     def object_type(self):
@@ -91,7 +91,7 @@ class DeliverableType(db.Model):
 class Deliverable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    task_id = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
+    task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     type_id = db.Column(db.Integer, db.ForeignKey('deliverable_type.id'))
     type = db.relationship("DeliverableType", foreign_keys=[type_id])
     notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
@@ -143,7 +143,7 @@ class Task(SearchableMixin, db.Model):
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
-    session_id = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
+    session_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
@@ -248,7 +248,7 @@ class Session(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
     flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='session_parent', lazy='dynamic')

@@ -82,22 +82,22 @@ class Sessions(Resource):
         if request.get_json():
             try:
                 session = load_request_into_object(SESSION)
-                if session.user_id != str(calling_user):
+                if session.user_uuid != str(calling_user):
                     if 'admin' not in utilities.current_rolenames():
                         return forbidden_error("only admins can create sessions for other users")
-                    if not is_user_present(session.user_id):
+                    if not is_user_present(session.user_uuid):
                         return forbidden_error("cannot create a session for a non-existent user")
             except SchemaValidationError as e:
                 return schema_validation_error(str(e))
 
         else:
             session = models.Session()
-            session.user_id = calling_user
+            session.user_uuid = calling_user
 
         db.session.add(session)
         db.session.commit()
 
-        user_obj = get_user_object(session.user_id)
+        user_obj = get_user_object(session.user_uuid)
 
         return {'uuid': str(session.uuid), 'user_uuid': str(user_obj.uuid), 'message': 'Session {} created'.format(str(session.uuid))}, 201
 

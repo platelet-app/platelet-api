@@ -93,6 +93,21 @@ for deliverable in insert_data['deliverables']:
     db.session.add(deliverable_type_model)
     db.session.commit()
 
+for vehicle in insert_data['vehicles']:
+    existing = None
+    try:
+        existing = models.Vehicle.query.filter_by(name=deliverable['name']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        db.session.flush()
+    vehicle_model = models.Vehicle(**vehicle)
+
+    db.session.add(vehicle_model)
+    db.session.commit()
+
 date = datetime.datetime.strptime('01/01/1980', '%d/%m/%Y').date()
 
 password = guard.encrypt_password(sys.argv[1])
@@ -114,8 +129,16 @@ user = models.User(username="admin",
                    is_active=True,
                    patch_id=1)
 
-coorduser = models.User.query.filter_by(username="coordinator").first()
-coorduser.password = guard.encrypt_password(sys.argv[1])
+coorduser = models.User(username="coordinator",
+                   email="asdf@asdf.com",
+                   password=password,
+                   address=address,
+                   name="Someone Person The Second",
+                   display_name="The Coordinator",
+                   dob=date,
+                   roles="coordinator",
+                   is_active=True)
+
 db.session.add(coorduser)
 
 db.session.add(user)
