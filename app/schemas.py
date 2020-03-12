@@ -76,7 +76,7 @@ class VehicleSchema(ma.ModelSchema):
 
     date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
-    assigned_user = fields.fields.Nested(UserSchema)
+    assigned_user = fields.fields.Nested(UserSchema, dump_only=True)
     #registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
