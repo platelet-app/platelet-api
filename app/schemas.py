@@ -39,16 +39,44 @@ class AddressSchema(ma.ModelSchema):
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
 
+class PatchSchema(ma.ModelSchema):
+    class Meta:
+        model = models.Patch
+        fields = ('id', 'label')
+
+
+class UserSchema(ma.ModelSchema):
+    class Meta:
+        model = models.User
+        fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
+                  'dob', 'patch', 'roles', 'notes', 'links', 'display_name')
+
+    username = ma.Str(required=True)
+    email = ma.Email()
+    dob = ma.DateTime(format='%d/%m/%Y')
+    address = fields.fields.Nested(AddressSchema)
+    uuid = field_for(models.User, 'uuid', dump_only=True)
+    notes = fields.fields.Nested(NoteSchema, many=True,
+                                 exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
+    #tasks = fields.fields.Nested(TaskSchema, many=True)
+    #vehicle = fields.fields.Nested(VehicleSchema, dump_only=True)
+
+    links = ma.Hyperlinks(
+        {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
+    )
+
+    patch = fields.fields.Nested(PatchSchema, only="label")
 
 
 class VehicleSchema(ma.ModelSchema):
     class Meta:
         model = models.Vehicle
         fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
-                  'registration_number', 'notes', 'links', 'name', 'uuid')
+                  'registration_number', 'notes', 'links', 'name', 'assigned_user', 'assigned_user_uuid', 'uuid')
 
     date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
+    assigned_user = fields.fields.Nested(UserSchema)
     #registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
@@ -68,34 +96,6 @@ def validate_date_of_registration(obj):
     if obj.dateOfManufacture > obj.dateOfRegistration:
         raise ValidationError("date of registration cannot be before date of manufacture")
 
-
-class PatchSchema(ma.ModelSchema):
-    class Meta:
-        model = models.Patch
-        fields = ('id', 'label')
-
-
-class UserSchema(ma.ModelSchema):
-    class Meta:
-        model = models.User
-        fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
-                  'dob', 'patch', 'roles', 'notes', 'links', 'vehicle', 'display_name')
-
-    username = ma.Str(required=True)
-    email = ma.Email()
-    dob = ma.DateTime(format='%d/%m/%Y')
-    address = fields.fields.Nested(AddressSchema)
-    uuid = field_for(models.User, 'uuid', dump_only=True)
-    notes = fields.fields.Nested(NoteSchema, many=True,
-                                 exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
-    #tasks = fields.fields.Nested(TaskSchema, many=True)
-    vehicle = fields.fields.Nested(VehicleSchema, dump_only=True)
-
-    links = ma.Hyperlinks(
-        {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
-    )
-
-    patch = fields.fields.Nested(PatchSchema, only="label")
 
 
 class PrioritySchema(ma.ModelSchema):

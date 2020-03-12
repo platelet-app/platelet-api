@@ -175,6 +175,8 @@ class Vehicle(SearchableMixin, db.Model):
     date_of_registration = db.Column(db.Date)
     registration_number = db.Column(db.String(10))
     flagged_for_deletion = db.Column(db.Boolean, default=False)
+    assigned_user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    assigned_user = db.relationship("User", foreign_keys=[assigned_user_uuid])
     notes = db.relationship('Note', backref='vehicle_parent', lazy='dynamic')
 
     __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
@@ -202,7 +204,7 @@ class User(SearchableMixin, db.Model):
     display_name = db.Column(db.String(64), unique=True)
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
-    assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
+    #assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
