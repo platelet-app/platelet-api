@@ -204,6 +204,7 @@ class User(SearchableMixin, db.Model):
     display_name = db.Column(db.String(64), unique=True)
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
+    assigned_vehicles = db.relationship('Vehicle', backref='vehicle', lazy='dynamic')
     #assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))

@@ -49,13 +49,15 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
-                  'dob', 'patch', 'roles', 'notes', 'links', 'display_name')
+                  'dob', 'patch', 'roles', 'notes', 'links', 'display_name',
+                  'assigned_vehicles')
 
     username = ma.Str(required=True)
     email = ma.Email()
     dob = ma.DateTime(format='%d/%m/%Y')
     address = fields.fields.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
+    assigned_vehicles = fields.fields.Nested("VehicleSchema", many=True, dump_only=True, exclude=("assigned_user",))
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     #tasks = fields.fields.Nested(TaskSchema, many=True)
