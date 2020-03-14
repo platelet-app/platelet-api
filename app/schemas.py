@@ -123,7 +123,7 @@ class TaskSchema(ma.ModelSchema):
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     pickup_time = fields.fields.DateTime()
     dropoff_time = fields.fields.DateTime()
-    priority = fields.fields.Nested(PrioritySchema, only="label")
+    priority = fields.fields.Nested(PrioritySchema, only="label", dump_only=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
