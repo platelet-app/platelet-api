@@ -153,6 +153,9 @@ class Task(SearchableMixin, db.Model):
     pickup_time = db.Column(db.DateTime)
     dropoff_time = db.Column(db.DateTime)
 
+    cancelled_time = db.Column(db.DateTime)
+    rejected_time = db.Column(db.DateTime)
+
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
 
     @property

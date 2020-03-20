@@ -112,7 +112,7 @@ class TaskSchema(ma.ModelSchema):
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
                   'contact_number', 'priority', 'session_uuid', 'timestamp', 'deliverables',
                   'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time', 'rider',
-                  'priority_id')
+                  'priority_id', 'cancelled_time', 'rejected_time')
 
 
     pickup_address = fields.fields.Nested(AddressSchema)
@@ -123,6 +123,8 @@ class TaskSchema(ma.ModelSchema):
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     pickup_time = fields.fields.DateTime()
     dropoff_time = fields.fields.DateTime()
+    cancelled_time = fields.fields.DateTime()
+    rejected_time = fields.fields.DateTime()
     priority = fields.fields.Nested(PrioritySchema, only="label", dump_only=True)
 
     links = ma.Hyperlinks({
