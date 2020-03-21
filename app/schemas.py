@@ -114,7 +114,6 @@ class TaskSchema(ma.ModelSchema):
                   'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time', 'rider',
                   'priority_id', 'cancelled_time', 'rejected_time')
 
-
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)
     rider = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'notes'), dump_only=True)

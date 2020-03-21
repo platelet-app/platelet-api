@@ -17,6 +17,22 @@ tasks_schema = schemas.TaskSchema(many=True)
 TASK = models.Objects.TASK
 SESSION = models.Objects.SESSION
 
+@ns.route('/<task_id>/restore', endpoint="task_undelete")
+class TaskRestore(Resource):
+    @flask_praetorian.roles_accepted("admin", "coordinator")
+    def put(self, task_id):
+        try:
+            task = get_object(TASK, task_id)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_id)
+
+        if task.flagged_for_deletion:
+            # TODO: clean up from delete queue or let it clean up itself?
+            task.flagged_for_deletion = False
+        else:
+            return {'uuid': str(task.uuid), 'message': 'Task {} not flagged for deletion.'.format(task.uuid)}, 200
+        db.session.commit()
+        return {'uuid': str(task.uuid), 'message': 'Task {} deletion flag removed.'.format(task.uuid)}, 200
 
 @ns.route('/<task_id>', endpoint="task_detail")
 class Task(Resource):
