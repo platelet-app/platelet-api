@@ -3,7 +3,7 @@ from app import schemas, models
 from flask_restplus import Resource
 import flask_praetorian
 from app import task_ns as ns
-from app.api.functions.viewfunctions import load_request_into_object, load_request_into_dict
+from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error
 from app.utilities import add_item_to_delete_queue, get_object, get_range
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError

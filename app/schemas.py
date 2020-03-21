@@ -120,10 +120,10 @@ class TaskSchema(ma.ModelSchema):
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
-    pickup_time = fields.fields.DateTime()
-    dropoff_time = fields.fields.DateTime()
-    cancelled_time = fields.fields.DateTime()
-    rejected_time = fields.fields.DateTime()
+    pickup_time = fields.fields.DateTime(allow_none=True)
+    dropoff_time = fields.fields.DateTime(allow_none=True)
+    cancelled_time = fields.fields.DateTime(allow_none=True)
+    rejected_time = fields.fields.DateTime(allow_none=True)
     priority = fields.fields.Nested(PrioritySchema, only="label", dump_only=True)
 
     links = ma.Hyperlinks({
