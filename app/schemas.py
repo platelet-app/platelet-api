@@ -112,7 +112,8 @@ class TaskSchema(ma.ModelSchema):
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
                   'contact_number', 'priority', 'session_uuid', 'timestamp', 'deliverables',
                   'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time', 'rider',
-                  'priority_id', 'cancelled_time', 'rejected_time')
+                  'priority_id', 'cancelled_time', 'rejected_time', "patient_name", "patient_contact_number",
+                  "destination_contact_number", "destination_contact_name")
 
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)

@@ -137,9 +137,14 @@ class Task(SearchableMixin, db.Model):
     dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
 
     # TODO: Make this foreign key
-    patch = db.Column(db.String(64))
+    patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
+    patch = db.relationship("Patch", foreign_keys=[patch_id])
     contact_name = db.Column(db.String(64))
     contact_number = db.Column(db.String(64))
+    patient_name = db.Column(db.String(64))
+    patient_contact_number = db.Column(db.String(64))
+    destination_contact_name = db.Column(db.String(64))
+    destination_contact_number = db.Column(db.String(64))
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
