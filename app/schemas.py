@@ -50,7 +50,7 @@ class UserSchema(ma.ModelSchema):
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'notes', 'links', 'display_name',
-                  'assigned_vehicles')
+                  'assigned_vehicles', 'patch_id')
 
     username = ma.Str(required=True)
     email = ma.Email()
@@ -67,7 +67,7 @@ class UserSchema(ma.ModelSchema):
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
     )
 
-    patch = fields.fields.Nested(PatchSchema, only="label")
+    patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
 
 
 class VehicleSchema(ma.ModelSchema):
