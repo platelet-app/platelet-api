@@ -39,6 +39,7 @@ class AddressSchema(ma.ModelSchema):
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
 
+
 class PatchSchema(ma.ModelSchema):
     class Meta:
         model = models.Patch
@@ -109,7 +110,7 @@ class PrioritySchema(ma.ModelSchema):
 class TaskSchema(ma.ModelSchema):
     class Meta:
         model = models.Task
-        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'contact_name',
+        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'contact_name',
                   'contact_number', 'priority', 'session_uuid', 'timestamp', 'deliverables',
                   'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time', 'rider',
                   'priority_id', 'cancelled_time', 'rejected_time', "patient_name", "patient_contact_number",
@@ -126,6 +127,7 @@ class TaskSchema(ma.ModelSchema):
     cancelled_time = fields.fields.DateTime(allow_none=True)
     rejected_time = fields.fields.DateTime(allow_none=True)
     priority = fields.fields.Nested(PrioritySchema, only="label", dump_only=True)
+    patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),

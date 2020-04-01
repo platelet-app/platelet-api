@@ -61,7 +61,7 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup, search, priority, ping
+from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup, search, priority, patch, ping
 
 site_blueprint = Blueprint('site', __name__, url_prefix='/')
 

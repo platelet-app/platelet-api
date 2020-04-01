@@ -6,18 +6,18 @@ from app import root_ns
 from app import models
 from app import schemas
 
-priorities_schema = schemas.PrioritySchema(many=True)
+patches_schema = schemas.PatchSchema(many=True)
 
-PRIORITY = models.Objects.PRIORITY
+PATCH = models.Objects.PATCH
 
 
-@root_ns.route('/priorities', endpoint='priorities_list')
-class Priorities(Resource):
+@root_ns.route('/patches', endpoint='patches_list')
+class Patches(Resource):
     def get(self):
         try:
-            items = get_all_objects(PRIORITY)
+            items = get_all_objects(PATCH)
         except Exception as e:
             return internal_error(e)
 
-        return jsonify(priorities_schema.dump(items).data)
+        return jsonify(patches_schema.dump(items).data)
 
