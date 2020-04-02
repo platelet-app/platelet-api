@@ -17,6 +17,22 @@ SESSION = models.Objects.SESSION
 session_schema = schemas.SessionSchema()
 sessions_schema = schemas.SessionSchema(many=True, exclude=('tasks',))
 
+@ns.route('/<session_id>/restore', endpoint="session_undelete")
+class SessionRestore(Resource):
+    @flask_praetorian.roles_accepted("admin", "coordinator")
+    def put(self, session_id):
+        try:
+            session = get_object(SESSION, session_id)
+        except ObjectNotFoundError:
+            return not_found(SESSION, session_id)
+
+        if session.flagged_for_deletion:
+            # TODO: clean up from delete queue or let it clean up itself?
+            session.flagged_for_deletion = False
+        else:
+            return {'uuid': str(session.uuid), 'message': 'Session {} not flagged for deletion.'.format(session.uuid)}, 200
+        db.session.commit()
+        return {'uuid': str(session.uuid), 'message': 'Session {} deletion flag removed.'.format(session.uuid)}, 200
 
 @ns.route('/<session_id>',
           endpoint='session_detail')
