@@ -41,7 +41,7 @@ class Deliverable(Resource):
         else:
             return not_found(deliverable_id)
 
-    @flask_praetorian.roles_required('admin')
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
     def delete(self, deliverable_id):
         try:
             deliverable = get_object(DELIVERABLE, deliverable_id)
@@ -50,7 +50,7 @@ class Deliverable(Resource):
 
         return add_item_to_delete_queue(deliverable)
 
-    @flask_praetorian.roles_required('admin', 'coordinator')
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
     def put(self, deliverable_id):
         try:
             deliverable = get_object(DELIVERABLE, deliverable_id)
