@@ -128,6 +128,7 @@ class TaskSchema(ma.ModelSchema):
     rejected_time = fields.fields.DateTime(allow_none=True)
     priority = fields.fields.Nested(PrioritySchema, only="label", dump_only=True)
     patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
+    timestamp = fields.fields.DateTime()
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
