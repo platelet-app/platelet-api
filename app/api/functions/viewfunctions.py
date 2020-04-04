@@ -5,7 +5,7 @@ from app import models
 from app.exceptions import SchemaValidationError
 from app.api.functions.errors import forbidden_error
 from app import schemas
-
+from app import logger
 user_schema = schemas.UserSchema()
 vehicle_schema = schemas.VehicleSchema()
 task_schema = schemas.TaskSchema()
@@ -37,7 +37,7 @@ def load_request_into_object(model_enum, instance=None):
     request_json = request.get_json()
     print(request_json)
     if not request_json:
-        raise SchemaValidationError("No json input data provided")
+        logger.warning("No json input data provided")
 
     if model_enum is models.Objects.USER:
         return user_schema.load(request_json, instance=instance if instance else None).data

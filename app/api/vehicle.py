@@ -16,6 +16,24 @@ vehicle_schema = schemas.VehicleSchema()
 vehicles_schema = schemas.VehicleSchema(many=True)
 
 
+@ns.route('/<vehicle_id>/restore', endpoint="vehicle_undelete")
+class VehicleRestore(Resource):
+    @flask_praetorian.roles_accepted("admin")
+    def put(self, vehicle_id):
+        try:
+            vehicle = get_object(VEHICLE, vehicle_id)
+        except ObjectNotFoundError:
+            return not_found(VEHICLE, vehicle_id)
+
+        if vehicle.flagged_for_deletion:
+            # TODO: clean up from delete queue or let it clean up itself?
+            vehicle.flagged_for_deletion = False
+        else:
+            return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} not flagged for deletion.'.format(vehicle.uuid)}, 200
+        db.session.commit()
+        return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} deletion flag removed.'.format(vehicle.uuid)}, 200
+
+
 @ns.route('/<vehicle_id>', endpoint='vehicle_detail')
 class Vehicle(Resource):
     @flask_praetorian.auth_required
