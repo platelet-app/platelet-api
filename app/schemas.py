@@ -4,25 +4,30 @@ from marshmallow_sqlalchemy import fields, field_for
 from app import models
 import datetime
 
+class TimesMixin:
+    time_created = fields.fields.DateTime()
+    time_modified = fields.fields.DateTime()
 
-class NoteSchema(ma.ModelSchema):
+class NoteSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Note
         fields = ('uuid', 'subject', 'body',
                   'task_uuid', 'vehicle_uuid', 'session_uuid',
-                  'user_uuid', 'deliverable_uuid', 'location_uuid')
+                  'user_uuid', 'deliverable_uuid', 'location_uuid',
+                  "time_created", "time_modified")
 
 
-class DeliverableTypeSchema(ma.ModelSchema):
+class DeliverableTypeSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.DeliverableType
         fields = ('id', 'name')
 
 
-class DeliverableSchema(ma.ModelSchema):
+class DeliverableSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Deliverable
-        fields = ('uuid', 'task_uuid', 'notes', 'type', 'type_id')
+        fields = ('uuid', 'task_uuid', 'notes', 'type', 'type_id',
+                  "time_created", "time_modified")
 
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
@@ -46,12 +51,13 @@ class PatchSchema(ma.ModelSchema):
         fields = ('id', 'label')
 
 
-class UserSchema(ma.ModelSchema):
+class UserSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'notes', 'links', 'display_name',
-                  'assigned_vehicles', 'patch_id')
+                  'assigned_vehicles', 'patch_id',
+                  "time_created", "time_modified")
 
     username = ma.Str(required=True)
     email = ma.Email()
@@ -71,11 +77,12 @@ class UserSchema(ma.ModelSchema):
     patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
 
 
-class VehicleSchema(ma.ModelSchema):
+class VehicleSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Vehicle
         fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
-                  'registration_number', 'notes', 'links', 'name', 'assigned_user', 'assigned_user_uuid', 'uuid')
+                  'registration_number', 'notes', 'links', 'name', 'assigned_user', 'assigned_user_uuid', 'uuid',
+                  "time_created", "time_modified")
 
     date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
@@ -107,14 +114,15 @@ class PrioritySchema(ma.ModelSchema):
         fields = ('id', 'label')
 
 
-class TaskSchema(ma.ModelSchema):
+class TaskSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Task
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'contact_name',
-                  'contact_number', 'priority', 'session_uuid', 'timestamp', 'deliverables',
-                  'notes', 'links', 'assigned_rider', 'pickup_time', 'dropoff_time', 'rider',
-                  'priority_id', 'cancelled_time', 'rejected_time', "patient_name", "patient_contact_number",
-                  "destination_contact_number", "destination_contact_name")
+                  'contact_number', 'priority', 'session_uuid', 'time_of_call', 'deliverables',
+                  'notes', 'links', 'assigned_rider', 'time_picked_up', 'time_dropped_off', 'rider',
+                  'priority_id', 'time_cancelled', 'time_rejected', "patient_name", "patient_contact_number",
+                  "destination_contact_number", "destination_contact_name",
+                  "time_created", "time_modified")
 
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)
@@ -123,12 +131,12 @@ class TaskSchema(ma.ModelSchema):
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     pickup_time = fields.fields.DateTime(allow_none=True)
-    dropoff_time = fields.fields.DateTime(allow_none=True)
-    cancelled_time = fields.fields.DateTime(allow_none=True)
-    rejected_time = fields.fields.DateTime(allow_none=True)
+    time_dropped_off = fields.fields.DateTime(allow_none=True)
+    time_cancelled = fields.fields.DateTime(allow_none=True)
+    time_rejected = fields.fields.DateTime(allow_none=True)
     priority = fields.fields.Nested(PrioritySchema, only="label", dump_only=True)
     patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
-    timestamp = fields.fields.DateTime()
+    time_of_call = fields.fields.DateTime()
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
@@ -158,12 +166,13 @@ class UserAddressSchema(ma.ModelSchema):
     address = fields.fields.Nested(AddressSchema, exclude=("ward",))
 
 
-class SessionSchema(ma.ModelSchema):
+class SessionSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Session
         fields = ('uuid', 'user_uuid',
-                  'timestamp', 'tasks',
-                  'notes', 'links', 'task_count')
+                  'time_created', 'tasks',
+                  'notes', 'links', 'task_count',
+                  "time_created", "time_modified")
 
     tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True,
                                  exclude=('notes', 'deliverables'))
@@ -176,10 +185,11 @@ class SessionSchema(ma.ModelSchema):
     })
 
 
-class LocationSchema(ma.ModelSchema):
+class LocationSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Location
-        fields = ('uuid', 'name', 'contact_name', 'contact_number', 'address', 'notes', 'links')
+        fields = ('uuid', 'name', 'contact_name', 'contact_number', 'address', 'notes', 'links',
+                  "time_created", "time_modified")
 
     notes = fields.fields.Nested(NoteSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))

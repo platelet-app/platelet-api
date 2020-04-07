@@ -20,7 +20,7 @@ class Objects(IntEnum):
     PATCH = auto()
 
 
-class SearchableMixin(object):
+class SearchableMixin:
     @classmethod
     def search(cls, expression, page, per_page):
         ids, total = query_index(cls.__tablename__, expression, page, per_page)
@@ -63,7 +63,13 @@ db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
 db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 
-class Note(db.Model):
+class CommonMixin:
+    time_created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    time_modified = db.Column(db.DateTime, index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
+    flagged_for_deletion = db.Column(db.Boolean, default=False)
+
+
+class Note(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
@@ -79,7 +85,7 @@ class Note(db.Model):
         return Objects.NOTE
 
 
-class DeliverableType(db.Model):
+class DeliverableType(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True)
 
@@ -88,7 +94,7 @@ class DeliverableType(db.Model):
         return Objects.DELIVERABLE_TYPE
 
 
-class Deliverable(db.Model):
+class Deliverable(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
@@ -96,7 +102,6 @@ class Deliverable(db.Model):
     type = db.relationship("DeliverableType", foreign_keys=[type_id])
     notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
 
-    flagged_for_deletion = db.Column(db.Boolean, default=False)
 
     @property
     def object_type(self):
@@ -116,7 +121,7 @@ class Address(db.Model):
     what3words = db.Column(db.String(64))
 
 
-class Priority(db.Model):
+class Priority(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(64), unique=True)
 
@@ -125,10 +130,10 @@ class Priority(db.Model):
         return Objects.PRIORITY
 
 
-class Task(SearchableMixin, db.Model):
+class Task(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    time_of_call = db.Column(db.DateTime, index=True)
 
     pickup_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     dropoff_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
@@ -147,7 +152,6 @@ class Task(SearchableMixin, db.Model):
     destination_contact_number = db.Column(db.String(64))
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
-    flagged_for_deletion = db.Column(db.Boolean, default=False)
     session_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
     priority = db.relationship("Priority", foreign_keys=[priority_id])
@@ -155,11 +159,11 @@ class Task(SearchableMixin, db.Model):
     notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
     assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
 
-    pickup_time = db.Column(db.DateTime)
-    dropoff_time = db.Column(db.DateTime)
+    time_picked_up = db.Column(db.DateTime)
+    time_dropped_off = db.Column(db.DateTime)
 
-    cancelled_time = db.Column(db.DateTime)
-    rejected_time = db.Column(db.DateTime)
+    time_cancelled = db.Column(db.DateTime)
+    time_rejected = db.Column(db.DateTime)
 
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
 
@@ -168,21 +172,19 @@ class Task(SearchableMixin, db.Model):
         return Objects.TASK
 
     def __repr__(self):
-        return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.timestamp),
+        return '<Task ID {} taken at {} with priority {}>'.format(str(self.uuid), str(self.time_created),
                                                                   str(self.priority))
 
 
-class Vehicle(SearchableMixin, db.Model):
+class Vehicle(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64), unique=True)
     manufacturer = db.Column(db.String(64))
     model = db.Column(db.String(64))
     date_of_manufacture = db.Column(db.Date)
     date_of_registration = db.Column(db.Date)
     registration_number = db.Column(db.String(10))
-    flagged_for_deletion = db.Column(db.Boolean, default=False)
     assigned_user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     assigned_user = db.relationship("User", foreign_keys=[assigned_user_uuid])
     notes = db.relationship('Note', backref='vehicle_parent', lazy='dynamic')
@@ -197,13 +199,12 @@ class Vehicle(SearchableMixin, db.Model):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registration_number)
 
 
-class User(SearchableMixin, db.Model):
+class User(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
 
     address = db.relationship("Address", foreign_keys=[address_id])
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     username = db.Column(db.String(64), unique=True)
     email = db.Column(EmailType)
     password = db.Column(db.String())
@@ -213,13 +214,11 @@ class User(SearchableMixin, db.Model):
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
     assigned_vehicles = db.relationship('Vehicle', backref='vehicle', lazy='dynamic')
-    #assigned_vehicle = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
 
     status = db.Column(db.String(64))
-    flagged_for_deletion = db.Column(db.Boolean, default=False)
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
     notes = db.relationship('Note', backref='user_parent', lazy='dynamic')
@@ -255,16 +254,14 @@ class User(SearchableMixin, db.Model):
         return '<User {}>'.format(self.username)
 
 
-class Session(SearchableMixin, db.Model):
+class Session(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
-    flagged_for_deletion = db.Column(db.Boolean, default=False)
     notes = db.relationship('Note', backref='session_parent', lazy='dynamic')
 
-    __searchable__ = ['timestamp']
+    __searchable__ = ['time_created']
 
     @property
     def task_count(self):
@@ -275,14 +272,14 @@ class Session(SearchableMixin, db.Model):
         return Objects.SESSION
 
     def __repr__(self):
-        return '<Session {} {}>'.format(self.uuid, self.timestamp)
+        return '<Session {} {}>'.format(self.uuid, self.time_created)
 
 
 class DeleteFlags(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     object_uuid = db.Column(UUID(as_uuid=True))
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    time_created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     time_to_delete = db.Column(db.Integer)
     time_deleted = db.Column(db.DateTime, index=True)
     object_type = db.Column(db.Integer)
@@ -291,14 +288,12 @@ class DeleteFlags(SearchableMixin, db.Model):
     __searchable__ = ['object_uuid', 'object_type', 'active']
 
 
-class Location(SearchableMixin, db.Model):
+class Location(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     name = db.Column(db.String(64), unique=True)
     contact_name = db.Column(db.String(64))
     contact_number = db.Column(db.String(64))
-    flagged_for_deletion = db.Column(db.Boolean, default=False)
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
 
@@ -309,7 +304,7 @@ class Location(SearchableMixin, db.Model):
         return Objects.LOCATION
 
 
-class Patch(db.Model):
+class Patch(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String, unique=True)
 

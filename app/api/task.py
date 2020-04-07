@@ -97,4 +97,4 @@ class Tasks(Resource):
         db.session.add(task)
         db.session.commit()
 
-        return {'uuid': str(task.uuid), 'timestamp': str(task.timestamp), 'message': 'Task {} created'.format(task.uuid)}, 201
+        return {'uuid': str(task.uuid), 'timestamp': str(task.time_created), 'message': 'Task {} created'.format(task.uuid)}, 201

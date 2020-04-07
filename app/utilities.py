@@ -67,7 +67,7 @@ def get_object(type, _id):
         raise
 
 
-def get_all_objects(type):
+def get_all_objects(type, include_delete_flagged=False):
 
     switch = {
         models.Objects.SESSION: get_all_sessions(),
@@ -80,10 +80,13 @@ def get_all_objects(type):
         models.Objects.DELIVERABLE_TYPE: get_all_deliverable_types()
     }
 
-    obj = switch.get(type, lambda: None)
+    items = switch.get(type, lambda: None)
 
-    if obj is not None:
-        return obj
+    if items is not None:
+        if include_delete_flagged:
+            return items
+        else:
+            return list(filter(lambda i: not i.flagged_for_deletion, items))
     else:
         raise ObjectNotFoundError("There is no object of this type")
 
