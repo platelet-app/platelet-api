@@ -4,9 +4,9 @@ from flask_restplus import Resource
 import flask_praetorian
 from app import note_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import not_found, internal_error, forbidden_error
+from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
 from app.utilities import get_object, add_item_to_delete_queue
-from app.exceptions import ObjectNotFoundError
+from app.exceptions import ObjectNotFoundError, AlreadyFlaggedForDeletionError
 from app import db
 
 NOTE = models.Objects.NOTE
@@ -34,8 +34,12 @@ class Note(Resource):
             note = get_object(NOTE, _id)
         except ObjectNotFoundError:
             return not_found("note", _id)
+        try:
+            add_item_to_delete_queue(note)
+        except AlreadyFlaggedForDeletionError:
+            return already_flagged_for_deletion_error(NOTE, str(note.uuid))
 
-        return add_item_to_delete_queue(note)
+        return {'uuid': str(note.uuid), 'message': "Note queued for deletion"}, 202
 
     @flask_praetorian.roles_required('admin', 'coordinator')
     def put(self, _id):

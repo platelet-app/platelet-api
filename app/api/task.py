@@ -4,9 +4,10 @@ from flask_restplus import Resource
 import flask_praetorian
 from app import task_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error
-from app.utilities import add_item_to_delete_queue, get_object, get_range
-from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError
+from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
+    already_flagged_for_deletion_error
+from app.utilities import add_item_to_delete_queue, get_object, get_range, remove_item_from_delete_queue
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError, AlreadyFlaggedForDeletionError
 from app.api.functions.taskfunctions import check_rider_match
 
 from app import db
@@ -27,11 +28,9 @@ class TaskRestore(Resource):
             return not_found(TASK, task_id)
 
         if task.flagged_for_deletion:
-            # TODO: clean up from delete queue or let it clean up itself?
-            task.flagged_for_deletion = False
+            remove_item_from_delete_queue(task)
         else:
             return {'uuid': str(task.uuid), 'message': 'Task {} not flagged for deletion.'.format(task.uuid)}, 200
-        db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} deletion flag removed.'.format(task.uuid)}, 200
 
 @ns.route('/<task_id>', endpoint="task_detail")
@@ -51,8 +50,12 @@ class Task(Resource):
             task = get_object(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
+        try:
+            add_item_to_delete_queue(task)
+        except AlreadyFlaggedForDeletionError:
+            return already_flagged_for_deletion_error(TASK, str(task.uuid))
 
-        return add_item_to_delete_queue(task)
+        return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
     @flask_praetorian.auth_required
     @check_rider_match

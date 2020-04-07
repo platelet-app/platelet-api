@@ -7,8 +7,9 @@ from flask_restplus import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
 from app.api.functions.userfunctions import get_user_object_by_int_id
-from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, internal_error
-from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError
+from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, \
+    internal_error, already_flagged_for_deletion_error
+from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError, AlreadyFlaggedForDeletionError
 from app.utilities import add_item_to_delete_queue, get_object, get_all_objects, get_range
 from app import guard
 from flask_praetorian import utilities as prae_util
@@ -85,8 +86,12 @@ class User(Resource):
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
+        try:
+            add_item_to_delete_queue(user)
+        except AlreadyFlaggedForDeletionError:
+            return already_flagged_for_deletion_error(USER, str(user.uuid))
 
-        return add_item_to_delete_queue(user)
+        return {'uuid': str(user.uuid), 'message': "User queued for deletion"}, 202
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin

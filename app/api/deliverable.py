@@ -4,9 +4,9 @@ from flask_restplus import Resource
 import flask_praetorian
 from app import deliverable_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import not_found, internal_error, forbidden_error
+from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
 from app.utilities import get_object, add_item_to_delete_queue, get_all_objects, get_range
-from app.exceptions import ObjectNotFoundError, InvalidRangeError
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
 from app import db
 
 DELIVERABLE = models.Objects.DELIVERABLE
@@ -47,8 +47,12 @@ class Deliverable(Resource):
             deliverable = get_object(DELIVERABLE, deliverable_id)
         except ObjectNotFoundError:
             return not_found(DELIVERABLE, deliverable_id)
+        try:
+            add_item_to_delete_queue(deliverable)
+        except AlreadyFlaggedForDeletionError:
+            return already_flagged_for_deletion_error(DELIVERABLE, str(deliverable.uuid))
 
-        return add_item_to_delete_queue(deliverable)
+        return {'uuid': str(deliverable.uuid), 'message': "Deliverable queued for deletion"}, 202
 
     @flask_praetorian.roles_accepted('admin', 'coordinator')
     def put(self, deliverable_id):

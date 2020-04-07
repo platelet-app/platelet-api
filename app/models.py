@@ -18,6 +18,7 @@ class Objects(IntEnum):
     LOCATION = auto()
     PRIORITY = auto()
     PATCH = auto()
+    DELETE_FLAG = auto()
 
 
 class SearchableMixin:
@@ -277,7 +278,7 @@ class Session(SearchableMixin, db.Model, CommonMixin):
 
 class DeleteFlags(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    uuid = db.Column(UUID(as_uuid=True), nullable=False)
     object_uuid = db.Column(UUID(as_uuid=True))
     time_created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     time_to_delete = db.Column(db.Integer)

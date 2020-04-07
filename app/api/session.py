@@ -8,11 +8,13 @@ from app.exceptions import InvalidRangeError, ObjectNotFoundError, SchemaValidat
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.userfunctions import get_user_object, is_user_present, get_user_object_by_int_id
 from app.api.functions.sessionfunctions import session_id_match_or_admin
-from app.api.functions.errors import forbidden_error, not_found, unauthorised_error, internal_error, schema_validation_error
+from app.api.functions.errors import forbidden_error, not_found, already_flagged_for_deletion_error, internal_error, schema_validation_error
+from app.exceptions import AlreadyFlaggedForDeletionError
 from app.utilities import get_object, get_range
-from app.utilities import add_item_to_delete_queue
+from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue
 
 SESSION = models.Objects.SESSION
+DELETE_FLAG = models.Objects.DELETE_FLAG
 
 session_schema = schemas.SessionSchema()
 sessions_schema = schemas.SessionSchema(many=True, exclude=('tasks',))
@@ -28,10 +30,15 @@ class SessionRestore(Resource):
 
         if session.flagged_for_deletion:
             # TODO: clean up from delete queue or let it clean up itself?
-            session.flagged_for_deletion = False
+            delete_queue_session = get_object(DELETE_FLAG, session.uuid)
+            for task in session.tasks:
+                check = get_object(DELETE_FLAG, task.uuid)
+                if check.time_created >= delete_queue_session.time_created and check.active:
+                    remove_item_from_delete_queue(task)
+            remove_item_from_delete_queue(session)
+
         else:
             return {'uuid': str(session.uuid), 'message': 'Session {} not flagged for deletion.'.format(session.uuid)}, 200
-        db.session.commit()
         return {'uuid': str(session.uuid), 'message': 'Session {} deletion flag removed.'.format(session.uuid)}, 200
 
 @ns.route('/<session_id>',
@@ -54,7 +61,19 @@ class Session(Resource):
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
 
-        return add_item_to_delete_queue(session)
+        try:
+            add_item_to_delete_queue(session)
+
+            for i in session.tasks:
+                try:
+                    add_item_to_delete_queue(i)
+                except AlreadyFlaggedForDeletionError:
+                    continue
+
+        except AlreadyFlaggedForDeletionError:
+            return already_flagged_for_deletion_error(SESSION, str(session.uuid))
+
+        return {'uuid': str(session.uuid), 'message': "Session queued for deletion"}, 202
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     @session_id_match_or_admin

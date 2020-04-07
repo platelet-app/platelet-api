@@ -6,3 +6,6 @@ class InvalidRangeError(Exception):
 
 class SchemaValidationError(Exception):
     """Raise when there is an error validating input with a schema"""
+
+class AlreadyFlaggedForDeletionError(Exception):
+    """Raise when an object that was requested to be deleted already is flagged for deletion"""

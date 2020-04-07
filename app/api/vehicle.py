@@ -4,9 +4,10 @@ from flask_restplus import Resource
 import flask_praetorian
 from app import vehicle_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import not_found, internal_error, forbidden_error, schema_validation_error
-from app.utilities import get_object, add_item_to_delete_queue, get_range, get_all_objects
-from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError
+from app.api.functions.errors import not_found, internal_error, forbidden_error, schema_validation_error, \
+    already_flagged_for_deletion_error
+from app.utilities import get_object, add_item_to_delete_queue, get_range, get_all_objects, remove_item_from_delete_queue
+from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError, AlreadyFlaggedForDeletionError
 
 from app import db
 
@@ -26,11 +27,9 @@ class VehicleRestore(Resource):
             return not_found(VEHICLE, vehicle_id)
 
         if vehicle.flagged_for_deletion:
-            # TODO: clean up from delete queue or let it clean up itself?
-            vehicle.flagged_for_deletion = False
+            remove_item_from_delete_queue(vehicle)
         else:
             return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} not flagged for deletion.'.format(vehicle.uuid)}, 200
-        db.session.commit()
         return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} deletion flag removed.'.format(vehicle.uuid)}, 200
 
 
@@ -51,8 +50,12 @@ class Vehicle(Resource):
             vehicle = get_object(VEHICLE, vehicle_id)
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)
+        try:
+            add_item_to_delete_queue(vehicle)
+        except AlreadyFlaggedForDeletionError:
+            return already_flagged_for_deletion_error(VEHICLE, str(vehicle.uuid))
 
-        return add_item_to_delete_queue(vehicle)
+        return {'uuid': str(vehicle.uuid), 'message': "Vehicle queued for deletion"}, 202
 
     @flask_praetorian.roles_required('admin')
     def put(self, vehicle_id):

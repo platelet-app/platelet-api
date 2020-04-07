@@ -4,9 +4,9 @@ from flask_restplus import Resource
 import flask_praetorian
 from app import location_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import not_found, internal_error, forbidden_error
+from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
 from app.utilities import get_object, add_item_to_delete_queue, get_all_objects, get_range
-from app.exceptions import ObjectNotFoundError, InvalidRangeError
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
 
 from app import db
 
@@ -36,6 +36,11 @@ class Location(Resource):
             location = get_object(LOCATION, location_id)
         except ObjectNotFoundError:
             return not_found("location", location_id)
+
+        try:
+            add_item_to_delete_queue(location)
+        except AlreadyFlaggedForDeletionError:
+            return already_flagged_for_deletion_error(LOCATION, str(location.uuid))
 
         return add_item_to_delete_queue(location)
 

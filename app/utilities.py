@@ -7,9 +7,19 @@ from app.api.functions.locationfunctions import get_location_object, get_all_loc
 from app.api.functions.priorityfunctions import get_all_priorities
 from app.api.functions.patchfunctions import get_all_patches
 from app.api.functions.notefunctions import get_note_object
+from app.api.functions.delete_flag_functions import get_delete_flag_object
 from app.api.functions.deliverablefunctions import get_deliverable_object, get_all_deliverable_types
-from app.api.functions.errors import already_flagged_for_deletion_error
-from app.exceptions import ObjectNotFoundError, InvalidRangeError
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
+
+
+def remove_item_from_delete_queue(item):
+    if not item:
+        return
+    flag = get_object(models.Objects.DELETE_FLAG, item.uuid)
+    if flag:
+        db.session.delete(flag)
+        item.flagged_for_deletion = False
+        db.session.commit()
 
 
 def add_item_to_delete_queue(item):
@@ -17,18 +27,15 @@ def add_item_to_delete_queue(item):
         return
 
     if item.flagged_for_deletion:
-        return already_flagged_for_deletion_error(item.object_type, str(item.uuid))
+        raise AlreadyFlaggedForDeletionError("This item is already flagged for deletion")
 
     item.flagged_for_deletion = True
 
-    delete = models.DeleteFlags(object_uuid=item.uuid, object_type=item.object_type, time_to_delete=app.config['DEFAULT_DELETE_TIME'])
+    delete = models.DeleteFlags(uuid=item.uuid, object_type=item.object_type, time_to_delete=app.config['DEFAULT_DELETE_TIME'])
 
-    db.session.add(item)
-    db.session.commit()
     db.session.add(delete)
     db.session.commit()
 
-    return {'uuid': str(item.uuid), 'message': "{} queued for deletion".format(item)}, 202  # TODO does item need to be converted to string?
 
 
 def object_type_to_string(type):
@@ -62,6 +69,8 @@ def get_object(type, _id):
             return get_deliverable_object(_id)
         elif type == models.Objects.LOCATION:
             return get_location_object(_id)
+        elif type == models.Objects.DELETE_FLAG:
+            return get_delete_flag_object(_id)
 
     except ObjectNotFoundError:
         raise
