@@ -3,12 +3,13 @@ from app import schemas, models
 from flask_restplus import Resource
 import flask_praetorian
 from app import task_ns as ns
+from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
     already_flagged_for_deletion_error
-from app.utilities import add_item_to_delete_queue, get_object, get_range, remove_item_from_delete_queue
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError, AlreadyFlaggedForDeletionError
 from app.api.functions.taskfunctions import check_rider_match
+from app.utilities import get_object, get_range
 
 from app import db
 
@@ -17,6 +18,7 @@ tasks_schema = schemas.TaskSchema(many=True)
 
 TASK = models.Objects.TASK
 SESSION = models.Objects.SESSION
+DELETE_FLAG = models.Objects.DELETE_FLAG
 
 @ns.route('/<task_id>/restore', endpoint="task_undelete")
 class TaskRestore(Resource):
@@ -28,6 +30,11 @@ class TaskRestore(Resource):
             return not_found(TASK, task_id)
 
         if task.flagged_for_deletion:
+            delete_queue_task = get_object(DELETE_FLAG, task.uuid)
+            for deliverable in task.deliverables:
+                check = get_object(DELETE_FLAG, deliverable.uuid)
+                if check.time_created >= delete_queue_task.time_created and check.active:
+                    remove_item_from_delete_queue(deliverable)
             remove_item_from_delete_queue(task)
         else:
             return {'uuid': str(task.uuid), 'message': 'Task {} not flagged for deletion.'.format(task.uuid)}, 200
@@ -52,6 +59,9 @@ class Task(Resource):
             return not_found(TASK, task_id)
         try:
             add_item_to_delete_queue(task)
+            for deliverable in task.deliverables:
+                if not deliverable.flagged_for_deletion:
+                    add_item_to_delete_queue(deliverable)
         except AlreadyFlaggedForDeletionError:
             return already_flagged_for_deletion_error(TASK, str(task.uuid))
 
