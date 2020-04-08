@@ -123,7 +123,4 @@ def get_range(items, _range="0-100", order="descending"):
     if order == "descending":
         items.reverse()
 
-    result = [i for i in items if not i.flagged_for_deletion]
-
-
-    return result[start:end]
+    return items[start:end]

@@ -158,9 +158,6 @@ class AssignedTasksList(Resource):
         return jsonify(tasks_schema.dump(user.tasks).data)
 
 
-
-
-
 @ns.route('/<user_id>/username')
 class UserNameField(Resource):
     @flask_praetorian.auth_required

@@ -1,12 +1,23 @@
-from marshmallow import ValidationError, pre_load
+from marshmallow import ValidationError, pre_dump
 from app import ma
 from marshmallow_sqlalchemy import fields, field_for
 from app import models
 import datetime
 
+
 class TimesMixin:
     time_created = fields.fields.DateTime()
     time_modified = fields.fields.DateTime()
+
+
+class DeleteFilterMixin:
+    @pre_dump(pass_many=True)
+    def filter_deleted(self, data, many):
+        if many:
+            return list(filter(lambda t: not t.flagged_for_deletion, data))
+        else:
+            return data
+
 
 class NoteSchema(ma.ModelSchema, TimesMixin):
     class Meta:
@@ -23,7 +34,7 @@ class DeliverableTypeSchema(ma.ModelSchema, TimesMixin):
         fields = ('id', 'name')
 
 
-class DeliverableSchema(ma.ModelSchema, TimesMixin):
+class DeliverableSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.Deliverable
         fields = ('uuid', 'task_uuid', 'notes', 'type', 'type_id',
@@ -51,7 +62,7 @@ class PatchSchema(ma.ModelSchema):
         fields = ('id', 'label')
 
 
-class UserSchema(ma.ModelSchema, TimesMixin):
+class UserSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
@@ -77,7 +88,7 @@ class UserSchema(ma.ModelSchema, TimesMixin):
     patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
 
 
-class VehicleSchema(ma.ModelSchema, TimesMixin):
+class VehicleSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.Vehicle
         fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
@@ -114,7 +125,7 @@ class PrioritySchema(ma.ModelSchema):
         fields = ('id', 'label')
 
 
-class TaskSchema(ma.ModelSchema, TimesMixin):
+class TaskSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.Task
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'contact_name',
@@ -143,11 +154,6 @@ class TaskSchema(ma.ModelSchema, TimesMixin):
         'collection': ma.URLFor('tasks_list')
     })
 
-#    @pre_load
-#    def set_urgency(self, data, **kwargs):
-#        if "priority" in data:
-
-
 
 class UserUsernameSchema(ma.ModelSchema):
     class Meta:
@@ -166,7 +172,7 @@ class UserAddressSchema(ma.ModelSchema):
     address = fields.fields.Nested(AddressSchema, exclude=("ward",))
 
 
-class SessionSchema(ma.ModelSchema, TimesMixin):
+class SessionSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.Session
         fields = ('uuid', 'user_uuid',
@@ -185,7 +191,7 @@ class SessionSchema(ma.ModelSchema, TimesMixin):
     })
 
 
-class LocationSchema(ma.ModelSchema, TimesMixin):
+class LocationSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.Location
         fields = ('uuid', 'name', 'contact_name', 'contact_number', 'address', 'notes', 'links',
