@@ -45,11 +45,10 @@ class Task(Resource):
     @flask_praetorian.auth_required
     def get(self, task_id):
         try:
-            task = get_object(TASK, task_id)
+            return jsonify(task_schema.dump(get_object(TASK, task_id)).data)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
-        return jsonify(task_schema.dump(task).data)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, task_id):
@@ -72,6 +71,8 @@ class Task(Resource):
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
+            if task.flagged_for_deletion:
+                return not_found(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
@@ -88,6 +89,8 @@ class Tasks(Resource):
     def get(self, session_id, _range=None, order="ascending"):
         try:
             session = get_object(SESSION, session_id)
+            if session.flagged_for_deletion:
+                return not_found(SESSION, session_id)
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
 

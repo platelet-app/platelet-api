@@ -20,15 +20,10 @@ locations_schema = schemas.LocationSchema(many=True)
 class Location(Resource):
     @flask_praetorian.auth_required
     def get(self, location_id):
-        if not location_id:
-            return not_found("location", location_id)
-
-        location = get_object(LOCATION, location_id)
-
-        if (location):
-            return jsonify(location_schema.dump(location).data)
-        else:
-            return not_found(location_id)
+        try:
+            return jsonify(location_schema.dump(get_object(LOCATION, location_id)).data)
+        except ObjectNotFoundError:
+            return not_found(LOCATION, location_id)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, location_id):
@@ -36,7 +31,6 @@ class Location(Resource):
             location = get_object(LOCATION, location_id)
         except ObjectNotFoundError:
             return not_found("location", location_id)
-
         try:
             add_item_to_delete_queue(location)
         except AlreadyFlaggedForDeletionError:
@@ -48,6 +42,8 @@ class Location(Resource):
     def put(self, location_id):
         try:
             location = get_object(LOCATION, location_id)
+            if location.flagged_for_deletion:
+                return not_found(LOCATION, location_id)
         except ObjectNotFoundError:
             return not_found(LOCATION, location_id)
 

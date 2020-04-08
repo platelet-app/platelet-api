@@ -47,11 +47,9 @@ class Session(Resource):
     @flask_praetorian.auth_required
     def get(self, session_id):
         try:
-            session = get_object(SESSION, session_id)
+            return jsonify(session_schema.dump(get_object(SESSION, session_id)).data)
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
-
-        return jsonify(session_schema.dump(session).data)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     @session_id_match_or_admin
@@ -80,6 +78,8 @@ class Session(Resource):
     def put(self, session_id):
         try:
             session = get_object(SESSION, session_id)
+            if session.flagged_for_deletion:
+                return not_found(SESSION, session_id)
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
 

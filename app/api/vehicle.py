@@ -38,11 +38,9 @@ class Vehicle(Resource):
     @flask_praetorian.auth_required
     def get(self, vehicle_id):
         try:
-            vehicle = get_object(VEHICLE, vehicle_id)
+            return jsonify(vehicle_schema.dump(get_object(VEHICLE, vehicle_id)).data)
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)
-
-        return jsonify(vehicle_schema.dump(vehicle).data)
 
     @flask_praetorian.roles_required('admin')
     def delete(self, vehicle_id):
@@ -61,6 +59,8 @@ class Vehicle(Resource):
     def put(self, vehicle_id):
         try:
             vehicle = get_object(VEHICLE, vehicle_id)
+            if vehicle.flagged_for_deletion:
+                return not_found(VEHICLE, vehicle_id)
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)
 

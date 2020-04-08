@@ -53,6 +53,8 @@ def object_type_to_string(type):
 
 
 def get_object(type, _id):
+    if not _id:
+        raise ObjectNotFoundError
 
     try:
         if type == models.Objects.SESSION:

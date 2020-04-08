@@ -72,12 +72,9 @@ class User(Resource):
     @ns.doc(params={'user_id': 'ID for the user'})
     def get(self, user_id):
         try:
-            user = get_object(USER, user_id)
+            return jsonify(user_dump_schema.dump(get_object(USER, user_id).data))
         except ObjectNotFoundError:
             return not_found(USER, user_id)
-        except:
-            raise
-        return jsonify(user_dump_schema.dump(user).data)
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
@@ -98,6 +95,8 @@ class User(Resource):
     def put(self, user_id):
         try:
             user = get_object(USER, user_id)
+            if user.flagged_for_deletion:
+                return not_found(USER, user_id)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 
@@ -151,11 +150,9 @@ class AssignedTasksList(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id):
         try:
-            user = get_object(USER, user_id)
+            return jsonify(tasks_schema.dump(get_object(USER, user_id).tasks).data)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
-
-        return jsonify(tasks_schema.dump(user.tasks).data)
 
 
 @ns.route('/<user_id>/username')
@@ -163,11 +160,9 @@ class UserNameField(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id):
         try:
-            user = get_object(USER, user_id)
+            return jsonify(user_username_schema.dump(get_object(USER, user_id)).data)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
-
-        return jsonify(user_username_schema.dump(user).data)
 
 
 @ns.route('/<user_id>/address')
@@ -175,9 +170,7 @@ class UserAddressField(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id):
         try:
-            user = get_object(USER, user_id)
+            return jsonify(user_address_schema.dump(get_object(USER, user_id)).data)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
-
-        return jsonify(user_address_schema.dump(user).data)
 

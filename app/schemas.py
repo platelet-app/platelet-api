@@ -1,4 +1,5 @@
 from marshmallow import ValidationError, pre_dump
+from app.exceptions import ObjectNotFoundError
 from app import ma
 from marshmallow_sqlalchemy import fields, field_for
 from app import models
@@ -16,7 +17,10 @@ class DeleteFilterMixin:
         if many:
             return list(filter(lambda t: not t.flagged_for_deletion, data))
         else:
-            return data
+            if data.flagged_for_deletion:
+                raise ObjectNotFoundError
+            else:
+                return data
 
 
 class NoteSchema(ma.ModelSchema, TimesMixin):
@@ -116,7 +120,6 @@ def validate_date_of_registration(obj):
 
     if obj.dateOfManufacture > obj.dateOfRegistration:
         raise ValidationError("date of registration cannot be before date of manufacture")
-
 
 
 class PrioritySchema(ma.ModelSchema):
