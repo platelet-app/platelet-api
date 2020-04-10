@@ -10,7 +10,7 @@ from app.api.functions.userfunctions import get_user_object, is_user_present, ge
 from app.api.functions.sessionfunctions import session_id_match_or_admin
 from app.api.functions.errors import forbidden_error, not_found, already_flagged_for_deletion_error, internal_error, schema_validation_error
 from app.exceptions import AlreadyFlaggedForDeletionError
-from app.utilities import get_object, get_range
+from app.utilities import get_object, get_range, get_all_objects
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue
 
 SESSION = models.Objects.SESSION
@@ -86,6 +86,62 @@ class Session(Resource):
         load_request_into_object(SESSION, instance=session)
         db.session.commit()
         return {'uuid': str(session.uuid), 'message': 'Session {} updated.'.format(session.uuid)}, 200
+
+
+@ns.route('/<session_id>/statistics',
+          endpoint='session_statistics')
+class SessionStatistics(Resource):
+    @flask_praetorian.auth_required
+    def get(self, session_id):
+        session = get_object(SESSION, session_id)
+        available_patches = get_all_objects(models.Objects.PATCH)
+        available_priorities = get_all_objects(models.Objects.PRIORITY)
+        tasks_plus_deleted = session.tasks.all()
+        tasks = list(filter(lambda t: not t.flagged_for_deletion, tasks_plus_deleted))
+        num_deleted = len(list(filter(lambda t: t.flagged_for_deletion, tasks_plus_deleted)))
+        num_tasks = len(tasks)
+        num_completed = len(list(filter(lambda t: t.time_dropped_off, tasks)))
+        num_picked_up = len(list(filter(lambda t: t.time_picked_up and not t.time_dropped_off, tasks)))
+        num_active = len(list(filter(lambda t: t.assigned_rider and not t.time_picked_up and not t.time_dropped_off, tasks)))
+        num_rejected = len(list(filter(lambda t: t.time_rejected, tasks)))
+        num_cancelled = len(list(filter(lambda t: t.time_cancelled, tasks)))
+        num_unassigned = len(list(filter(lambda t: not t.assigned_rider, tasks)))
+
+        riders_in_session = set(map(lambda t: t.rider, tasks))
+        rider_counts = {}
+        for rider in riders_in_session:
+            if rider:
+                riders_tasks = list(filter(lambda t: t.assigned_rider and rider.uuid == t.assigned_rider, tasks))
+                rider_counts[rider.display_name] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, riders_tasks)))), available_priorities))
+                rider_counts[rider.display_name]["Total"] = len(riders_tasks)
+                rider_counts[rider.display_name]["None"] = len(list(filter(lambda t: not t.priority_id, riders_tasks)))
+            else:
+                unassigned_tasks = list(filter(lambda t: not t.assigned_rider, tasks))
+                rider_counts["unassigned"] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, unassigned_tasks)))), available_priorities))
+                rider_counts["unassigned"]["Total"] = len(unassigned_tasks)
+                rider_counts["unassigned"]["None"] = len(list(filter(lambda t: not t.priority_id, unassigned_tasks)))
+
+        #rider_counts = dict(map(lambda rider: (rider.display_name if rider else "unassigned", len(list(filter(lambda t: not rider or t.assigned_rider == rider.uuid, tasks)))), riders_in_session))
+
+        patch_stats = dict(map(lambda patch: ("num_{}".format(patch.label), len(list(filter(lambda t: t.patch_id == patch.id, tasks)))), available_patches))
+        priority_stats = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, tasks)))), available_priorities))
+        priority_stats["None"] = len(list(filter(lambda t: not t.priority_id, tasks)))
+
+        last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)
+        time_active = str(last_changed_task[-1].time_modified - session.time_created)
+
+        return {"num_tasks": num_tasks,
+                "num_deleted": num_deleted,
+                "num_completed": num_completed,
+                "num_picked_up": num_picked_up,
+                "num_active": num_active,
+                "num_unassigned": num_unassigned,
+                "num_rejected": num_rejected,
+                "num_cancelled": num_cancelled,
+                "patches": patch_stats,
+                "riders": rider_counts,
+                "priorities": priority_stats,
+                "time_active": time_active}, 200
 
 
 @ns.route(
