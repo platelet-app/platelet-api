@@ -117,18 +117,32 @@ class SessionStatistics(Resource):
                 rider_counts[rider.display_name]["None"] = len(list(filter(lambda t: not t.priority_id, riders_tasks)))
             else:
                 unassigned_tasks = list(filter(lambda t: not t.assigned_rider, tasks))
-                rider_counts["unassigned"] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, unassigned_tasks)))), available_priorities))
-                rider_counts["unassigned"]["Total"] = len(unassigned_tasks)
-                rider_counts["unassigned"]["None"] = len(list(filter(lambda t: not t.priority_id, unassigned_tasks)))
+                rider_counts["Unassigned"] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, unassigned_tasks)))), available_priorities))
+                rider_counts["Unassigned"]["Total"] = len(unassigned_tasks)
+                rider_counts["Unassigned"]["None"] = len(list(filter(lambda t: not t.priority_id, unassigned_tasks)))
+
+        patches_in_session = set(map(lambda t: t.patch, tasks))
+        patch_counts = {}
+        for patch in patches_in_session:
+            if patch:
+                patch_tasks = list(filter(lambda t: t.patch and patch.id == t.patch_id, tasks))
+                patch_counts[patch.label] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, patch_tasks)))), available_priorities))
+                patch_counts[patch.label]["Total"] = len(patch_tasks)
+                patch_counts[patch.label]["None"] = len(list(filter(lambda t: not t.patch_id, patch_tasks)))
+            else:
+                no_patch = list(filter(lambda t: not t.patch_id, tasks))
+                patch_counts["None"] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, no_patch)))), available_priorities))
+                patch_counts["None"]["Total"] = len(no_patch)
+                patch_counts["None"]["None"] = len(list(filter(lambda t: not t.priority_id, no_patch)))
 
         #rider_counts = dict(map(lambda rider: (rider.display_name if rider else "unassigned", len(list(filter(lambda t: not rider or t.assigned_rider == rider.uuid, tasks)))), riders_in_session))
 
-        patch_stats = dict(map(lambda patch: ("num_{}".format(patch.label), len(list(filter(lambda t: t.patch_id == patch.id, tasks)))), available_patches))
+        #patch_stats = dict(map(lambda patch: (patch.label, len(list(filter(lambda t: t.patch_id == patch.id, tasks)))), available_patches))
         priority_stats = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, tasks)))), available_priorities))
         priority_stats["None"] = len(list(filter(lambda t: not t.priority_id, tasks)))
 
         last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)
-        time_active = str(last_changed_task[-1].time_modified - session.time_created)
+        time_active = str(round((last_changed_task[-1].time_modified - session.time_created).total_seconds()))
 
         return {"num_tasks": num_tasks,
                 "num_deleted": num_deleted,
@@ -138,7 +152,7 @@ class SessionStatistics(Resource):
                 "num_unassigned": num_unassigned,
                 "num_rejected": num_rejected,
                 "num_cancelled": num_cancelled,
-                "patches": patch_stats,
+                "patches": patch_counts,
                 "riders": rider_counts,
                 "priorities": priority_stats,
                 "time_active": time_active}, 200
