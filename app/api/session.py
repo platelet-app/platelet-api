@@ -94,55 +94,76 @@ class SessionStatistics(Resource):
     @flask_praetorian.auth_required
     def get(self, session_id):
         session = get_object(SESSION, session_id)
-        available_patches = get_all_objects(models.Objects.PATCH)
         available_priorities = get_all_objects(models.Objects.PRIORITY)
         tasks_plus_deleted = session.tasks.all()
         tasks = list(filter(lambda t: not t.flagged_for_deletion, tasks_plus_deleted))
         num_deleted = len(list(filter(lambda t: t.flagged_for_deletion, tasks_plus_deleted)))
         num_tasks = len(tasks)
+        # tasks with time_dropped_off set
         num_completed = len(list(filter(lambda t: t.time_dropped_off, tasks)))
+        # tasks with time_picked_up set and not time_dropped_off
         num_picked_up = len(list(filter(lambda t: t.time_picked_up and not t.time_dropped_off, tasks)))
+        # tasks that only have an assigned rider
         num_active = len(list(filter(lambda t: t.assigned_rider and not t.time_picked_up and not t.time_dropped_off, tasks)))
+        # tasks with time_rejected set
         num_rejected = len(list(filter(lambda t: t.time_rejected, tasks)))
+        # tasks with time_cancelled set
         num_cancelled = len(list(filter(lambda t: t.time_cancelled, tasks)))
+        # tasks with no assigned rider
         num_unassigned = len(list(filter(lambda t: not t.assigned_rider, tasks)))
 
+        # unique list of all riders that are assigned in this session
         riders_in_session = set(map(lambda t: t.rider, tasks))
         rider_counts = {}
         for rider in riders_in_session:
             if rider:
+                # get the tasks for a rider
                 riders_tasks = list(filter(lambda t: t.assigned_rider and rider.uuid == t.assigned_rider, tasks))
+                # match the tasks with all priorities that are available and return a dictionary: prioritylabel: numtasks.
                 rider_counts[rider.display_name] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, riders_tasks)))), available_priorities))
+                # total number of tasks for that rider
                 rider_counts[rider.display_name]["Total"] = len(riders_tasks)
+                # number of tasks for that rider with no priority
                 rider_counts[rider.display_name]["None"] = len(list(filter(lambda t: not t.priority_id, riders_tasks)))
             else:
+                # same as above but for tasks that are unassigned
                 unassigned_tasks = list(filter(lambda t: not t.assigned_rider, tasks))
                 rider_counts["Unassigned"] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, unassigned_tasks)))), available_priorities))
                 rider_counts["Unassigned"]["Total"] = len(unassigned_tasks)
                 rider_counts["Unassigned"]["None"] = len(list(filter(lambda t: not t.priority_id, unassigned_tasks)))
 
+        # unique list of all the patches that are set in this session
         patches_in_session = set(map(lambda t: t.patch, tasks))
         patch_counts = {}
         for patch in patches_in_session:
             if patch:
+                # get all tasks for a certain patch
                 patch_tasks = list(filter(lambda t: t.patch and patch.id == t.patch_id, tasks))
+                # match the tasks with all priorities that are available and return a dictionary: prioritylabel: numtasks.
                 patch_counts[patch.label] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, patch_tasks)))), available_priorities))
+                # total number of tasks for that patch
                 patch_counts[patch.label]["Total"] = len(patch_tasks)
-                patch_counts[patch.label]["None"] = len(list(filter(lambda t: not t.patch_id, patch_tasks)))
+                # total number of tasks with no priority
+                patch_counts[patch.label]["None"] = len(list(filter(lambda t: not t.priority_id, patch_tasks)))
             else:
+                # same as above but for tasks with no patch
                 no_patch = list(filter(lambda t: not t.patch_id, tasks))
                 patch_counts["None"] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, no_patch)))), available_priorities))
                 patch_counts["None"]["Total"] = len(no_patch)
                 patch_counts["None"]["None"] = len(list(filter(lambda t: not t.priority_id, no_patch)))
 
-        #rider_counts = dict(map(lambda rider: (rider.display_name if rider else "unassigned", len(list(filter(lambda t: not rider or t.assigned_rider == rider.uuid, tasks)))), riders_in_session))
-
-        #patch_stats = dict(map(lambda patch: (patch.label, len(list(filter(lambda t: t.patch_id == patch.id, tasks)))), available_patches))
+        # priority totals
         priority_stats = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, tasks)))), available_priorities))
         priority_stats["None"] = len(list(filter(lambda t: not t.priority_id, tasks)))
 
+        # get the task that was last modified on this session
         last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)
-        time_active = str(round((last_changed_task[-1].time_modified - session.time_created).total_seconds()))
+        if last_changed_task:
+            # calculate the time between the last modified task and the session creation date
+            time_active = str(round((last_changed_task[-1].time_modified - session.time_created).total_seconds()))
+        else:
+            # if no tasks then the time between the session creation date and session modification date
+            time_active = str(round((session.time_modified - session.time_created).total_seconds()))
 
         return {"num_tasks": num_tasks,
                 "num_deleted": num_deleted,
