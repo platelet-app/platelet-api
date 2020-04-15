@@ -72,7 +72,7 @@ class User(Resource):
     @ns.doc(params={'user_id': 'ID for the user'})
     def get(self, user_id):
         try:
-            return jsonify(user_dump_schema.dump(get_object(USER, user_id).data))
+            return jsonify(user_dump_schema.dump(get_object(USER, user_id)).data)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 
