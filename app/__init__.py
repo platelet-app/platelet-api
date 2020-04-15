@@ -47,7 +47,7 @@ user_ns = api.namespace('api/{}/user'.format(api_version), description='User ope
 session_ns = api.namespace('api/{}/session'.format(api_version), description='Session operations')
 task_ns = api.namespace('api/{}/task'.format(api_version), description='Task operations')
 vehicle_ns = api.namespace('api/{}/vehicle'.format(api_version), description='Vehicle operations')
-note_ns = api.namespace('api/{}/note'.format(api_version), description='Note operations')
+comment_ns = api.namespace('api/{}/comment'.format(api_version), description='Comment operations')
 deliverable_ns = api.namespace('api/{}/deliverable'.format(api_version), description='Deliverable operations')
 location_ns = api.namespace('api/{}/location'.format(api_version), description='Saved location operations')
 any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Lookup for any object')
@@ -61,7 +61,7 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.api import task, user, views, site, login, session, vehicle, testing_views, deliverable, note, location, uuid_lookup, search, priority, patch, ping
+from app.api import task, user, views, site, login, session, vehicle, comment, testing_views, deliverable, location, uuid_lookup, search, priority, patch, ping
 
 site_blueprint = Blueprint('site', __name__, url_prefix='/')
 

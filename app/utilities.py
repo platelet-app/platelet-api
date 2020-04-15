@@ -6,7 +6,7 @@ from app.api.functions.vehiclefunctions import get_vehicle_object, get_all_vehic
 from app.api.functions.locationfunctions import get_location_object, get_all_locations
 from app.api.functions.priorityfunctions import get_all_priorities
 from app.api.functions.patchfunctions import get_all_patches
-from app.api.functions.notefunctions import get_note_object
+from app.api.functions.commentfunctions import get_comment_object
 from app.api.functions.delete_flag_functions import get_delete_flag_object
 from app.api.functions.deliverablefunctions import get_deliverable_object, get_all_deliverable_types
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
@@ -44,12 +44,25 @@ def object_type_to_string(type):
         models.Objects.USER: "user",
         models.Objects.TASK: "task",
         models.Objects.VEHICLE: "vehicle",
-        models.Objects.NOTE: "note",
+        models.Objects.COMMENT: "comment",
         models.Objects.DELIVERABLE: "deliverable",
         models.Objects.LOCATION: "location"
     }
 
     return switch.get(type, lambda: None)
+
+
+def get_unspecified_object(_id):
+    if not _id:
+        raise ObjectNotFoundError
+
+    for i in models.Objects:
+        try:
+            return get_object(i, _id)
+        except ObjectNotFoundError:
+            continue
+
+    raise ObjectNotFoundError
 
 
 def get_object(type, _id):
@@ -65,8 +78,8 @@ def get_object(type, _id):
             return get_task_object(_id)
         elif type == models.Objects.VEHICLE:
             return get_vehicle_object(_id)
-        elif type == models.Objects.NOTE:
-            return get_note_object(_id)
+        elif type == models.Objects.COMMENT:
+            return get_comment_object(_id)
         elif type == models.Objects.DELIVERABLE:
             return get_deliverable_object(_id)
         elif type == models.Objects.LOCATION:

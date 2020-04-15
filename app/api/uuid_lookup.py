@@ -10,7 +10,7 @@ user_dump_schema = schemas.UserSchema(exclude=("password",))
 vehicle_schema = schemas.VehicleSchema()
 session_schema = schemas.SessionSchema()
 task_schema = schemas.TaskSchema()
-note_schema = schemas.NoteSchema()
+comment_schema = schemas.CommentSchema()
 deliverable_schema = schemas.DeliverableSchema()
 location_schema = schemas.LocationSchema()
 

@@ -1,7 +1,9 @@
+from sqlalchemy.ext.declarative import declared_attr, as_declarative
+
 from app import db
 from datetime import datetime
 from enum import IntEnum, auto
-from sqlalchemy_utils import EmailType
+from sqlalchemy_utils import EmailType, generic_relationship
 from app.search import add_to_index, remove_from_index, query_index
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -12,7 +14,7 @@ class Objects(IntEnum):
     SESSION = auto()
     TASK = auto()
     VEHICLE = auto()
-    NOTE = auto()
+    COMMENT = auto()
     DELIVERABLE = auto()
     DELIVERABLE_TYPE = auto()
     LOCATION = auto()
@@ -70,20 +72,48 @@ class CommonMixin:
     flagged_for_deletion = db.Column(db.Boolean, default=False)
 
 
-class Note(db.Model, CommonMixin):
+@as_declarative()
+class CommentBase(object):
+    """Base class which provides automated table name
+    and surrogate primary key column.
+    """
+
+    @declared_attr
+    def __tablename__(cls):
+        return cls.__name__.lower()
+
+    id = db.Column(db.Integer, primary_key=True)
+
+
+#class HasComments:
+#    @declared_attr
+#    def comments(cls):
+#        cls.Comment = type(
+#            "%sComment" % cls.__name__,
+#            (Comment, CommentBase),
+#            dict(
+#                __tablename__="%s_comment" % cls.__tablename__,
+#                parent_uuid=db.Column(
+#                    UUID, db.ForeignKey("%s.id" % cls.__tablename__)
+#                ),
+#                parent=db.relationship(cls),
+#            ),
+#        )
+#        return db.relationship(cls.Comment)
+
+
+class Comment(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
-    subject = db.Column(db.String(200))
-    task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
-    user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    session_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
-    vehicle_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('vehicle.uuid'))
-    deliverable_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('deliverable.uuid'))
+    author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    author = db.relationship("User", foreign_keys=[author_uuid])
+    parent_type = db.Column(db.Integer)
+    parent_uuid = db.Column(UUID(as_uuid=True))
 
     @property
     def object_type(self):
-        return Objects.NOTE
+        return Objects.COMMENT
 
 
 class DeliverableType(db.Model, CommonMixin):
@@ -101,8 +131,6 @@ class Deliverable(db.Model, CommonMixin):
     task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     type_id = db.Column(db.Integer, db.ForeignKey('deliverable_type.id'))
     type = db.relationship("DeliverableType", foreign_keys=[type_id])
-    notes = db.relationship('Note', backref='deliverable_parent', lazy='dynamic')
-
 
     @property
     def object_type(self):
@@ -157,14 +185,20 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
-    notes = db.relationship('Note', backref='task_parent', lazy='dynamic')
     assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+
+    comments = db.relationship(
+        'Comment',
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK)
+    )
+
 
     time_picked_up = db.Column(db.DateTime)
     time_dropped_off = db.Column(db.DateTime)
 
     time_cancelled = db.Column(db.DateTime)
     time_rejected = db.Column(db.DateTime)
+
 
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
 
@@ -188,7 +222,11 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
     registration_number = db.Column(db.String(10))
     assigned_user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     assigned_user = db.relationship("User", foreign_keys=[assigned_user_uuid])
-    notes = db.relationship('Note', backref='vehicle_parent', lazy='dynamic')
+
+    comments = db.relationship(
+        'Comment',
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE)
+    )
 
     __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
 
@@ -222,9 +260,12 @@ class User(SearchableMixin, db.Model, CommonMixin):
     status = db.Column(db.String(64))
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
-    notes = db.relationship('Note', backref='user_parent', lazy='dynamic')
 
     tasks = db.relationship('Task', backref='rider', lazy='dynamic')
+    comments = db.relationship(
+        'Comment',
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == User.uuid)".format(Objects.USER)
+    )
 
     __searchable__ = ['username', 'roles', 'name', 'email']
 
@@ -260,8 +301,11 @@ class Session(SearchableMixin, db.Model, CommonMixin):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
-    notes = db.relationship('Note', backref='session_parent', lazy='dynamic')
 
+    comments = db.relationship(
+        'Comment',
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Session.uuid)".format(Objects.SESSION)
+    )
     __searchable__ = ['time_created']
 
     @property
@@ -297,6 +341,11 @@ class Location(SearchableMixin, db.Model, CommonMixin):
     contact_number = db.Column(db.String(64))
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
+
+    comments = db.relationship(
+        'Comment',
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(Objects.LOCATION)
+    )
 
     __searchable__ = ['name', 'contact', 'phone_number', 'address']
 

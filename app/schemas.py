@@ -23,13 +23,14 @@ class DeleteFilterMixin:
                 return data
 
 
-class NoteSchema(ma.ModelSchema, TimesMixin):
+class CommentSchema(ma.ModelSchema, TimesMixin):
     class Meta:
-        model = models.Note
-        fields = ('uuid', 'subject', 'body',
-                  'task_uuid', 'vehicle_uuid', 'session_uuid',
-                  'user_uuid', 'deliverable_uuid', 'location_uuid',
+        model = models.Comment
+        fields = ('uuid', 'body', 'author', 'parent_uuid', 'author_uuid',
                   "time_created", "time_modified")
+    author = fields.fields.Nested('UserSchema', dump_only=True, exclude=('uuid', 'username', 'address', 'password', 'name', 'email',
+                  'dob', 'patch', 'roles', 'notes', 'assigned_vehicles', 'patch_id',
+                  "time_created", "time_modified"))
 
 
 class DeliverableTypeSchema(ma.ModelSchema, TimesMixin):
@@ -44,7 +45,7 @@ class DeliverableSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
         fields = ('uuid', 'task_uuid', 'notes', 'type', 'type_id',
                   "time_created", "time_modified")
 
-    notes = fields.fields.Nested(NoteSchema, many=True,
+    notes = fields.fields.Nested(CommentSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     type = fields.fields.Nested(DeliverableTypeSchema, only="name")
 
@@ -80,7 +81,7 @@ class UserSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     address = fields.fields.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
     assigned_vehicles = fields.fields.Nested("VehicleSchema", many=True, dump_only=True, exclude=("assigned_user",))
-    notes = fields.fields.Nested(NoteSchema, many=True,
+    notes = fields.fields.Nested(CommentSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     #tasks = fields.fields.Nested(TaskSchema, many=True)
     #vehicle = fields.fields.Nested(VehicleSchema, dump_only=True)
@@ -103,7 +104,7 @@ class VehicleSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
     assigned_user = fields.fields.Nested(UserSchema, dump_only=True)
     #registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
-    notes = fields.fields.Nested(NoteSchema, many=True,
+    notes = fields.fields.Nested(CommentSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
 
     links = ma.Hyperlinks({
@@ -142,7 +143,7 @@ class TaskSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     dropoff_address = fields.fields.Nested(AddressSchema)
     rider = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'notes'), dump_only=True)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
-    notes = fields.fields.Nested(NoteSchema, many=True,
+    notes = fields.fields.Nested(CommentSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     pickup_time = fields.fields.DateTime(allow_none=True)
     time_dropped_off = fields.fields.DateTime(allow_none=True)
@@ -185,7 +186,7 @@ class SessionSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
 
     tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True,
                                  exclude=('notes', 'deliverables'))
-    notes = fields.fields.Nested(NoteSchema, dump_only=True, many=True,
+    notes = fields.fields.Nested(CommentSchema, dump_only=True, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
 
     links = ma.Hyperlinks({
@@ -200,7 +201,7 @@ class LocationSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
         fields = ('uuid', 'name', 'contact_name', 'contact_number', 'address', 'notes', 'links',
                   "time_created", "time_modified")
 
-    notes = fields.fields.Nested(NoteSchema, many=True,
+    notes = fields.fields.Nested(CommentSchema, many=True,
                                  exclude=('task_uuid', 'deliverable_uuid', 'vehicle_uuid', 'session_uuid', 'location_uuid', 'user_uuid'))
     address = fields.fields.Nested(AddressSchema)
 

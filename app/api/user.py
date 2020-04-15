@@ -3,7 +3,7 @@ from sqlalchemy import exc as sqlexc
 from app import schemas, db, models
 from app import user_ns as ns
 from app import root_ns
-from flask_restplus import Resource, reqparse
+from flask_restplus import Resource
 import flask_praetorian
 from app.api.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
 from app.api.functions.userfunctions import get_user_object_by_int_id
