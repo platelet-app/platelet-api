@@ -27,7 +27,7 @@ class CommentSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Comment
         fields = ('uuid', 'body', 'author', 'parent_uuid', 'author_uuid',
-                  "time_created", "time_modified")
+                  "time_created", "time_modified, publicly_visible")
     author = fields.fields.Nested('UserSchema', dump_only=True, exclude=('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'notes', 'assigned_vehicles', 'patch_id',
                   "time_created", "time_modified"))

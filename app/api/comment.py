@@ -14,6 +14,7 @@ from app import db
 COMMENT = models.Objects.COMMENT
 
 comment_schema = schemas.CommentSchema()
+comments_schema = schemas.CommentSchema(many=True)
 
 
 @ns.route('/<_id>')
@@ -56,7 +57,8 @@ class Comment(Resource):
         return {'uuid': str(comment.uuid), 'message': 'Comment {} updated.'.format(comment.uuid)}, 200
 
 
-@ns.route('s')
+@ns.route('s',
+          's/<parent_id>')
 class Comments(Resource):
     @flask_praetorian.auth_required
     def post(self):
@@ -76,3 +78,14 @@ class Comments(Resource):
         db.session.commit()
 
         return {'uuid': str(comment.uuid), 'message': 'Comment {} created'.format(comment.uuid)}, 201
+
+    @flask_praetorian.auth_required
+    def get(self, parent_id):
+        try:
+            parent = get_unspecified_object(parent_id)
+        except ObjectNotFoundError:
+            return not_found(COMMENT, parent_id)
+        if hasattr(parent, "comments"):
+            return jsonify(comments_schema.dump(parent.comments).data)
+        else:
+            return forbidden_error("{} does not support comments.".format(parent), parent_id)

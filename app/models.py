@@ -110,6 +110,7 @@ class Comment(db.Model, CommonMixin):
     author = db.relationship("User", foreign_keys=[author_uuid])
     parent_type = db.Column(db.Integer)
     parent_uuid = db.Column(UUID(as_uuid=True))
+    publicly_visible = db.Column(db.Boolean, default=True)
 
     @property
     def object_type(self):
