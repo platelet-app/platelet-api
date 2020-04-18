@@ -81,11 +81,13 @@ class Comments(Resource):
 
     @flask_praetorian.auth_required
     def get(self, parent_id):
+        calling_user = get_user_object_by_int_id(prae_utils.current_user_id()).uuid
         try:
             parent = get_unspecified_object(parent_id)
         except ObjectNotFoundError:
             return not_found(COMMENT, parent_id)
         if hasattr(parent, "comments"):
-            return jsonify(comments_schema.dump(parent.comments).data)
+            result = filter(lambda comment: comment.publicly_visible or comment.author.uuid == calling_user, parent.comments)
+            return jsonify(comments_schema.dump(result).data)
         else:
             return forbidden_error("{} does not support comments.".format(parent), parent_id)
