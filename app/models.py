@@ -85,22 +85,6 @@ class CommentBase(object):
     id = db.Column(db.Integer, primary_key=True)
 
 
-#class HasComments:
-#    @declared_attr
-#    def comments(cls):
-#        cls.Comment = type(
-#            "%sComment" % cls.__name__,
-#            (Comment, CommentBase),
-#            dict(
-#                __tablename__="%s_comment" % cls.__tablename__,
-#                parent_uuid=db.Column(
-#                    UUID, db.ForeignKey("%s.id" % cls.__tablename__)
-#                ),
-#                parent=db.relationship(cls),
-#            ),
-#        )
-#        return db.relationship(cls.Comment)
-
 
 class Comment(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
