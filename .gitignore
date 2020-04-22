@@ -16,3 +16,6 @@ react_app/build
 site
 
 dev_data.json
+
+react_app/app.yaml
+react_app/.gcloudignore
