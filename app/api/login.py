@@ -1,7 +1,7 @@
 from flask_restplus import reqparse, Resource
 from app import guard
 from app import login_ns as ns
-import flask_praetorian
+from flask import jsonify
 
 
 parser = reqparse.RequestParser()
@@ -20,8 +20,7 @@ class Login(Resource):
 
 @ns.route('/refresh_token')
 class Login(Resource):
-    @flask_praetorian.auth_required
     def get(self):
-        token = guard.refresh_jwt_token(guard.refresh_jwt_token(guard.read_token_from_header()))
-        ret = {'access_token': token}
-        return ret, 200
+        old_token = guard.read_token_from_header()
+        new_token = guard.refresh_jwt_token(old_token)
+        return jsonify(access_token=new_token)

@@ -55,13 +55,15 @@ tasks_schema = schemas.TaskSchema(many=True)
 class Myself(Resource):
     @flask_praetorian.auth_required
     def get(self):
+        jwt_details = flask_praetorian.utilities.get_jwt_data_from_app_context()
+        print(jwt_details)
         try:
             user = get_user_object_by_int_id(prae_util.current_user_id())
         except ObjectNotFoundError:
             return not_found(USER, None)
-        except:
-            raise
-        return jsonify(user_dump_schema.dump(user).data)
+        result = user_dump_schema.dump(user).data
+        result['login_expiry'] = jwt_details['rf_exp'] if jwt_details else None
+        return jsonify(result)
 
 @ns.route(
     '/<user_id>',
