@@ -21,6 +21,7 @@ class Objects(IntEnum):
     PRIORITY = auto()
     PATCH = auto()
     DELETE_FLAG = auto()
+    SETTINGS = auto()
 
 
 class SearchableMixin:
@@ -72,18 +73,29 @@ class CommonMixin:
     flagged_for_deletion = db.Column(db.Boolean, default=False)
 
 
-@as_declarative()
-class CommentBase(object):
-    """Base class which provides automated table name
-    and surrogate primary key column.
-    """
-
-    @declared_attr
-    def __tablename__(cls):
-        return cls.__name__.lower()
-
+class ServerSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    time_created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    time_modified = db.Column(db.DateTime, index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    organisation_name = db.Column(db.String, unique=True)
+    image_url = db.Column(db.String)
+    version = db.Column(db.String)
+    hostname = db.Column(db.String)
+    favicon = db.Column(db.String)
+
+    locale_id = db.Column(db.Integer, db.ForeignKey('locale.id'))
+    locale = db.relationship("Locale",  foreign_keys=[locale_id])
+
+    @property
+    def object_type(self):
+        return Objects.SETTINGS
+
+
+class Locale(db.Model, CommonMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String, unique=True)
+    code = db.Column(db.String, unique=True)
 
 
 class Comment(db.Model, CommonMixin):
@@ -221,7 +233,6 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
 
     def __repr__(self):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registration_number)
-
 
 class User(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)

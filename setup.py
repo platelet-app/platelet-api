@@ -1,7 +1,6 @@
 from app import db, models, guard
 import datetime
 import sys
-import sys
 import json
 
 insert_data = None
@@ -25,6 +24,15 @@ for patch in insert_data['patches']:
     db.session.add(patch_model)
     db.session.commit()
 
+for locale in insert_data['locales']:
+    locale_model = models.Locale(**locale)
+    db.session.add(locale_model)
+    db.session.commit()
+
+server_settings = models.ServerSettings(**insert_data['server_settings'])
+db.session.add(server_settings)
+db.session.commit()
+
 for user in insert_data['users']:
     existing = None
     try:
@@ -32,9 +40,7 @@ for user in insert_data['users']:
     except:
         pass
     if existing:
-        db.session.delete(existing)
-        db.session.commit()
-        db.session.flush()
+        break
 
     user['name'] = user['firstname'] + " " + user['secondname']
     user['dob'] = datetime.datetime.strptime(user['dob'], '%d/%m/%Y').date()
@@ -53,9 +59,7 @@ for loc in insert_data['savedlocations']:
     except:
         pass
     if existing:
-        db.session.delete(existing)
-        db.session.commit()
-        db.session.flush()
+        break
     loc['address'] = models.Address(**loc['address'])
     location_model = models.Location(**loc)
 
@@ -70,9 +74,7 @@ for priority in insert_data['priorities']:
     except:
         pass
     if existing:
-        db.session.delete(existing)
-        db.session.commit()
-        db.session.flush()
+        break
     priority_model = models.Priority(**priority)
 
     db.session.add(priority_model)
@@ -85,9 +87,7 @@ for deliverable in insert_data['deliverables']:
     except:
         pass
     if existing:
-        db.session.delete(existing)
-        db.session.commit()
-        db.session.flush()
+        break
     deliverable_type_model = models.DeliverableType(**deliverable)
 
     db.session.add(deliverable_type_model)
@@ -100,9 +100,7 @@ for vehicle in insert_data['vehicles']:
     except:
         pass
     if existing:
-        db.session.delete(existing)
-        db.session.commit()
-        db.session.flush()
+        break
     vehicle_model = models.Vehicle(**vehicle)
 
     db.session.add(vehicle_model)

@@ -1,8 +1,7 @@
-from marshmallow import ValidationError, pre_dump
+from marshmallow import ValidationError, pre_dump, post_dump
 from app.exceptions import ObjectNotFoundError
-from app import ma
 from marshmallow_sqlalchemy import fields, field_for
-from app import models
+from app import models, ma, flask_version
 import datetime
 
 
@@ -23,14 +22,37 @@ class DeleteFilterMixin:
                 return data
 
 
+class ServerSettingsSchema(ma.ModelSchema, TimesMixin):
+    class Meta:
+        model = models.ServerSettings
+        fields = ('organisation_name', 'image_url',
+                  'version', 'hostname', 'favicon', 'locale',
+                  'locale_id')
+
+    locale = fields.fields.Nested('LocaleSchema', dump_only=True, exclude=('id',))
+
+    @post_dump()
+    def flask_version(self, data):
+        data['flask_version'] = flask_version
+        return data
+
+
+class LocaleSchema(ma.ModelSchema):
+    class Meta:
+        model = models.Locale
+        fields = ('label', 'id', 'code')
+
+
 class CommentSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.Comment
         fields = ('uuid', 'body', 'author', 'parent_uuid', 'author_uuid',
                   "time_created", "time_modified", "publicly_visible")
-    author = fields.fields.Nested('UserSchema', dump_only=True, exclude=('username', 'address', 'password', 'name', 'email',
-                  'dob', 'patch', 'roles', 'comments', 'assigned_vehicles', 'patch_id',
-                  "time_created", "time_modified"))
+    author = fields.fields.Nested(
+        'UserSchema', dump_only=True,
+        exclude=('username', 'address', 'password', 'name', 'email',
+                 'dob', 'patch', 'roles', 'comments', 'assigned_vehicles', 'patch_id',
+                 "time_created", "time_modified"))
 
 
 class DeliverableTypeSchema(ma.ModelSchema, TimesMixin):

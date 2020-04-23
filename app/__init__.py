@@ -1,4 +1,5 @@
-from flask import Flask, Blueprint, render_template, url_for
+import flask
+from flask import Flask, Blueprint, render_template
 from flask_restplus import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -20,11 +21,8 @@ logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
 app = Flask(__name__, static_folder="site/static", template_folder="site")
+flask_version = flask.__version__
 
-
-@app.route("/")
-def react():
-    return render_template('index.html', api_url="http://localhost:5000")
 app.config.from_object(Config)
 
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
@@ -61,7 +59,7 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.api import task, user, views, site, login, session, vehicle, comment, testing_views, deliverable, location, uuid_lookup, search, priority, patch, ping
+from app.api import task, user, views, site, login, session, vehicle, comment, testing_views, deliverable, location, uuid_lookup, search, priority, patch, ping, server_settings
 
 site_blueprint = Blueprint('site', __name__, url_prefix='/')
 
