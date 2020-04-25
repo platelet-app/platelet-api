@@ -10,11 +10,13 @@ from app.api.functions.userfunctions import get_user_object_by_int_id
 from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError, AlreadyFlaggedForDeletionError
-from app.utilities import add_item_to_delete_queue, get_object, get_all_objects, get_range
+from app.utilities import add_item_to_delete_queue, get_object, get_all_objects, get_range, \
+    remove_item_from_delete_queue
 from app import guard
 from flask_praetorian import utilities as prae_util
 
 USER = models.Objects.USER
+DELETE_FLAG = models.Objects.DELETE_FLAG
 
 user_dump_schema = schemas.UserSchema(exclude=("password",
                                                "tasks"))
@@ -64,6 +66,21 @@ class Myself(Resource):
         result = user_dump_schema.dump(user).data
         result['login_expiry'] = jwt_details['rf_exp'] if jwt_details else None
         return jsonify(result)
+
+@ns.route('/<user_id>/restore', endpoint="user_undelete")
+class UserRestore(Resource):
+    @flask_praetorian.roles_accepted("admin", "coordinator")
+    def put(self, user_id):
+        try:
+            user = get_object(USER, user_id)
+        except ObjectNotFoundError:
+            return not_found(USER, user_id)
+
+        if user.flagged_for_deletion:
+            remove_item_from_delete_queue(user)
+        else:
+            return {'uuid': str(user.uuid), 'message': 'User {} not flagged for deletion.'.format(user.uuid)}, 200
+        return {'uuid': str(user.uuid), 'message': 'User {} deletion flag removed.'.format(user.uuid)}, 200
 
 @ns.route(
     '/<user_id>',
