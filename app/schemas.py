@@ -6,8 +6,8 @@ import datetime
 
 
 class TimesMixin:
-    time_created = fields.fields.DateTime()
-    time_modified = fields.fields.DateTime()
+    time_created = fields.fields.DateTime(dump_only=True)
+    time_modified = fields.fields.DateTime(dump_only=True)
 
 
 class DeleteFilterMixin:
@@ -93,7 +93,7 @@ class UserSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
         model = models.User
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'comments', 'links', 'display_name',
-                  'assigned_vehicles', 'patch_id',
+                  'assigned_vehicles', 'patch_id', 'contact_number',
                   "time_created", "time_modified")
 
     username = ma.Str(required=True)
@@ -116,20 +116,22 @@ class UserSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
 class VehicleSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.Vehicle
-        fields = ('manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
-                  'registration_number', 'comments', 'links', 'name', 'assigned_user', 'assigned_user_uuid', 'uuid',
+        fields = ('uuid', 'manufacturer', 'model', 'date_of_manufacture', 'date_of_registration',
+                  'registration_number', 'comments', 'links', 'name', 'assigned_user', 'assigned_user_uuid',
                   "time_created", "time_modified")
 
-    date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
+    date_of_manufacture = fields.fields.DateTime(format='%d/%m/%Y')
     date_of_registration = ma.Function(lambda obj: validate_date_of_registration(obj))
     assigned_user = fields.fields.Nested(UserSchema, dump_only=True)
+    assigned_user_uuid = fields.fields.String(allow_none=True)
     #registration_number = ma.Function(lambda obj: obj.registrationNumber.upper())
     comments = fields.fields.Nested(CommentSchema, dump_only=True, many=True)
+    uuid = fields.fields.String(dump_only=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('vehicle_detail', vehicle_id='<uuid>'),
         'collection': ma.URLFor('vehicle_list')
-    })
+    }, dump_only=True)
 
 
 def validate_date_of_registration(obj):

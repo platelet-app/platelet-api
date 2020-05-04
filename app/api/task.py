@@ -50,7 +50,7 @@ class Task(Resource):
             return not_found(TASK, task_id)
 
 
-    @flask_praetorian.roles_required('admin')
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
     def delete(self, task_id):
         try:
             task = get_object(TASK, task_id)
