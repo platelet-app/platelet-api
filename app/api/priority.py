@@ -1,3 +1,4 @@
+import flask_praetorian
 from flask import jsonify, request
 from app.api.functions.errors import internal_error
 from app.utilities import get_range, get_all_objects
@@ -13,6 +14,7 @@ PRIORITY = models.Objects.PRIORITY
 
 @root_ns.route('/priorities', endpoint='priorities_list')
 class Priorities(Resource):
+    @flask_praetorian.auth_required
     def get(self):
         try:
             items = get_all_objects(PRIORITY)
