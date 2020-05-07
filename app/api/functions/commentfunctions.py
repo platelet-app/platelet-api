@@ -14,7 +14,7 @@ def comment_author_match_or_admin(func):
         if utilities.current_user().uuid == comment_author:
             return func(self, _id)
         else:
-            return forbidden_error("Comment not owned by user: user id: {}".format(comment_author))
+            return forbidden_error("Comment {} not owned by user: {}".format(_id, comment_author))
     return wrapper
 
 
