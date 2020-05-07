@@ -5,8 +5,8 @@ from app import user_ns as ns
 from app import root_ns
 from flask_restplus import Resource
 import flask_praetorian
-from app.api.functions.viewfunctions import user_id_match_or_admin, load_request_into_object
-from app.api.functions.userfunctions import get_user_object_by_int_id
+from app.api.functions.viewfunctions import load_request_into_object
+from app.api.functions.userfunctions import get_user_object_by_int_id, user_id_match_or_admin
 from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError, AlreadyFlaggedForDeletionError

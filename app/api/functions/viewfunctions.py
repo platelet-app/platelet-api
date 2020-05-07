@@ -1,5 +1,4 @@
 import functools
-from flask_praetorian import utilities
 from flask import request
 from app import models
 from app.exceptions import SchemaValidationError
@@ -18,19 +17,6 @@ deliverable_schema = schemas.DeliverableSchema()
 comment_schema = schemas.CommentSchema()
 location_schema = schemas.LocationSchema()
 
-
-def user_id_match_or_admin(func):
-    @functools.wraps(func)
-    def wrapper(self, user_id):
-        if 'admin' in utilities.current_rolenames():
-            return func(self, user_id)
-        user_int_id = models.User.query.filter_by(uuid=user_id).first().id
-        if utilities.current_user_id() == user_int_id:
-            return func(self, user_id)
-        else:
-            print(user_id)
-            return forbidden_error("Object not owned by user: user id: {}".format(user_id))
-    return wrapper
 
 
 def load_request_into_object(model_enum, instance=None):

@@ -4,6 +4,8 @@ from flask_restplus import Resource
 from flask_praetorian import utilities as prae_utils
 from app import comment_ns as ns
 import flask_praetorian
+
+from app.api.functions.commentfunctions import comment_author_match_or_admin
 from app.api.functions.userfunctions import get_user_object_by_int_id
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
@@ -17,14 +19,15 @@ DELETE_FLAG = models.Objects.DELETE_FLAG
 comment_schema = schemas.CommentSchema()
 comments_schema = schemas.CommentSchema(many=True)
 
-@ns.route('/<comment_id>/restore', endpoint="comment_undelete")
+@ns.route('/<_id>/restore', endpoint="comment_undelete")
 class SessionRestore(Resource):
     @flask_praetorian.auth_required
-    def put(self, comment_id):
+    @comment_author_match_or_admin
+    def put(self, _id):
         try:
-            comment = get_object(COMMENT, comment_id)
+            comment = get_object(COMMENT, _id)
         except ObjectNotFoundError:
-            return not_found(COMMENT, comment_id)
+            return not_found(COMMENT, _id)
 
         if comment.flagged_for_deletion:
             remove_item_from_delete_queue(comment)
@@ -45,6 +48,7 @@ class Comment(Resource):
             return not_found(_id)
 
     @flask_praetorian.auth_required
+    @comment_author_match_or_admin
     def delete(self, _id):
         try:
             comment = get_object(COMMENT, _id)
@@ -58,6 +62,7 @@ class Comment(Resource):
         return {'uuid': str(comment.uuid), 'message': "Comment queued for deletion"}, 202
 
     @flask_praetorian.auth_required
+    @comment_author_match_or_admin
     def put(self, _id):
         try:
             comment = get_object(COMMENT, _id)

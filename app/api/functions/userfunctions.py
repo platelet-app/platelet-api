@@ -1,5 +1,21 @@
+import functools
+from flask_praetorian import utilities
 from app import models
+from app.api.functions.errors import forbidden_error
 from app.exceptions import ObjectNotFoundError
+
+def user_id_match_or_admin(func):
+    @functools.wraps(func)
+    def wrapper(self, user_id):
+        if 'admin' in utilities.current_rolenames():
+            return func(self, user_id)
+        user_int_id = models.User.query.filter_by(uuid=user_id).first().id
+        if utilities.current_user_id() == user_int_id:
+            return func(self, user_id)
+        else:
+            print(user_id)
+            return forbidden_error("Object not owned by user: user id: {}".format(user_id))
+    return wrapper
 
 
 def get_all_users():
