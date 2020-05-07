@@ -43,7 +43,7 @@ class LocaleSchema(ma.ModelSchema):
         fields = ('label', 'id', 'code')
 
 
-class CommentSchema(ma.ModelSchema, TimesMixin):
+class CommentSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
         model = models.Comment
         fields = ('uuid', 'body', 'author', 'parent_uuid', 'author_uuid',

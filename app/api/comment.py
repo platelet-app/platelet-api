@@ -7,15 +7,30 @@ import flask_praetorian
 from app.api.functions.userfunctions import get_user_object_by_int_id
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
-from app.utilities import get_object, add_item_to_delete_queue, get_unspecified_object
+from app.utilities import get_object, add_item_to_delete_queue, get_unspecified_object, remove_item_from_delete_queue
 from app.exceptions import ObjectNotFoundError, AlreadyFlaggedForDeletionError
 from app import db
 
 COMMENT = models.Objects.COMMENT
+DELETE_FLAG = models.Objects.DELETE_FLAG
 
 comment_schema = schemas.CommentSchema()
 comments_schema = schemas.CommentSchema(many=True)
 
+@ns.route('/<comment_id>/restore', endpoint="comment_undelete")
+class SessionRestore(Resource):
+    @flask_praetorian.auth_required
+    def put(self, comment_id):
+        try:
+            comment = get_object(COMMENT, comment_id)
+        except ObjectNotFoundError:
+            return not_found(COMMENT, comment_id)
+
+        if comment.flagged_for_deletion:
+            remove_item_from_delete_queue(comment)
+        else:
+            return {'uuid': str(comment.uuid), 'message': 'Comment {} not flagged for deletion.'.format(comment.uuid)}, 200
+        return {'uuid': str(comment.uuid), 'message': 'Comment {} deletion flag removed.'.format(comment.uuid)}, 200
 
 @ns.route('/<_id>')
 class Comment(Resource):
@@ -23,9 +38,7 @@ class Comment(Resource):
     def get(self, _id):
         if not _id:
             return not_found("comment")
-
         comment = get_object(COMMENT, _id)
-
         if comment:
             return jsonify(comment_schema.dump(comment).data)
         else:
@@ -50,7 +63,6 @@ class Comment(Resource):
             comment = get_object(COMMENT, _id)
         except ObjectNotFoundError:
             return not_found(COMMENT, _id)
-
 
         load_request_into_object(COMMENT, instance=comment)
         db.session.commit()
