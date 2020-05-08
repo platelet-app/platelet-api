@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restplus import Resource
+from flask_restplus import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue
@@ -67,6 +67,7 @@ class Task(Resource):
         return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
     @flask_praetorian.auth_required
+    # TODO: make this decorator for assigned_users instead
     @check_rider_match
     def put(self, task_id):
         try:
@@ -77,6 +78,37 @@ class Task(Resource):
             return not_found(TASK, task_id)
 
         load_request_into_object(TASK, instance=task)
+        db.session.commit()
+        return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+
+@ns.route(
+          '/<task_id>/assign_user',
+          endpoint="tasks_assign_user")
+class TasksAssignees(Resource):
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
+    def put(self, task_id):
+        try:
+            task = get_object(TASK, task_id)
+            if task.flagged_for_deletion:
+                return not_found(TASK, task_id)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_id)
+
+        #load_request_into_object(TASK, instance=task)
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('user_uuid')
+        args = parser.parse_args()
+        user_uuid = args['user_uuid']
+        try:
+            user = get_object(models.Objects.USER, user_uuid)
+            if task.flagged_for_deletion:
+                return not_found(models.Objects.USER, user_uuid)
+        except ObjectNotFoundError:
+            return not_found(models.Objects.USER, user_uuid)
+
+        task.assigned_users.append(user)
+        db.session.add(task)
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 

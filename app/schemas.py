@@ -158,11 +158,12 @@ class TaskSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
                   'comments', 'links', 'assigned_rider', 'time_picked_up', 'time_dropped_off', 'rider',
                   'priority_id', 'time_cancelled', 'time_rejected', "patient_name", "patient_contact_number",
                   "destination_contact_number", "destination_contact_name",
-                  "time_created", "time_modified")
+                  "time_created", "time_modified", "assigned_users")
 
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)
     rider = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'), dump_only=True)
+    assigned_users = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'), many=True)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
     comments = fields.fields.Nested(CommentSchema, dump_only=True, many=True)
     pickup_time = fields.fields.DateTime(allow_none=True)
@@ -172,6 +173,7 @@ class TaskSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     priority = fields.fields.Nested(PrioritySchema, only="label", dump_only=True)
     patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
     time_of_call = fields.fields.DateTime()
+
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),

@@ -156,6 +156,13 @@ class Priority(db.Model, CommonMixin):
         return Objects.PRIORITY
 
 
+task_assignees = db.Table(
+    'task_assignees',
+    db.Column('task_uuid', UUID(as_uuid=True), db.ForeignKey('task.uuid'), primary_key=True),
+    db.Column('user_uuid', UUID(as_uuid=True), db.ForeignKey('user.uuid'), primary_key=True)
+)
+
+
 class Task(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
@@ -167,7 +174,6 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     pickup_address = db.relationship("Address", foreign_keys=[pickup_address_id])
     dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
 
-    # TODO: Make this foreign key
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
     contact_name = db.Column(db.String(64))
@@ -183,6 +189,8 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    assigned_users = db.relationship('User', secondary=task_assignees, lazy='subquery',
+        backref=db.backref('tasks', lazy=True))
 
     comments = db.relationship(
         'Comment',
@@ -234,6 +242,7 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
     def __repr__(self):
         return '<Vehicle {} {} with registration {}>'.format(self.manufacturer, self.model, self.registration_number)
 
+
 class User(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
@@ -257,11 +266,12 @@ class User(SearchableMixin, db.Model, CommonMixin):
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
 
-    tasks = db.relationship('Task', backref='rider', lazy='dynamic')
+    #tasks = db.relationship('Task', backref='rider', lazy='dynamic')
     comments = db.relationship(
         'Comment',
         primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == User.uuid)".format(Objects.USER)
     )
+    #password_reset_on_login = db.Column(db.Boolean, default=False)
 
     __searchable__ = ['username', 'roles', 'name', 'email']
 
