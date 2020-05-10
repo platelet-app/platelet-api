@@ -163,7 +163,7 @@ class TaskSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     pickup_address = fields.fields.Nested(AddressSchema)
     dropoff_address = fields.fields.Nested(AddressSchema)
     rider = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'), dump_only=True)
-    assigned_users = fields.fields.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'), many=True)
+    assigned_users = fields.fields.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'), many=True)
     deliverables = fields.fields.Nested(DeliverableSchema, many=True)
     comments = fields.fields.Nested(CommentSchema, dump_only=True, many=True)
     pickup_time = fields.fields.DateTime(allow_none=True)
