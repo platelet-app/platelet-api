@@ -113,12 +113,24 @@ class SessionStatistics(Resource):
         num_unassigned = len(list(filter(lambda t: not t.assigned_rider, tasks)))
 
         # unique list of all riders that are assigned in this session
-        riders_in_session = set(map(lambda t: t.rider, tasks))
+        #TODO: update for multiple assigned riders
+
+        riders_in_session = set()
+        for task in tasks:
+            riders_in_session = riders_in_session | set(map(lambda user: user, task.assigned_users))
+            riders_in_session = riders_in_session | {None}
+
         rider_counts = {}
+        num_all_riders = 0
         for rider in riders_in_session:
             if rider:
                 # get the tasks for a rider
-                riders_tasks = list(filter(lambda t: t.assigned_rider and rider.uuid == t.assigned_rider, tasks))
+                riders_tasks = list()
+                for task in tasks:
+                    task_users = map(lambda u: u.uuid, task.assigned_users)
+                    if rider.uuid in task_users:
+                        riders_tasks.append(task)
+                num_all_riders += len(riders_tasks)
                 # match the tasks with all priorities that are available and return a dictionary: prioritylabel: numtasks.
                 rider_counts[rider.display_name] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, riders_tasks)))), available_priorities))
                 # total number of tasks for that rider
@@ -127,10 +139,11 @@ class SessionStatistics(Resource):
                 rider_counts[rider.display_name]["None"] = len(list(filter(lambda t: not t.priority_id, riders_tasks)))
             else:
                 # same as above but for tasks that are unassigned
-                unassigned_tasks = list(filter(lambda t: not t.assigned_rider, tasks))
+                unassigned_tasks = list(filter(lambda t: not t.assigned_users, tasks))
                 rider_counts["Unassigned"] = dict(map(lambda priority: (priority.label, len(list(filter(lambda t: t.priority_id == priority.id, unassigned_tasks)))), available_priorities))
                 rider_counts["Unassigned"]["Total"] = len(unassigned_tasks)
                 rider_counts["Unassigned"]["None"] = len(list(filter(lambda t: not t.priority_id, unassigned_tasks)))
+                num_all_riders += len(unassigned_tasks)
 
         # unique list of all the patches that are set in this session
         patches_in_session = set(map(lambda t: t.patch, tasks))
@@ -166,6 +179,7 @@ class SessionStatistics(Resource):
             time_active = str(round((session.time_modified - session.time_created).total_seconds()))
 
         return {"num_tasks": num_tasks,
+                "num_all_riders": num_all_riders,
                 "num_deleted": num_deleted,
                 "num_completed": num_completed,
                 "num_picked_up": num_picked_up,
