@@ -174,7 +174,6 @@ class TaskSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     patch = fields.fields.Nested(PatchSchema, only="label", dump_only=True)
     time_of_call = fields.fields.DateTime()
 
-
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
         'collection': ma.URLFor('tasks_list')
