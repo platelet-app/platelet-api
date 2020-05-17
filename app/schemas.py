@@ -58,7 +58,7 @@ class CommentSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
 class DeliverableTypeSchema(ma.ModelSchema, TimesMixin):
     class Meta:
         model = models.DeliverableType
-        fields = ('id', 'name')
+        fields = ('id', 'label')
 
 
 class DeliverableSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
@@ -68,7 +68,7 @@ class DeliverableSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
                   "time_created", "time_modified")
 
     comments = fields.fields.Nested(CommentSchema, dump_only=True, many=True)
-    type = fields.fields.Nested(DeliverableTypeSchema, only="name")
+    type = fields.fields.Nested(DeliverableTypeSchema, dump_only=True, only="name")
 
 
 class AddressSchema(ma.ModelSchema):

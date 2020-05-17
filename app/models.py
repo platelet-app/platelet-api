@@ -115,7 +115,7 @@ class Comment(db.Model, CommonMixin):
 
 class DeliverableType(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, unique=True)
+    label = db.Column(db.String, unique=True)
 
     @property
     def object_type(self):
