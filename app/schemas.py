@@ -68,7 +68,7 @@ class DeliverableSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
                   "time_created", "time_modified")
 
     comments = fields.fields.Nested(CommentSchema, dump_only=True, many=True)
-    type = fields.fields.Nested(DeliverableTypeSchema, dump_only=True, only="name")
+    type = fields.fields.Nested(DeliverableTypeSchema, dump_only=True, only="label")
 
 
 class AddressSchema(ma.ModelSchema):
