@@ -3,6 +3,7 @@ from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import fields, field_for
 from app import models, ma, flask_version
 import datetime
+from app.utilities import get_object
 
 
 class TimesMixin:
@@ -202,7 +203,7 @@ class SessionSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
         model = models.Session
         fields = ('uuid', 'user_uuid',
                   'time_created', 'tasks', 'comments',
-                   'links', 'task_count',
+                   'links', 'task_count', 'last_active',
                   "time_created", "time_modified")
 
     tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True,
@@ -213,6 +214,14 @@ class SessionSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
         'self': ma.URLFor('session_detail', session_id='<uuid>'),
         'collection': ma.URLFor('sessions_list')
     })
+
+    @pre_dump
+    def get_last_active(self, data):
+        session = get_object(models.Objects.SESSION, data.uuid)
+        tasks_plus_deleted = session.tasks.all()
+        last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)
+        data.last_active = last_changed_task[-1].time_modified if last_changed_task else session.time_modified
+        return data
 
 
 class LocationSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
