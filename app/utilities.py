@@ -1,3 +1,7 @@
+import hashlib
+
+from flask import json
+
 from app import app, db, models
 from app.api.functions.userfunctions import get_user_object, get_all_users
 from app.api.functions.sessionfunctions import get_session_object, get_all_sessions
@@ -10,6 +14,13 @@ from app.api.functions.commentfunctions import get_comment_object
 from app.api.functions.delete_flag_functions import get_delete_flag_object
 from app.api.functions.deliverablefunctions import get_deliverable_object, get_all_deliverable_types
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
+from app import schemas
+
+
+def calculate_tasks_etag(data):
+    tasks_schema = schemas.TaskSchema(many=True)
+    json_data = json.dumps(tasks_schema.dump(data).data)
+    return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
 
 
 def remove_item_from_delete_queue(item):

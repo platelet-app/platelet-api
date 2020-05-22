@@ -3,7 +3,7 @@ from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import fields, field_for
 from app import models, ma, flask_version
 import datetime
-from app.utilities import get_object
+from app.utilities import get_object, calculate_tasks_etag
 
 
 class TimesMixin:
@@ -204,7 +204,7 @@ class SessionSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
         fields = ('uuid', 'user_uuid',
                   'time_created', 'tasks', 'comments',
                    'links', 'task_count', 'last_active',
-                  "time_created", "time_modified")
+                  'time_created', 'time_modified', 'tasks_etag')
 
     tasks = fields.fields.Nested(TaskSchema, dump_only=True, many=True,
                                  exclude=('comments', 'deliverables'))
@@ -223,6 +223,10 @@ class SessionSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
         data.last_active = last_changed_task[-1].time_modified if last_changed_task else session.time_modified
         return data
 
+    @pre_dump
+    def calculate_tasks_etag(self, data):
+        data.tasks_etag = calculate_tasks_etag(data.tasks.all())
+        return data
 
 class LocationSchema(ma.ModelSchema, TimesMixin, DeleteFilterMixin):
     class Meta:
