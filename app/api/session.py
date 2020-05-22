@@ -16,7 +16,7 @@ from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queu
 SESSION = models.Objects.SESSION
 DELETE_FLAG = models.Objects.DELETE_FLAG
 
-session_schema = schemas.SessionSchema()
+session_schema = schemas.SessionSchema(exclude=('tasks',))
 sessions_schema = schemas.SessionSchema(many=True, exclude=('tasks',))
 
 @ns.route('/<session_id>/restore', endpoint="session_undelete")
@@ -93,7 +93,12 @@ class Session(Resource):
 class SessionStatistics(Resource):
     @flask_praetorian.auth_required
     def get(self, session_id):
-        session = get_object(SESSION, session_id)
+        if not session_id:
+            return not_found(SESSION)
+        try:
+            session = get_object(SESSION, session_id)
+        except ObjectNotFoundError:
+            return not_found(SESSION, session_id)
         available_priorities = get_all_objects(models.Objects.PRIORITY)
         tasks_plus_deleted = session.tasks.all()
         tasks = list(filter(lambda t: not t.flagged_for_deletion, tasks_plus_deleted))
