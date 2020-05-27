@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restplus import Resource
+from flask_restx import Resource
 import flask_praetorian
 from app import deliverable_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
@@ -14,7 +14,7 @@ DELIVERABLE_TYPE = models.Objects.DELIVERABLE_TYPE
 TASK = models.Objects.TASK
 
 deliverable_schema = schemas.DeliverableSchema()
-deliverables_schema = schemas.DeliverableSchema(many=True, exclude=("flagged_for_deletion",))
+deliverables_schema = schemas.DeliverableSchema(many=True)
 deliverable_types_schema = schemas.DeliverableTypeSchema(many=True)
 
 
@@ -23,7 +23,7 @@ class DeliverableType(Resource):
     @flask_praetorian.auth_required
     def get(self):
         deliverable_types = get_all_objects(DELIVERABLE_TYPE)
-        return jsonify(deliverable_types_schema.dump(deliverable_types).data)
+        return jsonify(deliverable_types_schema.dump(deliverable_types))
 
 
 
@@ -37,7 +37,7 @@ class Deliverable(Resource):
         deliverable = get_object(DELIVERABLE, deliverable_id)
 
         if deliverable:
-            return jsonify(deliverable_schema.dump(deliverable).data)
+            return jsonify(deliverable_schema.dump(deliverable))
         else:
             return not_found(deliverable_id)
 

@@ -226,7 +226,6 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
     date_of_registration = db.Column(db.Date)
     registration_number = db.Column(db.String(10))
     assigned_user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    assigned_user = db.relationship("User", foreign_keys=[assigned_user_uuid])
 
     comments = db.relationship(
         'Comment',
@@ -257,7 +256,7 @@ class User(SearchableMixin, db.Model, CommonMixin):
     display_name = db.Column(db.String(64), unique=True)
     dob = db.Column(db.Date)
     sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
-    assigned_vehicles = db.relationship('Vehicle', backref='vehicle', lazy='dynamic')
+    assigned_vehicles = db.relationship('Vehicle', backref='assigned_user', lazy='dynamic')
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])

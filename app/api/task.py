@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restplus import Resource, reqparse
+from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue
@@ -45,7 +45,7 @@ class Task(Resource):
     @flask_praetorian.auth_required
     def get(self, task_id):
         try:
-            return jsonify(task_schema.dump(get_object(TASK, task_id)).data)
+            return jsonify(task_schema.dump(get_object(TASK, task_id)))
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
@@ -82,8 +82,8 @@ class Task(Resource):
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
 @ns.route(
-          '/<task_id>/assign_user',
-          endpoint="tasks_assign_user")
+    '/<task_id>/assign_user',
+    endpoint="tasks_assign_user")
 class TasksAssignees(Resource):
     @flask_praetorian.roles_accepted('admin', 'coordinator')
     def put(self, task_id):

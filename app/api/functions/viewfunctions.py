@@ -18,27 +18,26 @@ comment_schema = schemas.CommentSchema()
 location_schema = schemas.LocationSchema()
 
 
-
-def load_request_into_object(model_enum, instance=None):
+def load_request_into_object(model_enum, instance=None, partial=True):
     request_json = request.get_json()
     print(request_json)
     if not request_json:
         logger.warning("No json input data provided")
 
     if model_enum is models.Objects.USER:
-        return user_schema.load(request_json, instance=instance if instance else None).data
+        return user_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.SESSION:
-        return session_schema.load(request_json, instance=instance if instance else None).data
+        return session_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.TASK:
-        return task_schema.load(request_json, instance=instance if instance else None).data
+        return task_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.VEHICLE:
-        return vehicle_schema.load(request_json, instance=instance if instance else None).data
+        return vehicle_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.DELIVERABLE:
-        return deliverable_schema.load(request_json, instance=instance if instance else None).data
+        return deliverable_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.COMMENT:
-        return comment_schema.load(request_json, instance=instance if instance else None).data
+        return comment_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.LOCATION:
-        return location_schema.load(request_json, instance=instance if instance else None).data
+        return location_schema.load(request_json, instance=instance if instance else None, partial=partial)
 
     # if model_enum is models.Objects.USER:
     #     return models.User(**user_schema.load(request_json).data)

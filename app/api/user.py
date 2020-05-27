@@ -3,7 +3,7 @@ from sqlalchemy import exc as sqlexc
 from app import schemas, db, models
 from app import user_ns as ns
 from app import root_ns
-from flask_restplus import Resource
+from flask_restx import Resource
 import flask_praetorian
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.userfunctions import get_user_object_by_int_id, user_id_match_or_admin
@@ -18,20 +18,17 @@ from flask_praetorian import utilities as prae_util
 USER = models.Objects.USER
 DELETE_FLAG = models.Objects.DELETE_FLAG
 
-user_dump_schema = schemas.UserSchema(exclude=("password",
-                                               "tasks"))
+user_dump_schema = schemas.UserSchema(exclude=("password",))
 user_schema = schemas.UserSchema()
-users_schema = schemas.UserSchema(many=True, exclude=("address",
-                                                      "dob",
-                                                      "email",
-                                                      "notes",
-                                                      "password",
-                                                      "tasks"))
+users_schema = schemas.UserSchema(
+    exclude=("address",
+             "dob",
+             "email",
+             "password",))
 address_schema = schemas.AddressSchema()
 user_username_schema = schemas.UserSchema(exclude=("address",
                                                    "dob",
                                                    "email",
-                                                   "notes",
                                                    "password",
                                                    "name",
                                                    "roles",
@@ -41,7 +38,6 @@ user_username_schema = schemas.UserSchema(exclude=("address",
 user_address_schema = schemas.UserSchema(exclude=("username",
                                                    "dob",
                                                    "email",
-                                                   "notes",
                                                    "password",
                                                    "name",
                                                    "roles",
@@ -58,12 +54,11 @@ class Myself(Resource):
     @flask_praetorian.auth_required
     def get(self):
         jwt_details = flask_praetorian.utilities.get_jwt_data_from_app_context()
-        print(jwt_details)
         try:
             user = get_user_object_by_int_id(prae_util.current_user_id())
         except ObjectNotFoundError:
             return not_found(USER, None)
-        result = user_dump_schema.dump(user).data
+        result = user_dump_schema.dump(user)
         result['login_expiry'] = jwt_details['rf_exp'] if jwt_details else None
         return jsonify(result)
 
@@ -90,7 +85,7 @@ class User(Resource):
     @ns.doc(params={'user_id': 'ID for the user'})
     def get(self, user_id):
         try:
-            return jsonify(user_dump_schema.dump(get_object(USER, user_id)).data)
+            return jsonify(user_dump_schema.dump(get_object(USER, user_id)))
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 
@@ -128,7 +123,6 @@ class User(Resource):
         return {'uuid': str(user.uuid), 'message': 'User {} updated.'.format(user.username)}, 200
 
 
-
 @ns.route(
     's',
     's/<_range>',
@@ -144,8 +138,9 @@ class Users(Resource):
         except Exception as e:
             return internal_error(e)
 
-        return jsonify(users_schema.dump(items).data)
+        return users_schema.dump(items, many=True)
 
+    @flask_praetorian.roles_accepted('admin')
     def post(self):
         try:
             user = load_request_into_object(USER)
@@ -162,13 +157,12 @@ class Users(Resource):
         return {'uuid': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
 
 
-
 @ns.route('/<user_id>/tasks')
 class AssignedTasksList(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id):
         try:
-            return jsonify(tasks_schema.dump(get_object(USER, user_id).tasks).data)
+            return jsonify(tasks_schema.dump(get_object(USER, user_id).tasks))
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 

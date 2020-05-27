@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restplus import Resource
+from flask_restx import Resource
 import flask_praetorian
 from app import root_ns
 from app.api.functions.viewfunctions import load_request_into_object
@@ -22,8 +22,9 @@ class ServerSettings(Resource):
             settings = models.ServerSettings.query.filter_by(id=1).first()
             if not settings:
                 return internal_error("There is no record in the database for server settings.")
-            return jsonify(server_settings_schema.dump(settings).data)
+            return jsonify(server_settings_schema.dump(settings))
         except Exception as e:
+            raise
             return internal_error("An exception occurred while retrieving server settings: {}".format(e))
 
     @flask_praetorian.roles_required('admin')

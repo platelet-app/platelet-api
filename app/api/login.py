@@ -1,4 +1,4 @@
-from flask_restplus import reqparse, Resource
+from flask_restx import reqparse, Resource
 from app import guard
 from app import login_ns as ns
 from flask import jsonify

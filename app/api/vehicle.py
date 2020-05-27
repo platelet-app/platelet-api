@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restplus import Resource
+from flask_restx import Resource
 import flask_praetorian
 from app import vehicle_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
@@ -38,7 +38,8 @@ class Vehicle(Resource):
     @flask_praetorian.auth_required
     def get(self, vehicle_id):
         try:
-            return jsonify(vehicle_schema.dump(get_object(VEHICLE, vehicle_id)).data)
+            vehicle = get_object(VEHICLE, vehicle_id)
+            return vehicle_schema.dump(vehicle)
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)
 
@@ -80,7 +81,7 @@ class Vehicles(Resource):
         except Exception as e:
             return internal_error(e)
 
-        return jsonify(vehicles_schema.dump(items).data)
+        return vehicles_schema.dump(items)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):

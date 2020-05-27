@@ -1,6 +1,6 @@
 from flask import jsonify
 from app import schemas, models
-from flask_restplus import Resource
+from flask_restx import Resource
 from flask_praetorian import utilities as prae_utils
 from app import comment_ns as ns
 import flask_praetorian
@@ -43,7 +43,7 @@ class Comment(Resource):
             return not_found("comment")
         comment = get_object(COMMENT, _id)
         if comment:
-            return jsonify(comment_schema.dump(comment).data)
+            return jsonify(comment_schema.dump(comment))
         else:
             return not_found(_id)
 
@@ -105,6 +105,6 @@ class Comments(Resource):
             return not_found(COMMENT, parent_id)
         if hasattr(parent, "comments"):
             result = filter(lambda comment: comment.publicly_visible or comment.author.uuid == calling_user, parent.comments)
-            return jsonify(comments_schema.dump(result).data)
+            return jsonify(comments_schema.dump(result))
         else:
             return forbidden_error("{} does not support comments.".format(parent), parent_id)

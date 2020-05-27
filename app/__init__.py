@@ -1,6 +1,6 @@
 import flask
 from flask import Flask, Blueprint, render_template
-from flask_restplus import Api
+from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
@@ -10,6 +10,7 @@ from config import Config
 import flask_cors
 from flask_buzz import FlaskBuzz
 from elasticsearch import Elasticsearch
+from flask import jsonify
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
 logger = logging.getLogger()

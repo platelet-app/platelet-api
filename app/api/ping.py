@@ -1,5 +1,5 @@
 from app import root_ns as ns
-from flask_restplus import Resource
+from flask_restx import Resource
 
 
 @ns.route('/ping', endpoint="api_ping")

@@ -1,7 +1,7 @@
 from flask import jsonify
 import flask_praetorian
 from app import schemas, any_object_ns as ns, models
-from flask_restplus import Resource
+from flask_restx import Resource
 from app.exceptions import ObjectNotFoundError
 from app.utilities import get_object
 from app.api.functions.errors import not_found

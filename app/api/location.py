@@ -21,7 +21,7 @@ class Location(Resource):
     @flask_praetorian.auth_required
     def get(self, location_id):
         try:
-            return jsonify(location_schema.dump(get_object(LOCATION, location_id)).data)
+            return jsonify(location_schema.dump(get_object(LOCATION, location_id)))
         except ObjectNotFoundError:
             return not_found(LOCATION, location_id)
 
@@ -62,7 +62,7 @@ class Locations(Resource):
         except Exception as e:
             return internal_error(e)
 
-        return jsonify(locations_schema.dump(items).data)
+        return jsonify(locations_schema.dump(items))
     @flask_praetorian.roles_accepted('admin')
     def post(self):
         try:

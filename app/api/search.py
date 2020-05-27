@@ -2,7 +2,7 @@ from app import search_ns as ns
 from app import models
 from flask import request, jsonify
 import flask_praetorian
-from flask_restplus import Resource
+from flask_restx import Resource
 from app.search import query_index
 from app import schemas
 
@@ -10,12 +10,10 @@ search_schema = schemas.SearchSchema()
 users_schema = schemas.UserSchema(many=True, exclude=("address",
                                                       "dob",
                                                       "email",
-                                                      "notes",
                                                       "password",
                                                       "name",
                                                       "roles",
-                                                      "patch",
-                                                      "tasks"))
+                                                      "patch",))
 
 sessions_schema = schemas.SessionSchema(many=True)
 

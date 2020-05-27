@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from app import schemas, db, models, utilities
-from flask_restplus import Resource
+from flask_restx import Resource
 import flask_praetorian
 from flask_praetorian import utilities
 from app import session_ns as ns
@@ -47,7 +47,7 @@ class Session(Resource):
     @flask_praetorian.auth_required
     def get(self, session_id):
         try:
-            return jsonify(session_schema.dump(get_object(SESSION, session_id)).data)
+            return jsonify(session_schema.dump(get_object(SESSION, session_id)))
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
 
