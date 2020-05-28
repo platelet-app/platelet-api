@@ -3,7 +3,7 @@ from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, flask_version
 import datetime
-from app.utilities import get_object, calculate_tasks_etag
+from app.utilities import get_object, calculate_tasks_etag, get_all_objects
 
 
 class TimesMixin:
@@ -126,6 +126,12 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     patch = fields.Pluck(PatchSchema, "label", dump_only=True)
 
+    @validates("display_name")
+    def check_display_name_unique(self, value):
+        users = get_all_objects(models.Objects.USER)
+        if any(list(filter(lambda u: u.display_name == value, users))):
+            raise ValidationError("This display name is already taken.")
+
 
 class VehicleSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
     class Meta:
@@ -146,16 +152,6 @@ class VehicleSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         'self': ma.URLFor('vehicle_detail', vehicle_id='<uuid>'),
         'collection': ma.URLFor('vehicle_list')
     }, dump_only=True)
-
-    @validates("date_of_registration")
-    def validate_date_of_registration(self, value):
-        try:
-            datetime.datetime.strptime(value, '%d/%m/%Y')
-        except ValueError:
-            raise ValidationError("{} has invalid date format, should be %d/%m/%Y".format(value))
-
-        if self.date_of_manufacture and self.date_of_manufacture > value:
-            raise ValidationError("date of registration cannot be before date of manufacture")
 
 
 class PrioritySchema(ma.SQLAlchemySchema, PostLoadMixin):

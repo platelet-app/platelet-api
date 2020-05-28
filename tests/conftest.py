@@ -23,6 +23,7 @@ api_url = "/api/v0.1/"
 #db.session.remove()
 #db.drop_all()
 
+
 @pytest.fixture(scope="session")
 def client():
     return _client
@@ -35,7 +36,8 @@ def login_header_admin():
                             username=generate_name(),
                             display_name=generate_name(),
                             password=guard.hash_password("somepass")
-                            )).data
+                            ))
+    print(user)
     assert isinstance(user, models.User)
     db.session.add(user)
     db.session.commit()
@@ -56,7 +58,7 @@ def login_header_coordinator():
                             username=generate_name(),
                             display_name=generate_name(),
                             password=guard.hash_password("somepass")
-                            )).data
+                            ))
     assert isinstance(user, models.User)
     db.session.add(user)
     db.session.commit()
@@ -77,7 +79,7 @@ def login_header_rider():
                             username=generate_name(),
                             display_name=generate_name(),
                             password=guard.hash_password("somepass")
-                            )).data
+                            ))
     assert isinstance(user, models.User)
     db.session.add(user)
     db.session.commit()
@@ -100,7 +102,7 @@ def user_coordinator():
 @pytest.fixture(scope="session")
 def user_rider_uuid():
     schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())).data
+    user = schema.load(dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name()))
     db.session.add(user)
     db.session.commit()
     db.session.flush()
@@ -111,7 +113,7 @@ def user_rider_uuid():
 @pytest.fixture(scope="session")
 def user_coordinator_uuid():
     schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name())).data
+    user = schema.load(dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name()))
     db.session.add(user)
     db.session.commit()
     db.session.flush()
@@ -124,7 +126,7 @@ def all_user_uuids():
     schema = schemas.UserSchema()
     users = []
     for key in json_data['users']:
-        user = schema.load(dict(**json_data['users'][key], password="somepass", username=generate_name(), display_name=generate_name())).data
+        user = schema.load(dict(**json_data['users'][key], password="somepass", username=generate_name(), display_name=generate_name()))
         db.session.add(user)
         db.session.commit()
         db.session.flush()
@@ -138,11 +140,11 @@ def all_user_uuids():
 @pytest.fixture(scope="session")
 def coordinator_session_uuid():
     schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name())).data
+    user = schema.load(dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name()))
     db.session.add(user)
     db.session.commit()
     db.session.flush()
-    session = models.Session(user_id=user.uuid)
+    session = models.Session(user_uuid=user.uuid)
     db.session.add(session)
     db.session.commit()
     db.session.flush()
@@ -155,7 +157,7 @@ def coordinator_session_uuid():
 @pytest.fixture(scope="function")
 def vehicle_obj():
     schema = schemas.VehicleSchema()
-    vehicle = schema.load(dict(**json_data['vehicle_data'], name=generate_name())).data
+    vehicle = schema.load(dict(**json_data['vehicle_data'], name=generate_name()))
     db.session.add(vehicle)
     db.session.commit()
     db.session.flush()
@@ -167,7 +169,7 @@ def vehicle_obj():
 @pytest.fixture(scope="function")
 def location_obj():
     schema = schemas.LocationSchema()
-    location = schema.load(dict(**json_data['location_data'], name=generate_name())).data
+    location = schema.load(dict(**json_data['location_data'], name=generate_name()))
     db.session.add(location)
     db.session.commit()
     db.session.flush()

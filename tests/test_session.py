@@ -8,7 +8,7 @@ from app import models
 
 def create_session(client, header, other_user_id=None):
     if other_user_id:
-        data = {"user": str(other_user_id)}
+        data = {"user_uuid": str(other_user_id)}
     else:
         data = ""
 
@@ -44,7 +44,7 @@ def delete_session_success(client, header, session_id):
     session = models.Session.query.filter_by(uuid=session_id).first()
     assert session.flagged_for_deletion
 
-    queue = models.DeleteFlags.query.filter_by(object_uuid=session_id, object_type=int(models.Objects.SESSION)).first()
+    queue = models.DeleteFlags.query.filter_by(uuid=session_id, object_type=int(models.Objects.SESSION)).first()
 
     assert int(queue.object_type) == int(models.Objects.SESSION)
 

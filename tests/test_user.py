@@ -36,7 +36,6 @@ def test_add_valid_user(client, user_coordinator, login_header_admin):
     db.session.commit()
 
 
-
 def test_get_user(client, user_rider_uuid, login_header_admin):
     r = client.get('{}/{}'.format(user_url, user_rider_uuid), headers=login_header_admin)
     print_response(r)
@@ -45,9 +44,19 @@ def test_get_user(client, user_rider_uuid, login_header_admin):
     data = json.loads(r.data)
     user_model = get_object(USER, user_rider_uuid)
 
-    #assert datetime(data['dob']) == user_model.dob
-
-    attr_check(data, user_model, exclude=["password", "id", "dob", "links", "notes", "uuid"])
+    attr_check(
+        data,
+        user_model,
+        exclude=["password",
+                 "id",
+                 "dob",
+                 "links",
+                 "comments",
+                 "assigned_vehicles",
+                 "uuid",
+                 "email",
+                 "time_created",
+                 "time_modified"])
 
 
 def test_get_users(client, all_user_uuids, login_header_admin):
@@ -63,9 +72,21 @@ def test_get_users(client, all_user_uuids, login_header_admin):
         if str(user.uuid) in all_user_uuids:
             for i in data:
                 if i['uuid'] == str(user.uuid):
-                    attr_check(i, user, exclude=["password", "id", "dob", "links", "notes", "uuid", "email"])
+                    attr_check(
+                        i,
+                        user,
+                        exclude=["password",
+                                 "id",
+                                 "dob",
+                                 "links",
+                                 "comments",
+                                 "assigned_vehicles",
+                                 "uuid",
+                                 "email",
+                                 "time_created",
+                                 "time_modified"])
 
-    assert(len(data) == len(users))
+    assert(len(data) == len(list(filter(lambda u: not u.flagged_for_deletion, users))))
 
 
 def test_add_invalid_user_existing_username(client, login_header_admin, user_coordinator):
@@ -76,12 +97,16 @@ def test_add_invalid_user_existing_username(client, login_header_admin, user_coo
     assert(r2.status_code == 403)
 
 
-def test_add_invalid_user_existing_displayname(client, login_header_admin, user_coordinator):
-    r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
-    assert(r.status_code == 201)
-    user_coordinator['username'] = generate_name()
-    r2 = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
-    assert(r2.status_code == 403)
+def test_add_invalid_user_existing_display_name(client, login_header_admin, user_coordinator_uuid, user_rider_uuid):
+    r = client.get('{}/{}'.format(user_url, user_coordinator_uuid), headers=login_header_admin)
+    coord_user = json.loads(r.data)
+    print(coord_user['display_name'])
+    name = coord_user['display_name']
+    r3 = client.put(
+        '{}/{}'.format(user_url, user_rider_uuid),
+        data=json.dumps({"display_name": name}),
+        headers=login_header_admin)
+    assert(r3.status_code == 400)
 
 
 def test_delete_other_user_as_coordinator(client, login_header_coordinator, user_rider_uuid):
@@ -98,7 +123,7 @@ def test_delete_user(client, login_header_admin, user_rider_uuid):
     user = get_object(USER, user_rider_uuid)
     assert user.flagged_for_deletion
 
-    queue = models.DeleteFlags.query.filter_by(object_uuid=user_rider_uuid, object_type=USER).first()
+    queue = models.DeleteFlags.query.filter_by(uuid=user_rider_uuid, object_type=USER).first()
     assert int(queue.object_type) == int(USER)
 
 
@@ -120,17 +145,17 @@ def test_add_invalid_user_dob(client, user_rider, login_header_admin):
 
 # UserNameField
 
-def test_get_username(client, user_rider_uuid, login_header_admin):
-    user = get_object(USER, user_rider_uuid)
-
-
-    r = client.get('{}/{}/username'.format(user_url, user.uuid), headers=login_header_admin)
-    print_response(r)
-    assert(r.status_code == 200)
-
-    data = json.loads(r.data)
-    assert(data['uuid'] == str(user.uuid))
-    assert(data['username'] == user.username)
+#def test_get_username(client, user_rider_uuid, login_header_admin):
+#    user = get_object(USER, user_rider_uuid)
+#
+#
+#    r = client.get('{}/{}/username'.format(user_url, user.uuid), headers=login_header_admin)
+#    print_response(r)
+#    assert(r.status_code == 200)
+#
+#    data = json.loads(r.data)
+#    assert(data['uuid'] == str(user.uuid))
+#    assert(data['username'] == user.username)
 
 
 # def test_change_username(client):
@@ -159,15 +184,15 @@ def test_get_username(client, user_rider_uuid, login_header_admin):
 
 # UserAddressField
 
-def test_get_address(client, login_header_admin, user_rider_uuid):
-    user = get_object(USER, user_rider_uuid)
-    r = client.get('{}/{}/address'.format(user_url, user_rider_uuid), headers=login_header_admin)
-    print_response(r)
-    assert(r.status_code == 200)
-
-    data = json.loads(r.data)
-    assert(data['uuid'] == user_rider_uuid)
-    attr_check(data['address'], user.address)
+#def test_get_address(client, login_header_admin, user_rider_uuid):
+#    user = get_object(USER, user_rider_uuid)
+#    r = client.get('{}/{}/address'.format(user_url, user_rider_uuid), headers=login_header_admin)
+#    print_response(r)
+#    assert(r.status_code == 200)
+#
+#    data = json.loads(r.data)
+#    assert(data['uuid'] == user_rider_uuid)
+#    attr_check(data['address'], user.address)
 
 # def test_change_address(client):
 #     new_address = address.copy()

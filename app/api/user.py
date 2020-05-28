@@ -1,4 +1,5 @@
 from flask import jsonify
+from marshmallow import ValidationError
 from sqlalchemy import exc as sqlexc
 from app import schemas, db, models
 from app import user_ns as ns
@@ -113,8 +114,11 @@ class User(Resource):
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 
-        new_user = load_request_into_object(USER, instance=user)
-        print(new_user)
+        try:
+            new_user = load_request_into_object(USER, instance=user)
+        except ValidationError as e:
+            return schema_validation_error(e)
+
         if new_user.password:
             new_user.password = guard.encrypt_password(new_user.password)
 
@@ -144,13 +148,14 @@ class Users(Resource):
     def post(self):
         try:
             user = load_request_into_object(USER)
-        except SchemaValidationError as e:
+        except ValidationError as e:
             return schema_validation_error(str(e))
 
         user.password = guard.encrypt_password(user.password if user.password else "")
         try:
             db.session.add(user)
             db.session.commit()
+        #TODO: put this into schema validate function
         except sqlexc.IntegrityError:
             return not_unique_error("username")
 

@@ -90,8 +90,8 @@ def get_object(type, _id):
         return models.Task.query.filter_by(uuid=_id).first()
     elif type == models.Objects.VEHICLE:
         return models.Vehicle.query.filter_by(uuid=_id).first()
-    elif type == models.Objects.NOTE:
-        return models.Note.query.filter_by(uuid=_id).first()
+    elif type == models.Objects.COMMENT:
+        return models.Comment.query.filter_by(uuid=_id).first()
     elif type == models.Objects.DELIVERABLE:
         return models.Deliverable.query.filter_by(uuid=_id).first()
     elif type == models.Objects.LOCATION:

@@ -9,7 +9,7 @@ TASK = models.Objects.TASK
 def test_add_new_task(client, login_header_coordinator):
     me = whoami(client, login_header_coordinator)
     r = client.post("{}s".format(session_url),
-                    data=json.dumps({"user_id": me}),
+                    data=json.dumps({"user_uuid": me}),
                     headers=login_header_coordinator)
     print_response(r)
     assert r.status_code == 201
@@ -25,7 +25,7 @@ def test_add_new_task(client, login_header_coordinator):
 def test_update_new_task(client, login_header_coordinator, task_data):
     me = whoami(client, login_header_coordinator)
     r = client.post("{}s".format(session_url),
-                    data=json.dumps({"user_id": me}),
+                    data=json.dumps({"user_uuid": me}),
                     headers=login_header_coordinator)
     print_response(r)
     assert r.status_code == 201

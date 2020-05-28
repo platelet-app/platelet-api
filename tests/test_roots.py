@@ -16,7 +16,7 @@ def test_login(client, user_coordinator):
                             username=generate_name(),
                             display_name=generate_name(),
                             password=guard.hash_password("somepass")
-                            )).data
+                            ))
     assert isinstance(user, models.User)
     db.session.add(user)
     db.session.commit()

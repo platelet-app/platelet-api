@@ -49,4 +49,4 @@ def test_get_vehicle(client, login_header_coordinator, vehicle_data, vehicle_obj
     assert r.status_code == 200
     check_data = vehicle_data.copy()
     check_data['name'] = vehicle_obj.name
-    dict_check(r.json, check_data, exclude=["links", "notes"])
+    dict_check(r.json, check_data, exclude=["links", "comments"])

@@ -223,7 +223,7 @@ class Sessions(Resource):
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
-        calling_user = get_user_object_by_int_id(utilities.current_user_id()).uuid
+        calling_user = utilities.current_user().uuid
         if request.get_json():
             try:
                 session = load_request_into_object(SESSION)
