@@ -1,4 +1,7 @@
-from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates
+import phonenumbers
+from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates, validate
+from phonenumbers import NumberParseException
+
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, flask_version
@@ -42,11 +45,6 @@ class ServerSettingsSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'locale_id')
 
     locale = ma.Nested('LocaleSchema', dump_only=True, exclude=('id',))
-
-    @post_dump()
-    def flask_version(self, data, many):
-        data['flask_version'] = flask_version
-        return data
 
 
 class LocaleSchema(ma.SQLAlchemySchema, PostLoadMixin):
@@ -132,6 +130,20 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         if any(list(filter(lambda u: u.display_name == value, users))):
             raise ValidationError("This display name is already taken.")
 
+    @validates("username")
+    def check_username_unique(self, value):
+        users = get_all_objects(models.Objects.USER)
+        if any(list(filter(lambda u: u.username == value, users))):
+            raise ValidationError("This username is already taken.")
+
+    @post_dump
+    def split_roles(self, data, many):
+        try:
+            data['roles'] = data['roles'].split(",")
+        except KeyError:
+            return data
+        return data
+
 
 class VehicleSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
     class Meta:
@@ -189,6 +201,49 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
         'collection': ma.URLFor('tasks_list')
     })
+
+    @validates("contact_number")
+    def contact_number(self, value):
+        validate_tel_number(value)
+        return
+        #TODO: see if this is a better way to do things
+        if not value:
+            return
+        try:
+            phonenumbers.parse(value)
+        except NumberParseException:
+            raise
+            raise ValidationError("Not a valid telephone number.")
+
+    @validates("patient_contact_number")
+    def patient_contact_number(self, value):
+        validate_tel_number(value)
+
+    @validates("destination_contact_number")
+    def destination_contact_number(self, value):
+        validate_tel_number(value)
+
+
+def validate_tel_number(value):
+    if not value:
+        return
+    split_list = list(value)
+    if len(list((filter(lambda n: n == "+", split_list)))) > 1:
+        raise ValidationError("Not a valid telephone number.")
+    if "+" in split_list and split_list[0] != "+":
+        raise ValidationError("Not a valid telephone number.")
+    if any(list(filter(int_check, split_list))):
+        raise ValidationError("Not a valid telephone number.")
+
+
+def int_check(value):
+    if value == "+" or value == " ":
+        return False
+    try:
+        int(value)
+    except ValueError:
+        return True
+    return False
 
 
 class UserUsernameSchema(ma.SQLAlchemySchema):

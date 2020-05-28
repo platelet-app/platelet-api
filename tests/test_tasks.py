@@ -1,10 +1,9 @@
 import json
 from tests.testutils import is_json, is_valid_uuid, session_url, task_url, login_as, find_user, is_valid_uuid, print_response, whoami, delete_by_uuid, get_object, attr_check
-from app import db
-import tests.testutils
 from app import models
 
 TASK = models.Objects.TASK
+
 
 def test_add_new_task(client, login_header_coordinator):
     me = whoami(client, login_header_coordinator)
@@ -22,7 +21,7 @@ def test_add_new_task(client, login_header_coordinator):
     assert is_valid_uuid(json.loads(r2.data)['uuid'])
 
 
-def test_update_new_task(client, login_header_coordinator, task_data):
+def test_update_task(client, login_header_coordinator, task_data):
     me = whoami(client, login_header_coordinator)
     r = client.post("{}s".format(session_url),
                     data=json.dumps({"user_uuid": me}),

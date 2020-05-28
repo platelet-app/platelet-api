@@ -24,7 +24,6 @@ class ServerSettings(Resource):
                 return internal_error("There is no record in the database for server settings.")
             return jsonify(server_settings_schema.dump(settings))
         except Exception as e:
-            raise
             return internal_error("An exception occurred while retrieving server settings: {}".format(e))
 
     @flask_praetorian.roles_required('admin')

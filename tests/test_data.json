@@ -1,4 +1,17 @@
 {
+  "server_settings":  {
+    "organisation_name": "Freewheelers EVS",
+    "image_url":  "https://upload.wikimedia.org/wikipedia/en/4/42/Freewheelers_EVS_Logo.svg",
+    "version": "1.0",
+    "hostname": "ks361234.kimsufi.com",
+    "locale_id": 1
+  },
+  "locales": [
+    {
+      "label": "England",
+      "code": "en-GB"
+    }
+  ],
   "users": {
     "admin": {
       "name": "Someone Person",

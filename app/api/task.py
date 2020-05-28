@@ -1,4 +1,6 @@
 from flask import jsonify
+from marshmallow import ValidationError
+
 from app import schemas, models
 from flask_restx import Resource, reqparse
 import flask_praetorian
@@ -77,7 +79,11 @@ class Task(Resource):
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
-        load_request_into_object(TASK, instance=task)
+        try:
+            load_request_into_object(TASK, instance=task)
+        except ValidationError as e:
+            return schema_validation_error(e)
+
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 

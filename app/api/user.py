@@ -151,13 +151,10 @@ class Users(Resource):
         except ValidationError as e:
             return schema_validation_error(str(e))
 
-        user.password = guard.encrypt_password(user.password if user.password else "")
-        try:
-            db.session.add(user)
-            db.session.commit()
-        #TODO: put this into schema validate function
-        except sqlexc.IntegrityError:
-            return not_unique_error("username")
+        user.password = guard.hash_password(user.password if user.password else "")
+
+        db.session.add(user)
+        db.session.commit()
 
         return {'uuid': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
 

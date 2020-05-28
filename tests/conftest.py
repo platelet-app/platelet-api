@@ -11,17 +11,66 @@ json_data = get_test_json()
 
 app.config['TESTING'] = True
 app.config['WTF_CSRF_ENABLED'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/bloodbike_dev'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/bloodbike_test'
 _client = app.test_client()
 
+db.drop_all()
 db.create_all()
 
 db.session.commit()
 
 api_url = "/api/v0.1/"
 
+server_settings = models.ServerSettings.query.filter_by(id=1).first()
+if server_settings:
+    db.session.delete(server_settings)
+    db.session.flush()
+
+for patch in json_data['patches']:
+    existing = None
+    try:
+        existing = models.Patch.query.filter_by(label=patch['label']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.flush()
+    patch_model = models.Patch(**patch)
+
+    db.session.add(patch_model)
+
+for priority in json_data['priorities']:
+    existing = None
+    try:
+        existing = models.Priority.query.filter_by(label=priority['label']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.flush()
+    priority_model = models.Priority(**priority)
+
+    db.session.add(priority_model)
+
+for locale in json_data['locales']:
+    existing = None
+    try:
+        existing = models.Locale.query.filter_by(label=locale['label']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.flush()
+    locale_model = models.Locale(**locale)
+    db.session.add(locale_model)
+
+db.session.flush()
+
+server_settings = models.ServerSettings(**json_data['server_settings'])
+db.session.add(server_settings)
+db.session.commit()
+
 #db.session.remove()
-#db.drop_all()
 
 
 @pytest.fixture(scope="session")
@@ -211,3 +260,7 @@ def location_data_alternative():
 def user_rider():
     res = dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())
     return res
+
+def pytest_sessionfinish(session, exitstatus):
+    return
+    #db.drop_all()

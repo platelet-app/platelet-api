@@ -2,14 +2,9 @@ import json
 from tests.testutils import dict_check, is_json, is_valid_uuid, location_url, vehicle_url, task_url, login_as, find_user, is_valid_uuid, print_response, whoami, delete_by_uuid, get_object, attr_check
 from app import db
 from app import models
-from datetime import date, datetime
 
 LOCATION = models.Objects.LOCATION
 
-def convert_dates(data):
-    data['date_of_manufacture'] = datetime.strptime(data['date_of_manufacture'], '%d/%m/%Y').date()
-    data['date_of_registration'] = datetime.strptime(data['date_of_registration'], '%d/%m/%Y').date()
-    return data
 
 def test_add_new_location(client, login_header_admin, location_data):
     r = client.post("{}s".format(location_url),
@@ -25,7 +20,7 @@ def test_add_new_location(client, login_header_admin, location_data):
     db.session.commit()
 
 
-def test_update_new_location(client, login_header_admin, location_data, location_data_alternative, location_obj):
+def test_update_location(client, login_header_admin, location_data, location_data_alternative, location_obj):
     check_data = location_data.copy()
     check_data['name'] = location_obj.name
     attr_check(check_data, location_obj, exclude=["timestamp", "links", "notes"])

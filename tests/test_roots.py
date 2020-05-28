@@ -4,13 +4,11 @@ import tests.testutils
 from app import models, db, schemas, guard
 from datetime import datetime
 
-def test_ping(client, ):
+def test_ping(client):
     res = client.get('/api/v0.1/ping')
     assert res.status == "200 OK"
 
-
 def test_login(client, user_coordinator):
-
     schema = schemas.UserSchema()
     user = schema.load(dict(user_coordinator,
                             username=generate_name(),
@@ -26,3 +24,9 @@ def test_login(client, user_coordinator):
     assert "access_token" in token
     db.session.delete(user)
     db.session.commit()
+
+
+def test_server_settings(client):
+    res = client.get("/api/v0.1/server_settings")
+    settings = models.ServerSettings.query.filter_by(id=1).first()
+    attr_check(json.loads(res.data), settings)

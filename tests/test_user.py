@@ -1,5 +1,6 @@
 import json
-from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, attr_check, generate_name, get_object
+from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, \
+    attr_check, generate_name, get_object
 import tests.testutils
 from app import models, db
 from datetime import datetime
@@ -26,10 +27,10 @@ payload['address'] = address
 def test_add_valid_user(client, user_coordinator, login_header_admin):
     r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
     print_response(r)
-    assert(r.status_code == 201)
+    assert (r.status_code == 201)
 
     data = json.loads(r.data)
-    assert(is_valid_uuid(data['uuid']))
+    assert (is_valid_uuid(data['uuid']))
     del_user = get_object(USER, data['uuid'])
     assert isinstance(del_user, models.User)
     db.session.delete(del_user)
@@ -39,7 +40,7 @@ def test_add_valid_user(client, user_coordinator, login_header_admin):
 def test_get_user(client, user_rider_uuid, login_header_admin):
     r = client.get('{}/{}'.format(user_url, user_rider_uuid), headers=login_header_admin)
     print_response(r)
-    assert(r.status_code == 200)
+    assert (r.status_code == 200)
 
     data = json.loads(r.data)
     user_model = get_object(USER, user_rider_uuid)
@@ -56,16 +57,19 @@ def test_get_user(client, user_rider_uuid, login_header_admin):
                  "uuid",
                  "email",
                  "time_created",
-                 "time_modified"])
+                 "time_modified",
+                 "roles"])
+
+    users_roles = user_model.roles.split(",")
+    for role in data['roles']:
+        assert role in users_roles
 
 
 def test_get_users(client, all_user_uuids, login_header_admin):
-    r = client.get('{}s'.format(user_url),  headers=login_header_admin)
+    r = client.get('{}s'.format(user_url), headers=login_header_admin)
     print_response(r)
-    assert(r.status_code == 200)
-
+    assert (r.status_code == 200)
     data = json.loads(r.data)
-
     users = models.User.query.all()
 
     for user in users:
@@ -84,17 +88,21 @@ def test_get_users(client, all_user_uuids, login_header_admin):
                                  "uuid",
                                  "email",
                                  "time_created",
-                                 "time_modified"])
+                                 "time_modified",
+                                 "roles"])
+                    users_roles = user.roles.split(",")
+                    for role in i['roles']:
+                        assert role in users_roles
 
-    assert(len(data) == len(list(filter(lambda u: not u.flagged_for_deletion, users))))
+    assert (len(data) == len(list(filter(lambda u: not u.flagged_for_deletion, users))))
 
 
 def test_add_invalid_user_existing_username(client, login_header_admin, user_coordinator):
     r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
-    assert(r.status_code == 201)
+    assert (r.status_code == 201)
     user_coordinator['display_name'] = generate_name()
     r2 = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
-    assert(r2.status_code == 403)
+    assert (r2.status_code == 400)
 
 
 def test_add_invalid_user_existing_display_name(client, login_header_admin, user_coordinator_uuid, user_rider_uuid):
@@ -106,19 +114,19 @@ def test_add_invalid_user_existing_display_name(client, login_header_admin, user
         '{}/{}'.format(user_url, user_rider_uuid),
         data=json.dumps({"display_name": name}),
         headers=login_header_admin)
-    assert(r3.status_code == 400)
+    assert (r3.status_code == 400)
 
 
 def test_delete_other_user_as_coordinator(client, login_header_coordinator, user_rider_uuid):
     r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header_coordinator)
     print_response(r)
-    assert(r.status_code == 403)
+    assert (r.status_code == 403)
 
 
 def test_delete_user(client, login_header_admin, user_rider_uuid):
     r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header_admin)
     print_response(r)
-    assert(r.status_code == 202)
+    assert (r.status_code == 202)
 
     user = get_object(USER, user_rider_uuid)
     assert user.flagged_for_deletion
@@ -131,21 +139,21 @@ def test_add_invalid_user_email(client, user_rider, login_header_admin):
     new_payload = user_rider.copy().update({"email": "invalidEmail"})
     r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header_admin)
     print_response(r)
-    assert(r.status_code == 400)
+    assert (r.status_code == 400)
 
 
 def test_add_invalid_user_dob(client, user_rider, login_header_admin):
     new_payload = user_rider.copy().update({"dob": "221256"})
     r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header_admin)
     print_response(r)
-    assert(r.status_code == 400)
+    assert (r.status_code == 400)
 
 # TODO more restricted fields
 
 
 # UserNameField
 
-#def test_get_username(client, user_rider_uuid, login_header_admin):
+# def test_get_username(client, user_rider_uuid, login_header_admin):
 #    user = get_object(USER, user_rider_uuid)
 #
 #
@@ -184,7 +192,7 @@ def test_add_invalid_user_dob(client, user_rider, login_header_admin):
 
 # UserAddressField
 
-#def test_get_address(client, login_header_admin, user_rider_uuid):
+# def test_get_address(client, login_header_admin, user_rider_uuid):
 #    user = get_object(USER, user_rider_uuid)
 #    r = client.get('{}/{}/address'.format(user_url, user_rider_uuid), headers=login_header_admin)
 #    print_response(r)
