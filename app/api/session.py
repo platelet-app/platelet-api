@@ -47,7 +47,8 @@ class Session(Resource):
     @flask_praetorian.auth_required
     def get(self, session_id):
         try:
-            return jsonify(session_schema.dump(get_object(SESSION, session_id)))
+            session = get_object(SESSION, session_id)
+            return jsonify(session_schema.dump(session))
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
 
