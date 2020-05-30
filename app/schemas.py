@@ -107,7 +107,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'comments', 'display_name',
                   'assigned_vehicles', 'patch_id', 'contact_number',
-                  'time_created', 'time_modified', 'links')
+                  'time_created', 'time_modified', 'links', 'tasks_etag')
 
     username = ma.Str(required=True)
     email = ma.Email()
@@ -116,7 +116,6 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     uuid = field_for(models.User, 'uuid', dump_only=True)
     assigned_vehicles = ma.Nested("VehicleSchema", many=True, dump_only=True, exclude=("assigned_user",))
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
-    #tasks = ma.Nested(TaskSchema, many=True)
 
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
@@ -135,6 +134,12 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         users = get_all_objects(models.Objects.USER)
         if any(list(filter(lambda u: u.username == value, users))):
             raise ValidationError("This username is already taken.")
+
+    @pre_dump
+    def get_tasks_etag(self, data, many):
+        if not many:
+            data.tasks_etag = calculate_tasks_etag(data.tasks)
+        return data
 
     @post_dump
     def split_roles(self, data, many):
@@ -186,7 +191,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     pickup_address = ma.Nested(AddressSchema)
     dropoff_address = ma.Nested(AddressSchema)
     rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'), dump_only=True)
-    assigned_users = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'), many=True)
+    assigned_users = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments', 'tasks_etag'), many=True, dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     pickup_time = ma.DateTime(allow_none=True)
@@ -281,7 +286,7 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         'collection': ma.URLFor('sessions_list')
     })
 
-    @pre_dump(pass_many=False)
+    @pre_dump
     def get_last_active(self, data, many):
         session = get_object(models.Objects.SESSION, data.uuid)
         tasks_plus_deleted = session.tasks.all()
@@ -289,7 +294,7 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         data.last_active = last_changed_task[-1].time_modified if last_changed_task else session.time_modified
         return data
 
-    @pre_dump(pass_many=False)
+    @pre_dump
     def get_tasks_etag(self, data, many):
         data.tasks_etag = calculate_tasks_etag(data.tasks.all())
         return data

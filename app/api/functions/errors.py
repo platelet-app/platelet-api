@@ -38,12 +38,19 @@ def not_found(object_type, object_id="null"):
     return {'id': object_id, 'message': "{} not found".format(object_type_to_string(object_type))}, 404
 
 def object_type_to_string(type):
-
     switch = {
-        Objects.SESSION: "session",
         Objects.USER: "user",
+        Objects.SESSION: "session",
         Objects.TASK: "task",
         Objects.VEHICLE: "vehicle",
+        Objects.COMMENT: "comment",
+        Objects.DELIVERABLE: "deliverable",
+        Objects.DELIVERABLE_TYPE: "deliverable type",
+        Objects.LOCATION: "location",
+        Objects.PRIORITY: "priority",
+        Objects.PATCH: "patch",
+        Objects.SETTINGS: "server settings",
+        Objects.UNKNOWN: "unknown",
         None: "no type"
     }
 

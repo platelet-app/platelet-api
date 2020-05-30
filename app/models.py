@@ -22,6 +22,7 @@ class Objects(IntEnum):
     PATCH = auto()
     DELETE_FLAG = auto()
     SETTINGS = auto()
+    UNKNOWN = auto()
 
 
 class SearchableMixin:

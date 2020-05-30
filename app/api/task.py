@@ -5,7 +5,7 @@ from app import schemas, models
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
-from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue
+from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
     already_flagged_for_deletion_error
@@ -120,26 +120,27 @@ class TasksAssignees(Resource):
 
 
 @ns.route('s',
-          's/<session_id>',
+          's/<session_user_id>',
           endpoint="tasks_list")
 class Tasks(Resource):
     @flask_praetorian.auth_required
-    def get(self, session_id, _range=None, order="ascending"):
+    def get(self, session_user_id, _range=None, order="ascending"):
+        if not session_user_id:
+            return not_found(models.Objects.UNKNOWN)
         try:
-            session = get_object(SESSION, session_id)
-            if session.flagged_for_deletion:
-                return not_found(SESSION, session_id)
+            session_user = get_unspecified_object(session_user_id)
+            if session_user.flagged_for_deletion:
+                return not_found(session_user.object_type, session_user_id)
         except ObjectNotFoundError:
-            return not_found(SESSION, session_id)
-
+            return not_found(models.Objects.UNKNOWN, session_user_id)
         try:
-            items = get_range(session.tasks.all(), _range, order)
+            items = get_range(session_user.tasks.all(), _range, order)
         except InvalidRangeError as e:
             return forbidden_error(e)
         except Exception as e:
             return internal_error(e)
 
-        return tasks_schema.jsonify(items)
+        return tasks_schema.dump(items)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):
