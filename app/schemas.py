@@ -194,7 +194,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     assigned_users = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments', 'tasks_etag'), many=True, dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
-    pickup_time = ma.DateTime(allow_none=True)
+    time_picked_up = ma.DateTime(allow_none=True)
     time_dropped_off = ma.DateTime(allow_none=True)
     time_cancelled = ma.DateTime(allow_none=True)
     time_rejected = ma.DateTime(allow_none=True)
