@@ -19,6 +19,7 @@ flask-marshmallow==0.12.0
 Flask-Migrate==2.4.0
 flask-praetorian==1.0.0
 Flask-RESTful==0.3.7
+flask-restplus==0.13.0
 flask-restx==0.2.0
 Flask-SQLAlchemy==2.4.0
 Flask-WTF==0.14.2
@@ -34,6 +35,7 @@ marshmallow-sqlalchemy==0.23.0
 more-itertools==7.0.0
 passlib==1.7.1
 pendulum==2.0.4
+phonenumbers==8.12.4
 pluggy==0.9.0
 psycopg2==2.8.2
 py==1.8.0

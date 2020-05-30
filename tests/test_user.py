@@ -58,11 +58,14 @@ def test_get_user(client, user_rider_uuid, login_header_admin):
                  "email",
                  "time_created",
                  "time_modified",
-                 "roles"])
+                 "roles",
+                 "tasks_etag"
+                 ])
 
     users_roles = user_model.roles.split(",")
     for role in data['roles']:
         assert role in users_roles
+    assert data['tasks_etag']
 
 
 def test_get_users(client, all_user_uuids, login_header_admin):
