@@ -251,5 +251,12 @@
     "date_of_manufacture": "20/10/2019",
     "date_of_registration": "30/10/2019",
     "registration_number": "BRAAAAAAP"
+  },
+  "comment_data": {
+    "body": "hello this is a comment\n\nyayayay",
+    "publicly_visible": true
+  },
+  "comment_data_alternative": {
+    "body": "An alternative comment\n\nwooooo"
   }
 }

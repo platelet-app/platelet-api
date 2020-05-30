@@ -117,8 +117,6 @@ def login_header_coordinator():
     assert "access_token" in token
     header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
     yield header
-    db.session.delete(user)
-    db.session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -138,8 +136,6 @@ def login_header_rider():
     assert "access_token" in token
     header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
     yield header
-    db.session.delete(user)
-    db.session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -156,8 +152,7 @@ def user_rider_uuid():
     db.session.commit()
     db.session.flush()
     yield str(user.uuid)
-    db.session.delete(user)
-    db.session.commit()
+
 
 @pytest.fixture(scope="session")
 def user_coordinator_uuid():
@@ -167,8 +162,8 @@ def user_coordinator_uuid():
     db.session.commit()
     db.session.flush()
     yield str(user.uuid)
-    db.session.delete(user)
-    db.session.commit()
+    db.session.flush()
+
 
 @pytest.fixture(scope="session")
 def all_user_uuids():
@@ -182,9 +177,7 @@ def all_user_uuids():
         users.append(user)
 
     yield [str(i.uuid) for i in users]
-    for user in users:
-        db.session.delete(user)
-    db.session.commit()
+
 
 @pytest.fixture(scope="session")
 def coordinator_session_uuid():
@@ -198,9 +191,6 @@ def coordinator_session_uuid():
     db.session.commit()
     db.session.flush()
     yield str(session.uuid)
-    db.session.delete(session)
-    db.session.delete(user)
-    db.session.commit()
 
 
 @pytest.fixture(scope="function")
@@ -211,8 +201,27 @@ def vehicle_obj():
     db.session.commit()
     db.session.flush()
     yield vehicle
-    db.session.delete(vehicle)
+
+
+@pytest.fixture(scope="function")
+def comment_obj():
+    # Make an author
+    user_schema = schemas.UserSchema()
+    author = user_schema.load(dict(**json_data['users']['rider'], display_name=generate_name(), username=generate_name()))
+    db.session.add(author)
+    # Make a parent object
+    vehicle_schema = schemas.VehicleSchema()
+    vehicle = vehicle_schema.load(dict(**json_data['vehicle_data'], name=generate_name()))
+    db.session.add(vehicle)
     db.session.commit()
+    db.session.flush()
+
+    schema = schemas.CommentSchema()
+    comment = schema.load(dict(**json_data['comment_data'], author_uuid=author.uuid, parent_uuid=vehicle.uuid))
+    db.session.add(comment)
+    db.session.commit()
+    db.session.flush()
+    yield comment
 
 
 @pytest.fixture(scope="function")
@@ -223,8 +232,6 @@ def location_obj():
     db.session.commit()
     db.session.flush()
     yield location
-    db.session.delete(location)
-    db.session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -245,6 +252,18 @@ def vehicle_data_alternative():
 
 
 @pytest.fixture(scope="session")
+def comment_data():
+    data = json_data['comment_data']
+    return data
+
+
+@pytest.fixture(scope="session")
+def comment_data_alternative():
+    data = json_data['comment_data_alternative']
+    return data
+
+
+@pytest.fixture(scope="session")
 def location_data():
     data = json_data['location_data']
     return data
@@ -261,6 +280,6 @@ def user_rider():
     res = dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())
     return res
 
+
 def pytest_sessionfinish(session, exitstatus):
-    return
-    #db.drop_all()
+    db.drop_all()

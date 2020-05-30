@@ -10,6 +10,7 @@ login_url = "{}login".format(root_url)
 user_url = "{}user".format(root_url)
 session_url = "{}session".format(root_url)
 vehicle_url = "{}vehicle".format(root_url)
+comment_url = "{}comment".format(root_url)
 location_url = "{}location".format(root_url)
 task_url = "{}task".format(root_url)
 jwtKey = ""
@@ -35,7 +36,10 @@ def generate_name():
 
 def dict_check(data, compare, exclude=[]):
     for i in exclude:
-        del data[i]
+        try:
+            del data[i]
+        except KeyError:
+            print("Tried to exclude non existent key")
 
     return data == compare
 

@@ -40,12 +40,15 @@ class Comment(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
         if not _id:
-            return not_found("comment")
+            return not_found(COMMENT)
         comment = get_object(COMMENT, _id)
         if comment:
-            return jsonify(comment_schema.dump(comment))
+            try:
+                return jsonify(comment_schema.dump(comment))
+            except ObjectNotFoundError:
+                return not_found(COMMENT, _id)
         else:
-            return not_found(_id)
+            return not_found(COMMENT, _id)
 
     @flask_praetorian.auth_required
     @comment_author_match_or_admin
@@ -53,7 +56,7 @@ class Comment(Resource):
         try:
             comment = get_object(COMMENT, _id)
         except ObjectNotFoundError:
-            return not_found("comment", _id)
+            return not_found(COMMENT, _id)
         try:
             add_item_to_delete_queue(comment)
         except AlreadyFlaggedForDeletionError:
