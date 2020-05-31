@@ -1,19 +1,17 @@
 import phonenumbers
-from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates, validate
+from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates, validate, pre_load
 from phonenumbers import NumberParseException
+from marshmallow_arrow import ArrowField
 
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, flask_version
-import datetime
 from app.utilities import get_object, calculate_tasks_etag, get_all_objects
-
-time_format = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 class TimesMixin:
-    time_created = ma.DateTime(format=time_format)
-    time_modified = ma.DateTime(format=time_format, dump_only=True)
+    time_created = ma.AwareDateTime(utc_only=True)
+    time_modified = ma.AwareDateTime(utc_only=True, dump_only=True)
 
 
 class DeleteFilterMixin:
@@ -196,14 +194,14 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     assigned_users = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments', 'tasks_etag'), many=True, dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
-    time_picked_up = ma.DateTime(format=time_format, allow_none=True)
-    time_dropped_off = ma.DateTime(format=time_format, allow_none=True)
-    time_cancelled = ma.DateTime(format=time_format, allow_none=True)
-    time_rejected = ma.DateTime(format=time_format, allow_none=True)
+    time_picked_up = ma.AwareDateTime(utc_only=True, allow_none=True)
+    time_dropped_off = ma.AwareDateTime(utc_only=True, allow_none=True)
+    time_cancelled = ma.AwareDateTime(utc_only=True, allow_none=True)
+    time_rejected = ma.AwareDateTime(utc_only=True, allow_none=True)
     priority = fields.Pluck(PrioritySchema, "label", dump_only=True)
     patch = fields.Pluck(PatchSchema, "label", dump_only=True)
-    time_of_call = ma.DateTime(format=time_format)
-    #time_of_call = ma.DateTime(format=time_format, format='YYYY-MM-DDTHH:mm:ss.sssZ')
+    time_of_call = ma.AwareDateTime(utc_only=True)
+    #time_of_call = ma.AwareDateTime(utc_only=True, format='YYYY-MM-DDTHH:mm:ss.sssZ')
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
@@ -301,6 +299,12 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
     def get_tasks_etag(self, data, many):
         data.tasks_etag = calculate_tasks_etag(data.tasks.all())
         return data
+
+    @pre_dump
+    def arrow_convert(self, data, many):
+        return data
+        for key, value in data:
+            print(key, value)
 
 
 class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):

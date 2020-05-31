@@ -20,7 +20,6 @@ location_schema = schemas.LocationSchema()
 
 def load_request_into_object(model_enum, instance=None, partial=True):
     request_json = request.get_json()
-    print(request_json)
     if not request_json:
         logger.warning("No json input data provided")
 

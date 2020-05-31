@@ -129,6 +129,8 @@ class Tasks(Resource):
             return not_found(models.Objects.UNKNOWN)
         try:
             session_user = get_unspecified_object(session_user_id)
+            if not session_user:
+                return not_found(models.Objects.UNKNOWN, session_user_id)
             if session_user.flagged_for_deletion:
                 return not_found(session_user.object_type, session_user_id)
         except ObjectNotFoundError:

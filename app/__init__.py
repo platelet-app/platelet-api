@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, Blueprint, render_template
+from flask import Flask, Blueprint
 from flask_restx import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -10,7 +10,7 @@ from config import Config
 import flask_cors
 from flask_buzz import FlaskBuzz
 from elasticsearch import Elasticsearch
-from flask import jsonify
+
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
 logger = logging.getLogger()
@@ -29,7 +29,7 @@ app.config.from_object(Config)
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
         if app.config['ELASTICSEARCH_URL'] else None
 
-db = SQLAlchemy(app, engine_options={"connect_args": {"options": "-c timezone=utc"}})
+db = SQLAlchemy(app, engine_options={"connect_args": {"options": "-c timezone=UTC"}})
 ma = Marshmallow(app)
 cors = flask_cors.CORS()
 cors.init_app(app)

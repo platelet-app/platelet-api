@@ -48,7 +48,7 @@ class Session(Resource):
     def get(self, session_id):
         try:
             session = get_object(SESSION, session_id)
-            return jsonify(session_schema.dump(session))
+            return session_schema.dump(session)
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
 

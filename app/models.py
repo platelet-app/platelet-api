@@ -1,9 +1,7 @@
-from sqlalchemy.ext.declarative import declared_attr, as_declarative
-
 from app import db
 from datetime import datetime
 from enum import IntEnum, auto
-from sqlalchemy_utils import EmailType, generic_relationship
+from sqlalchemy_utils import EmailType
 from app.search import add_to_index, remove_from_index, query_index
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -23,7 +21,7 @@ class Objects(IntEnum):
     DELETE_FLAG = auto()
     SETTINGS = auto()
     UNKNOWN = auto()
-
+    
 
 class SearchableMixin:
     @classmethod
@@ -69,15 +67,17 @@ db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 
 class CommonMixin:
-    time_created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    time_modified = db.Column(db.DateTime, index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # I don't know why any DateTime objects need their columns to be named explicitly
+    # before they will store and return proper timezone data
+    time_created = db.Column("time_created", db.DateTime(timezone=True), index=True, default=datetime.utcnow)
+    time_modified = db.Column("time_modified", db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
 
 
 class ServerSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    time_created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    time_modified = db.Column(db.DateTime, index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
+    time_created = db.Column("time_created", db.DateTime(timezone=True), index=True, default=datetime.utcnow)
+    time_modified = db.Column("time_modified", db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     organisation_name = db.Column(db.String, unique=True)
     image_url = db.Column(db.String)
@@ -167,7 +167,7 @@ task_assignees = db.Table(
 class Task(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    time_of_call = db.Column(db.DateTime, index=True)
+    time_of_call = db.Column("time_of_call", db.DateTime(timezone=True), index=True)
 
     pickup_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     dropoff_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
@@ -199,11 +199,11 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     )
 
 
-    time_picked_up = db.Column(db.DateTime)
-    time_dropped_off = db.Column(db.DateTime)
+    time_picked_up = db.Column("time_picked_up", db.DateTime(timezone=True))
+    time_dropped_off = db.Column("time_dropped_off", db.DateTime(timezone=True))
 
-    time_cancelled = db.Column(db.DateTime)
-    time_rejected = db.Column(db.DateTime)
+    time_cancelled = db.Column("time_cancelled", db.DateTime(timezone=True))
+    time_rejected = db.Column("time_rejected", db.DateTime(timezone=True))
 
 
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
@@ -330,9 +330,9 @@ class DeleteFlags(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), nullable=False)
     object_uuid = db.Column(UUID(as_uuid=True))
-    time_created = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    time_created = db.Column("time_created", db.DateTime(timezone=True), index=True, default=datetime.utcnow)
     time_to_delete = db.Column(db.Integer)
-    time_deleted = db.Column(db.DateTime, index=True)
+    time_deleted = db.Column("time_deleted", db.DateTime(timezone=True), index=True)
     object_type = db.Column(db.Integer)
     active = db.Column(db.Boolean, default=True)
 
