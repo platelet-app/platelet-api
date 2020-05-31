@@ -169,6 +169,13 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     time_of_call = db.Column("time_of_call", db.DateTime(timezone=True), index=True)
 
+    time_picked_up = db.Column("time_picked_up", db.DateTime(timezone=True))
+    time_dropped_off = db.Column("time_dropped_off", db.DateTime(timezone=True))
+
+    time_cancelled = db.Column("time_cancelled", db.DateTime(timezone=True))
+    time_rejected = db.Column("time_rejected", db.DateTime(timezone=True))
+
+
     pickup_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     dropoff_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
 
@@ -198,12 +205,6 @@ class Task(SearchableMixin, db.Model, CommonMixin):
         primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK)
     )
 
-
-    time_picked_up = db.Column("time_picked_up", db.DateTime(timezone=True))
-    time_dropped_off = db.Column("time_dropped_off", db.DateTime(timezone=True))
-
-    time_cancelled = db.Column("time_cancelled", db.DateTime(timezone=True))
-    time_rejected = db.Column("time_rejected", db.DateTime(timezone=True))
 
 
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
