@@ -69,15 +69,15 @@ db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 class CommonMixin:
     # I don't know why any DateTime objects need their columns to be named explicitly
     # before they will store and return proper timezone data
-    time_created = db.Column("time_created", db.DateTime(timezone=True), index=True, default=datetime.utcnow)
-    time_modified = db.Column("time_modified", db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
+    time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
+    time_modified = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
 
 
 class ServerSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    time_created = db.Column("time_created", db.DateTime(timezone=True), index=True, default=datetime.utcnow)
-    time_modified = db.Column("time_modified", db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
+    time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
+    time_modified = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     organisation_name = db.Column(db.String, unique=True)
     image_url = db.Column(db.String)
@@ -167,20 +167,30 @@ task_assignees = db.Table(
 class Task(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    time_of_call = db.Column("time_of_call", db.DateTime(timezone=True), index=True)
+    time_of_call = db.Column(db.DateTime(timezone=True), index=True)
 
-    time_picked_up = db.Column("time_picked_up", db.DateTime(timezone=True))
-    time_dropped_off = db.Column("time_dropped_off", db.DateTime(timezone=True))
+    time_picked_up = db.Column(db.DateTime(timezone=True))
+    time_dropped_off = db.Column(db.DateTime(timezone=True))
 
-    time_cancelled = db.Column("time_cancelled", db.DateTime(timezone=True))
-    time_rejected = db.Column("time_rejected", db.DateTime(timezone=True))
-
+    time_cancelled = db.Column(db.DateTime(timezone=True))
+    time_rejected = db.Column(db.DateTime(timezone=True))
 
     pickup_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     dropoff_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
 
     pickup_address = db.relationship("Address", foreign_keys=[pickup_address_id])
     dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
+
+    ## TODO: figure out how to add more than one signature for relays
+   # destination_contact_name = db.Column(db.String(64))
+   # destination_contact_number = db.Column(db.String(64))
+
+   # recipient_name = db.Column(db.String(64))
+   # recipient_signature = db.Column(db.String(4096))
+
+   # sender_name = db.Column(db.String(64))
+   # sender_signature = db.Column(db.String(4096))
+
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
@@ -204,8 +214,6 @@ class Task(SearchableMixin, db.Model, CommonMixin):
         'Comment',
         primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK)
     )
-
-
 
     __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
 
@@ -331,9 +339,9 @@ class DeleteFlags(SearchableMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), nullable=False)
     object_uuid = db.Column(UUID(as_uuid=True))
-    time_created = db.Column("time_created", db.DateTime(timezone=True), index=True, default=datetime.utcnow)
+    time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
     time_to_delete = db.Column(db.Integer)
-    time_deleted = db.Column("time_deleted", db.DateTime(timezone=True), index=True)
+    time_deleted = db.Column(db.DateTime(timezone=True), index=True)
     object_type = db.Column(db.Integer)
     active = db.Column(db.Boolean, default=True)
 

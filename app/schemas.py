@@ -58,11 +58,13 @@ class CommentSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         model = models.Comment
         fields = ('uuid', 'body', 'author', 'parent_uuid', 'author_uuid',
                   "time_created", "time_modified", "publicly_visible")
+
     author = ma.Nested(
         'UserSchema', dump_only=True,
         exclude=('username', 'address', 'password', 'name', 'email',
                  'dob', 'patch', 'roles', 'comments', 'assigned_vehicles', 'patch_id',
                  "time_created", "time_modified"))
+
 
 
 class DeliverableTypeSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
@@ -90,7 +92,14 @@ class AddressSchema(ma.SQLAlchemySchema, PostLoadMixin):
                   'county', 'country', 'postcode',
                   'what3words')
 
-    #postcode = ma.Function(lambda obj: obj.postcode.upper())
+    ward = ma.Str(allow_none=True)
+    line1 = ma.Str(allow_none=True)
+    line2 = ma.Str(allow_none=True)
+    town = ma.Str(allow_none=True)
+    county = ma.Str(allow_none=True)
+    country = ma.Str(allow_none=True)
+    postcode = ma.Str(allow_none=True)
+    what3words = ma.Str(allow_none=True)
 
 
 class PatchSchema(ma.SQLAlchemySchema, PostLoadMixin):
@@ -189,8 +198,11 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     pickup_address = ma.Nested(AddressSchema)
     dropoff_address = ma.Nested(AddressSchema)
-    rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'), dump_only=True)
-    assigned_users = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments', 'tasks_etag'), many=True, dump_only=True)
+    rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'),
+                      dump_only=True)
+    assigned_users = ma.Nested(UserSchema,
+                               exclude=('address', 'password', 'email', 'dob', 'roles', 'comments', 'tasks_etag'),
+                               many=True, dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     time_picked_up = ma.DateTime(allow_none=True)
@@ -200,7 +212,6 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     priority = fields.Pluck(PrioritySchema, "label", dump_only=True)
     patch = fields.Pluck(PatchSchema, "label", dump_only=True)
     time_of_call = ma.DateTime()
-    #time_of_call = ma.DateTime(format='YYYY-MM-DDTHH:mm:ss.sssZ')
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
@@ -211,7 +222,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     def contact_number(self, value):
         validate_tel_number(value)
         return
-        #TODO: see if this is a better way to do things
+        # TODO: see if this is a better way to do things
         if not value:
             return
         try:
@@ -274,11 +285,11 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         model = models.Session
         fields = ('uuid', 'user_uuid',
                   'time_created', 'tasks', 'comments',
-                   'links', 'task_count', 'last_active',
+                  'links', 'task_count', 'last_active',
                   'time_created', 'time_modified', 'tasks_etag')
 
     tasks = ma.Nested(TaskSchema, dump_only=True, many=True,
-                                 exclude=('comments', 'deliverables'))
+                      exclude=('comments', 'deliverables'))
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
 
     links = ma.Hyperlinks({
@@ -298,12 +309,6 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
     def get_tasks_etag(self, data, many):
         data.tasks_etag = calculate_tasks_etag(data.tasks.all())
         return data
-
-    @pre_dump
-    def arrow_convert(self, data, many):
-        return data
-        for key, value in data:
-            print(key, value)
 
 
 class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):

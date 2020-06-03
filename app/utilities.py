@@ -23,6 +23,12 @@ def calculate_tasks_etag(data):
     return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
 
 
+def calculate_comments_etag(data):
+    comments_schema = schemas.CommentSchema(many=True)
+    json_data = json.dumps(comments_schema.dump(data))
+    return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
+
+
 def remove_item_from_delete_queue(item):
     if not item:
         return
