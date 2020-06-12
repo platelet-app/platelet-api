@@ -115,7 +115,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'comments', 'display_name',
                   'assigned_vehicles', 'patch_id', 'contact_number',
-                  'time_created', 'time_modified', 'links', 'tasks_etag')
+                  'time_created', 'time_modified', 'links')
 
     username = ma.Str(required=True)
     email = ma.Email()
@@ -145,6 +145,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     @pre_dump
     def get_tasks_etag(self, data, many):
+        return data
         if not many:
             data.tasks_etag = calculate_tasks_etag(data.tasks)
         return data
@@ -201,7 +202,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'),
                       dump_only=True)
     assigned_users = ma.Nested(UserSchema,
-                               exclude=('address', 'password', 'email', 'dob', 'roles', 'comments', 'tasks_etag'),
+                               exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
                                many=True, dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
