@@ -222,6 +222,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     priority = fields.Pluck(PrioritySchema, "label", dump_only=True)
     patch = fields.Pluck(PatchSchema, "label", dump_only=True)
     time_of_call = ma.DateTime()
+    assigned_users_display_string = ma.String(dump_only=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
