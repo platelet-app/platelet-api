@@ -1,3 +1,5 @@
+from functools import reduce
+
 import phonenumbers
 from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates, validate, pre_load
 from phonenumbers import NumberParseException
@@ -186,6 +188,13 @@ class PrioritySchema(ma.SQLAlchemySchema, PostLoadMixin):
         fields = ('id', 'label')
 
 
+def display_names_reducer(result, user):
+    if user[0] == 0:
+        return result + user[1].display_name
+    else:
+        return result + ", {}".format(user[1].display_name)
+
+
 class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
@@ -195,7 +204,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
                   'comments', 'links', 'assigned_rider', 'time_picked_up', 'time_dropped_off', 'rider',
                   'priority_id', 'time_cancelled', 'time_rejected', "patient_name", "patient_contact_number",
                   "destination_contact_number", "destination_contact_name",
-                  "time_created", "time_modified", "assigned_users")
+                  "time_created", "time_modified", "assigned_users", "assigned_users_display_string")
 
     pickup_address = ma.Nested(AddressSchema)
     dropoff_address = ma.Nested(AddressSchema)
@@ -218,6 +227,11 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
         'collection': ma.URLFor('tasks_list')
     })
+
+    @pre_dump
+    def concatenate_assigned_users_display_string(self, data, many):
+        data.assigned_users_display_string = reduce(display_names_reducer, enumerate(data.assigned_users), "")
+        return data
 
     @validates("contact_number")
     def contact_number(self, value):
