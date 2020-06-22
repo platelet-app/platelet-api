@@ -53,6 +53,28 @@
         "dob": "19/02/1991"
       }
     },
+  "rider_patches": [
+    {
+      "username": "Patch 1",
+      "patch_id": 1,
+      "roles": "rider"
+    },
+    {
+      "username": "Patch 2",
+      "patch_id": 2,
+      "roles": "rider"
+    },
+    {
+      "username": "Patch 3",
+      "patch_id": 3,
+      "roles": "rider"
+    },
+    {
+      "username": "Patch 4",
+      "patch_id": 4,
+      "roles": "rider"
+    }
+  ],
   "savedlocations":
   [
     {

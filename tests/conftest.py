@@ -39,6 +39,7 @@ for patch in json_data['patches']:
 
     db.session.add(patch_model)
 
+
 for priority in json_data['priorities']:
     existing = None
     try:
@@ -98,6 +99,29 @@ def login_header_admin():
     yield header
     db.session.delete(user)
     db.session.commit()
+
+
+def rider_patch_mapper(rider):
+    existing = None
+    try:
+        existing = models.User.query.filter_by(name=rider['username']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.flush()
+    user_model = models.User(**rider)
+
+    db.session.add(user_model)
+    db.session.flush()
+    return user_model.uuid
+
+
+@pytest.fixture(scope="session")
+def rider_patches_uuids():
+    users = map(rider_patch_mapper, json_data['rider_patches'])
+    db.session.commit()
+    return set(users)
 
 
 @pytest.fixture(scope="session")
@@ -193,6 +217,10 @@ def coordinator_session_uuid():
     yield str(session.uuid)
 
 
+@pytest.fixture(scope="session")
+def priorities_ids():
+    yield [p.id for p in models.Priority.query.all()]
+
 @pytest.fixture(scope="function")
 def vehicle_obj():
     schema = schemas.VehicleSchema()
@@ -277,6 +305,11 @@ def location_data_alternative():
 
 @pytest.fixture(scope="session")
 def user_rider():
+    res = dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())
+    return res
+
+@pytest.fixture(scope="session")
+def user_riders_different_patches():
     res = dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())
     return res
 
