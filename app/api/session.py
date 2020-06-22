@@ -110,13 +110,13 @@ class SessionStatistics(Resource):
         # tasks with time_picked_up set and not time_dropped_off
         num_picked_up = len(list(filter(lambda t: t.time_picked_up and not t.time_dropped_off, tasks)))
         # tasks that only have an assigned rider
-        num_active = len(list(filter(lambda t: t.assigned_rider and not t.time_picked_up and not t.time_dropped_off, tasks)))
+        num_active = len(list(filter(lambda t: t.assigned_users and not t.time_picked_up and not t.time_dropped_off, tasks)))
         # tasks with time_rejected set
         num_rejected = len(list(filter(lambda t: t.time_rejected, tasks)))
         # tasks with time_cancelled set
         num_cancelled = len(list(filter(lambda t: t.time_cancelled, tasks)))
         # tasks with no assigned rider
-        num_unassigned = len(list(filter(lambda t: not t.assigned_rider, tasks)))
+        num_unassigned = len(list(filter(lambda t: not t.assigned_users, tasks)))
 
         # unique list of all riders that are assigned in this session
         #TODO: update for multiple assigned riders

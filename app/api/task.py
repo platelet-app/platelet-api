@@ -150,7 +150,6 @@ class Tasks(Resource):
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
-        print(task)
         db.session.add(task)
         db.session.commit()
 

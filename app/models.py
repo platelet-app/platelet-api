@@ -67,8 +67,6 @@ db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 
 class CommonMixin:
-    # I don't know why any DateTime objects need their columns to be named explicitly
-    # before they will store and return proper timezone data
     time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
     time_modified = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
     flagged_for_deletion = db.Column(db.Boolean, default=False)
@@ -215,7 +213,7 @@ class Task(SearchableMixin, db.Model, CommonMixin):
         primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK)
     )
 
-    __searchable__ = ['contact_name', 'contact_number', 'session_id', 'assigned_rider']
+    __searchable__ = ['contact_name', 'contact_number', 'session_uuid']
 
     @property
     def object_type(self):
@@ -362,7 +360,7 @@ class Location(SearchableMixin, db.Model, CommonMixin):
         primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(Objects.LOCATION)
     )
 
-    __searchable__ = ['name', 'contact', 'phone_number', 'address']
+    __searchable__ = ['name', 'contact_name', 'contact_number', 'address']
 
     @property
     def object_type(self):
