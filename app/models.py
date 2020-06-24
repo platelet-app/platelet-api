@@ -321,7 +321,7 @@ class Session(SearchableMixin, db.Model, CommonMixin):
     coordinator_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     collaborators = db.relationship('User', secondary=session_collaborators, lazy='subquery',
                                      backref=db.backref('collaborator_sessions', lazy=True))
-    tasks = db.relationship('Task', backref='sess', lazy='dynamic')
+    tasks = db.relationship('Task', backref='parent_session', lazy='dynamic')
 
     comments = db.relationship(
         'Comment',

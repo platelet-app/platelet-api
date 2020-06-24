@@ -10,7 +10,7 @@ from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
     already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError, AlreadyFlaggedForDeletionError
-from app.api.functions.taskfunctions import check_rider_match
+from app.api.functions.taskfunctions import check_rider_match, check_parent_or_collaborator_match
 from app.utilities import get_object, get_range
 
 from app import db
@@ -69,8 +69,8 @@ class Task(Resource):
         return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
     @flask_praetorian.auth_required
-    # TODO: make this decorator for assigned_users instead and also check for collaborator status
     @check_rider_match
+    @check_parent_or_collaborator_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)

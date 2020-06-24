@@ -75,7 +75,6 @@ class Session(Resource):
         return {'uuid': str(session.uuid), 'message': "Session queued for deletion"}, 202
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
-    #TODO: session id match or collaborator match? Or would that only be for task puts?
     @session_id_match_or_admin
     def put(self, session_id):
         try:
@@ -118,6 +117,9 @@ class UserCollaborators(Resource):
 
         if "coordinator" not in user.roles:
             return forbidden_error("Can not assign a non-coordinator as a collaborator.", user_uuid)
+
+        if user.uuid in [u.uuid for u in session.collaborators]:
+            return forbidden_error("Can not add a collaborator twice.")
 
         session.collaborators.append(user)
         db.session.add(session)

@@ -81,7 +81,7 @@ class Deliverables(Resource):
 
         return {'uuid': str(deliverable.uuid), 'message': 'Deliverable {} created'.format(deliverable.uuid)}, 201
 
-    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    @flask_praetorian.auth_required
     def get(self, task_id, _range=None, order="ascending"):
         try:
             task = get_object(TASK, task_id)

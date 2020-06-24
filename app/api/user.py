@@ -133,7 +133,7 @@ class User(Resource):
     's/<_range>/<order>',
     endpoint='users')
 class Users(Resource):
-    @flask_praetorian.roles_accepted('admin', 'coordinator')
+    @flask_praetorian.auth_required
     def get(self, _range=None, order="ascending"):
         try:
             items = get_range(get_all_objects(USER), _range, order)
