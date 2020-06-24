@@ -30,7 +30,7 @@ def test_update_task(client, login_header_coordinator, task_data):
     assert r.status_code == 201
     session_uuid = json.loads(r.data)['uuid']
     r2 = client.post("{}s".format(task_url),
-                     data=json.dumps({"session_id": session_uuid}),
+                     data=json.dumps({"session_uuid": session_uuid}),
                      headers=login_header_coordinator)
     print_response(r2)
     assert r2.status_code == 201
