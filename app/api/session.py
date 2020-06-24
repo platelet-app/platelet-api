@@ -1,6 +1,6 @@
 from flask import jsonify, request
 from app import schemas, db, models, utilities
-from flask_restx import Resource
+from flask_restx import Resource, reqparse
 import flask_praetorian
 from flask_praetorian import utilities
 from app import session_ns as ns
@@ -75,6 +75,7 @@ class Session(Resource):
         return {'uuid': str(session.uuid), 'message': "Session queued for deletion"}, 202
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
+    #TODO: session id match or collaborator match? Or would that only be for task puts?
     @session_id_match_or_admin
     def put(self, session_id):
         try:
@@ -85,6 +86,41 @@ class Session(Resource):
             return not_found(SESSION, session_id)
 
         load_request_into_object(SESSION, instance=session)
+        db.session.commit()
+        return {'uuid': str(session.uuid), 'message': 'Session {} updated.'.format(session.uuid)}, 200
+
+@ns.route(
+    '/<session_id>/assign_collaborator',
+    endpoint="sessions_assign_collaborator")
+class UserCollaborators(Resource):
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
+    @session_id_match_or_admin
+    def put(self, session_id):
+        try:
+            session = get_object(SESSION, session_id)
+            if session.flagged_for_deletion:
+                return not_found(SESSION, session_id)
+        except ObjectNotFoundError:
+            return not_found(SESSION, session_id)
+
+        #load_request_into_object(TASK, instance=task)
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('user_uuid')
+        args = parser.parse_args()
+        user_uuid = args['user_uuid']
+        try:
+            user = get_object(models.Objects.USER, user_uuid)
+            if user.flagged_for_deletion:
+                return not_found(models.Objects.USER, user_uuid)
+        except ObjectNotFoundError:
+            return not_found(models.Objects.USER, user_uuid)
+
+        if "coordinator" not in user.roles:
+            return forbidden_error("Can not assign a non-coordinator as a collaborator.", user_uuid)
+
+        session.collaborators.append(user)
+        db.session.add(session)
         db.session.commit()
         return {'uuid': str(session.uuid), 'message': 'Session {} updated.'.format(session.uuid)}, 200
 
@@ -228,22 +264,22 @@ class Sessions(Resource):
         if request.get_json():
             try:
                 session = load_request_into_object(SESSION)
-                if session.user_uuid != str(calling_user):
+                if session.coordinator_uuid != str(calling_user):
                     if 'admin' not in utilities.current_rolenames():
                         return forbidden_error("only admins can create sessions for other users")
-                    if not is_user_present(session.user_uuid):
+                    if not is_user_present(session.coordinator_uuid):
                         return forbidden_error("cannot create a session for a non-existent user")
             except SchemaValidationError as e:
                 return schema_validation_error(str(e))
 
         else:
             session = models.Session()
-            session.user_uuid = calling_user
+            session.coordinator_uuid = calling_user
 
         db.session.add(session)
         db.session.commit()
 
-        user_obj = get_user_object(session.user_uuid)
+        user_obj = get_user_object(session.coordinator_uuid)
 
-        return {'uuid': str(session.uuid), 'user_uuid': str(user_obj.uuid), 'message': 'Session {} created'.format(str(session.uuid))}, 201
+        return {'uuid': str(session.uuid), 'coordinator_uuid': str(user_obj.uuid), 'message': 'Session {} created'.format(str(session.uuid))}, 201
 

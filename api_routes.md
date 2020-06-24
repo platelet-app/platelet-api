@@ -39,7 +39,7 @@ Content-Type: application/json (optional)
 ####  Returns:
 status code 200 on success
 
-{ uuid, user_uuid, message }
+{ uuid, coordinator_uuid, message }
 
 status code 403 on failure
 

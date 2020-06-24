@@ -189,7 +189,6 @@ class Task(SearchableMixin, db.Model, CommonMixin):
    # sender_name = db.Column(db.String(64))
    # sender_signature = db.Column(db.String(4096))
 
-
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
     contact_name = db.Column(db.String(64))
@@ -204,7 +203,6 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
-    assigned_rider = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     assigned_users = db.relationship('User', secondary=task_assignees, lazy='subquery',
         backref=db.backref('tasks', lazy=True))
 
@@ -253,9 +251,10 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
 class User(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
 
+    address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
+
     username = db.Column(db.String(64), unique=True)
     email = db.Column(EmailType)
     password = db.Column(db.String())
@@ -278,7 +277,7 @@ class User(SearchableMixin, db.Model, CommonMixin):
         'Comment',
         primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == User.uuid)".format(Objects.USER)
     )
-    #password_reset_on_login = db.Column(db.Boolean, default=False)
+    password_reset_on_login = db.Column(db.Boolean, default=False)
 
     __searchable__ = ['username', 'roles', 'name', 'email']
 
@@ -309,10 +308,19 @@ class User(SearchableMixin, db.Model, CommonMixin):
         return '<User {}>'.format(self.username)
 
 
+session_collaborators = db.Table(
+    'session_collaborators',
+    db.Column('session_uuid', UUID(as_uuid=True), db.ForeignKey('session.uuid'), primary_key=True),
+    db.Column('user_uuid', UUID(as_uuid=True), db.ForeignKey('user.uuid'), primary_key=True)
+)
+
+
 class Session(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    coordinator_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    collaborators = db.relationship('User', secondary=session_collaborators, lazy='subquery',
+                                     backref=db.backref('collaborator_sessions', lazy=True))
     tasks = db.relationship('Task', backref='sess', lazy='dynamic')
 
     comments = db.relationship(

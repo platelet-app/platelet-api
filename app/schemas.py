@@ -299,7 +299,7 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
     class Meta:
         unknown = EXCLUDE
         model = models.Session
-        fields = ('uuid', 'user_uuid',
+        fields = ('uuid', 'coordinator_uuid',
                   'time_created', 'tasks', 'comments',
                   'links', 'task_count', 'last_active',
                   'time_created', 'time_modified', 'tasks_etag')

@@ -69,7 +69,7 @@ class Task(Resource):
         return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
     @flask_praetorian.auth_required
-    # TODO: make this decorator for assigned_users instead
+    # TODO: make this decorator for assigned_users instead and also check for collaborator status
     @check_rider_match
     def put(self, task_id):
         try:
@@ -108,10 +108,13 @@ class TasksAssignees(Resource):
         user_uuid = args['user_uuid']
         try:
             user = get_object(models.Objects.USER, user_uuid)
-            if task.flagged_for_deletion:
+            if user.flagged_for_deletion:
                 return not_found(models.Objects.USER, user_uuid)
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
+
+        if "rider" not in user.roles:
+            return forbidden_error("Can not assign a non-rider as an assignee.", user_uuid)
 
         task.assigned_users.append(user)
         db.session.add(task)

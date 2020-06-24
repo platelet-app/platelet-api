@@ -9,7 +9,7 @@ from datetime import datetime
 
 def create_session(client, header, other_user_id=None):
     if other_user_id:
-        data = {"user_uuid": str(other_user_id)}
+        data = {"coordinator_uuid": str(other_user_id)}
     else:
         data = ""
 
@@ -22,7 +22,7 @@ def create_session_success(client, header, other_user_id=None):
     assert(r.status_code == 201)
     data = json.loads(r.data)
 
-    assert(is_valid_uuid(data['user_uuid']))
+    assert(is_valid_uuid(data['coordinator_uuid']))
     assert(is_valid_uuid(data['uuid']))
     return data['uuid']
 

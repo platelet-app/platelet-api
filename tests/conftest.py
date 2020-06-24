@@ -210,7 +210,7 @@ def coordinator_session_uuid():
     db.session.add(user)
     db.session.commit()
     db.session.flush()
-    session = models.Session(user_uuid=user.uuid)
+    session = models.Session(coordinator_uuid=user.uuid)
     db.session.add(session)
     db.session.commit()
     db.session.flush()
