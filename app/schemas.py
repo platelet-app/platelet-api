@@ -126,6 +126,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     uuid = field_for(models.User, 'uuid', dump_only=True)
     assigned_vehicles = ma.Nested("VehicleSchema", many=True, dump_only=True, exclude=("assigned_user",))
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
+    password = ma.Str(load_only=True)
 
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
@@ -302,11 +303,26 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         fields = ('uuid', 'coordinator_uuid',
                   'time_created', 'tasks', 'comments',
                   'links', 'task_count', 'last_active',
-                  'time_created', 'time_modified', 'tasks_etag')
+                  'time_created', 'time_modified', 'tasks_etag',
+                  'collaborators')
 
     tasks = ma.Nested(TaskSchema, dump_only=True, many=True,
                       exclude=('comments', 'deliverables'))
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
+    collaborators = ma.Nested(UserSchema, dump_only=True, many=True, exclude=(
+        "address",
+        "time_created",
+        "dob",
+        "username",
+        "patch",
+        "contact_number",
+        "email",
+        "assigned_vehicles",
+        "comments",
+        "patch_id",
+        "time_modified",
+        "roles",
+        "name"))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('session_detail', session_id='<uuid>'),
