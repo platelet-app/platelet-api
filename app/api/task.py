@@ -17,6 +17,8 @@ from app import db
 
 task_schema = schemas.TaskSchema()
 tasks_schema = schemas.TaskSchema(many=True)
+#assigned_users_schema = schemas.AssignedUsersSchema(many=True)
+assigned_users_schema = schemas.UserSchema(many=True)
 
 TASK = models.Objects.TASK
 SESSION = models.Objects.SESSION
@@ -50,7 +52,6 @@ class Task(Resource):
             return jsonify(task_schema.dump(get_object(TASK, task_id)))
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
-
 
     @flask_praetorian.roles_accepted('admin', 'coordinator')
     def delete(self, task_id):
@@ -87,10 +88,19 @@ class Task(Resource):
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
+# TODO: make this a get, put, delete for assignees and don't bother sending assignees with the tasks list
 @ns.route(
-    '/<task_id>/assign_user',
+    '/<task_id>/assigned_users',
     endpoint="tasks_assign_user")
 class TasksAssignees(Resource):
+    @flask_praetorian.auth_required
+    def get(self, task_id):
+        try:
+            task = get_object(TASK, task_id)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_id)
+        return assigned_users_schema.dump(task.assigned_users)
+
     @flask_praetorian.roles_accepted('admin', 'coordinator')
     def put(self, task_id):
         try:
@@ -117,6 +127,32 @@ class TasksAssignees(Resource):
             return forbidden_error("Can not assign a non-rider as an assignee.", user_uuid)
 
         task.assigned_users.append(user)
+        db.session.add(task)
+        db.session.commit()
+        return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+
+    def delete(self, task_id):
+        try:
+            task = get_object(TASK, task_id)
+            if task.flagged_for_deletion:
+                return not_found(TASK, task_id)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_id)
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('user_uuid')
+        args = parser.parse_args()
+        user_uuid = args['user_uuid']
+        try:
+            user = get_object(models.Objects.USER, user_uuid)
+            if user.flagged_for_deletion:
+                return not_found(models.Objects.USER, user_uuid)
+        except ObjectNotFoundError:
+            return not_found(models.Objects.USER, user_uuid)
+
+        filtered_assignees = list(filter(lambda u: u.uuid != user.uuid, task.assigned_users))
+
+        task.assigned_users = filtered_assignees
         db.session.add(task)
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200

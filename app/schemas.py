@@ -222,6 +222,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     time_rejected = ma.DateTime(allow_none=True)
     priority = fields.Pluck(PrioritySchema, "label", dump_only=True)
     patch = fields.Pluck(PatchSchema, "label", dump_only=True)
+    patch_id = ma.Int(allow_none=True)
     time_of_call = ma.DateTime()
     assigned_users_display_string = ma.String(dump_only=True)
 
