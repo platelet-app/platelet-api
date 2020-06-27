@@ -10,8 +10,9 @@ from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
     already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError, AlreadyFlaggedForDeletionError
-from app.api.functions.taskfunctions import check_rider_match, check_parent_or_collaborator_match
+from app.api.functions.taskfunctions import check_rider_match, check_parent_or_collaborator_or_admin_match
 from app.utilities import get_object, get_range
+from flask_praetorian import utilities
 
 from app import db
 
@@ -71,7 +72,7 @@ class Task(Resource):
 
     @flask_praetorian.auth_required
     @check_rider_match
-    @check_parent_or_collaborator_match
+    @check_parent_or_collaborator_or_admin_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -88,7 +89,7 @@ class Task(Resource):
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
-# TODO: make this a get, put, delete for assignees and don't bother sending assignees with the tasks list
+# TODO: make this do checks for the calling users
 @ns.route(
     '/<task_id>/assigned_users',
     endpoint="tasks_assign_user")
@@ -102,6 +103,7 @@ class TasksAssignees(Resource):
         return assigned_users_schema.dump(task.assigned_users)
 
     @flask_praetorian.roles_accepted('admin', 'coordinator')
+    @check_parent_or_collaborator_or_admin_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -109,8 +111,6 @@ class TasksAssignees(Resource):
                 return not_found(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
-
-        #load_request_into_object(TASK, instance=task)
 
         parser = reqparse.RequestParser()
         parser.add_argument('user_uuid')
@@ -131,6 +131,8 @@ class TasksAssignees(Resource):
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
+    @check_parent_or_collaborator_or_admin_match
     def delete(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -189,7 +191,11 @@ class Tasks(Resource):
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
-        db.session.add(task)
-        db.session.commit()
-
-        return {'uuid': str(task.uuid), 'timestamp': str(task.time_created), 'message': 'Task {} created'.format(task.uuid)}, 201
+        session = get_object(SESSION, task.session_uuid)
+        calling_user = utilities.current_user()
+        if calling_user.uuid in [u.uuid for u in session.collaborators] or calling_user.uuid == session.coordinator_uuid:
+            db.session.add(task)
+            db.session.commit()
+            return {'uuid': str(task.uuid), 'time_created': str(task.time_created), 'message': 'Task {} created'.format(task.uuid)}, 201
+        else:
+            return forbidden_error("You do not have permission to post new tasks on this session.", str(session.uuid))
