@@ -117,7 +117,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'comments', 'display_name',
                   'assigned_vehicles', 'patch_id', 'contact_number',
-                  'time_created', 'time_modified', 'links')
+                  'time_created', 'time_modified', 'links', 'password_reset_on_login')
 
     username = ma.Str(required=True)
     email = ma.Email()
@@ -127,6 +127,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     assigned_vehicles = ma.Nested("VehicleSchema", many=True, dump_only=True, exclude=("assigned_user",))
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     password = ma.Str(load_only=True)
+    password_reset_on_login = ma.Bool(dump_only=True)
 
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}

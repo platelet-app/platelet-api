@@ -118,9 +118,11 @@ class User(Resource):
             new_user = load_request_into_object(USER, instance=user)
         except ValidationError as e:
             return schema_validation_error(e)
-
+        # TODO: check this is right, might always be password field?
         if new_user.password:
             new_user.password = guard.encrypt_password(new_user.password)
+            if new_user.password_reset_on_login:
+                new_user.password_reset_on_login = False
 
         db.session.commit()
 
