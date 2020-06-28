@@ -8,6 +8,7 @@ from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, flask_version
 from app.utilities import get_object, calculate_tasks_etag, get_all_objects
+from flask_praetorian.utilities import current_user
 
 
 class TimesMixin:
@@ -68,7 +69,6 @@ class CommentSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
                  "time_created", "time_modified"))
 
 
-
 class DeliverableTypeSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     class Meta:
         model = models.DeliverableType
@@ -120,14 +120,15 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
                   'time_created', 'time_modified', 'links', 'password_reset_on_login')
 
     username = ma.Str(required=True)
-    email = ma.Email()
-    dob = ma.DateTime(format='%d/%m/%Y')
+    email = ma.Email(allow_none=True)
+    dob = ma.DateTime(format='%d/%m/%Y', allow_none=True)
     address = ma.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
     assigned_vehicles = ma.Nested("VehicleSchema", many=True, dump_only=True, exclude=("assigned_user",))
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     password = ma.Str(load_only=True)
     password_reset_on_login = ma.Bool(dump_only=True)
+    patch_id = ma.Int(allow_none=True)
 
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
@@ -306,7 +307,7 @@ class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
                   'time_created', 'tasks', 'comments',
                   'links', 'task_count', 'last_active',
                   'time_created', 'time_modified', 'tasks_etag',
-                  'collaborators')
+                  'collaborators', 'is_owner')
 
     tasks = ma.Nested(TaskSchema, dump_only=True, many=True,
                       exclude=('comments', 'deliverables'))

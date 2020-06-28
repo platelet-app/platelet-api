@@ -48,6 +48,7 @@ class Session(Resource):
     def get(self, session_id):
         try:
             session = get_object(SESSION, session_id)
+            session.is_owner = utilities.current_user().uuid == session.coordinator_uuid
             return session_schema.dump(session)
         except ObjectNotFoundError:
             return not_found(SESSION, session_id)
@@ -252,11 +253,14 @@ class Sessions(Resource):
             return not_found(models.Objects.USER, user_id)
 
         try:
-            items = get_range(user.sessions.all(), _range, order)
+            items = set(get_range(user.sessions.all() + user.collaborator_sessions, _range, order))
         except InvalidRangeError as e:
             return forbidden_error(e)
         except Exception as e:
             return internal_error(e)
+
+        for i in items:
+            i.is_owner = utilities.current_user().uuid == i.coordinator_uuid
 
         return sessions_schema.jsonify(items)
 
