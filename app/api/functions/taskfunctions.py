@@ -22,12 +22,12 @@ def get_all_tasks():
 
 def check_rider_match(func):
     @functools.wraps(func)
-    def wrapper(self, *args):
+    def wrapper(self, task_id):
         if "coordinator" in utilities.current_rolenames() or "admin" in utilities.current_rolenames():
-            return func(self, *args, skip_collab_check=False)
-        assigned_riders = models.Task.query.filter_by(uuid=args[0]).first().assigned_users
+            return func(self, task_id, skip_collab_check=False)
+        assigned_riders = models.Task.query.filter_by(uuid=task_id).first().assigned_users
         if utilities.current_user().uuid in [rider.uuid for rider in assigned_riders]:
-            return func(self, *args, skip_collab_check=True)
+            return func(self, task_id, skip_collab_check=True)
         else:
             return forbidden_error("Calling user is not a coordinator or assigned user.")
     return wrapper
@@ -35,21 +35,21 @@ def check_rider_match(func):
 
 def check_parent_or_collaborator_or_admin_match(func):
     @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self, task_id, **kwargs):
         try:
             if kwargs["skip_collab_check"]:
-                return func(self, *args, **kwargs)
+                return func(self, task_id)
         except KeyError:
             pass
         if "admin" in utilities.current_rolenames():
-            return func(self, *args, **kwargs)
+            return func(self, task_id)
         calling_user_uuid = utilities.current_user().uuid
-        task = models.Task.query.filter_by(uuid=args[0]).first()
+        task = models.Task.query.filter_by(uuid=task_id).first()
         if task.parent_session:
             if calling_user_uuid == task.parent_session.coordinator_uuid:
-                return func(self, *args, **kwargs)
+                return func(self, task_id)
             elif calling_user_uuid in [user.uuid for user in task.parent_session.collaborators]:
-                return func(self, *args, **kwargs)
+                return func(self, task_id)
             else:
                 return forbidden_error(
                     "Parent session is not owned by calling user or collaborator: session id: {}".format(
