@@ -7,8 +7,8 @@ from phonenumbers import NumberParseException
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, flask_version
-from app.utilities import get_object, calculate_tasks_etag, get_all_objects
-from flask_praetorian.utilities import current_user
+from app.utilities import get_object, get_all_objects
+from app.api.task.task_utilities.taskfunctions import calculate_tasks_etag
 
 
 class TimesMixin:

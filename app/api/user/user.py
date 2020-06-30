@@ -1,16 +1,15 @@
 from flask import jsonify
 from marshmallow import ValidationError
-from sqlalchemy import exc as sqlexc
 from app import schemas, db, models
 from app import user_ns as ns
 from app import root_ns
 from flask_restx import Resource
 import flask_praetorian
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.userfunctions import get_user_object_by_int_id, user_id_match_or_admin
-from app.api.functions.errors import not_found, schema_validation_error, not_unique_error, forbidden_error, \
+from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id, user_id_match_or_admin
+from app.api.functions.errors import not_found, schema_validation_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
-from app.exceptions import ObjectNotFoundError, SchemaValidationError, InvalidRangeError, AlreadyFlaggedForDeletionError
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
 from app.utilities import add_item_to_delete_queue, get_object, get_all_objects, get_range, \
     remove_item_from_delete_queue
 from app import guard

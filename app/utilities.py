@@ -1,32 +1,15 @@
-import hashlib
-
-from flask import json
-
 from app import app, db, models
-from app.api.functions.userfunctions import get_user_object, get_all_users
-from app.api.functions.sessionfunctions import get_session_object, get_all_sessions
-from app.api.functions.taskfunctions import get_task_object, get_all_tasks
-from app.api.functions.vehiclefunctions import get_vehicle_object, get_all_vehicles
-from app.api.functions.locationfunctions import get_location_object, get_all_locations
-from app.api.functions.priorityfunctions import get_all_priorities
-from app.api.functions.patchfunctions import get_all_patches
-from app.api.functions.commentfunctions import get_comment_object
+from app.api.user.user_utilities.userfunctions import get_user_object, get_all_users
+from app.api.session.session_utilities.sessionfunctions import get_session_object, get_all_sessions
+from app.api.task.task_utilities.taskfunctions import get_task_object, get_all_tasks
+from app.api.vehicle.vehicle_utilities.vehiclefunctions import get_vehicle_object, get_all_vehicles
+from app.api.location.location_utilities.locationfunctions import get_location_object, get_all_locations
+from app.api.priority.priority_utilities.priorityfunctions import get_all_priorities
+from app.api.patch.patch_utilities.patchfunctions import get_all_patches
+from app.api.comment.comment_utilities.commentfunctions import get_comment_object
 from app.api.functions.delete_flag_functions import get_delete_flag_object
-from app.api.functions.deliverablefunctions import get_deliverable_object, get_all_deliverable_types
+from app.api.deliverable.deliverable_utilities.deliverablefunctions import get_deliverable_object, get_all_deliverable_types
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
-from app import schemas
-
-
-def calculate_tasks_etag(data):
-    tasks_schema = schemas.TaskSchema(many=True)
-    json_data = json.dumps(tasks_schema.dump(data))
-    return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
-
-
-def calculate_comments_etag(data):
-    comments_schema = schemas.CommentSchema(many=True)
-    json_data = json.dumps(comments_schema.dump(data))
-    return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
 
 
 def remove_item_from_delete_queue(item):
@@ -52,7 +35,6 @@ def add_item_to_delete_queue(item):
 
     db.session.add(delete)
     db.session.commit()
-
 
 
 def object_type_to_string(type):
@@ -133,10 +115,8 @@ def get_all_objects(type, include_delete_flagged=False):
 
 
 def get_range(items, _range="0-100", order="descending"):
-
     start = 0
     end = 100
-
     if _range:
         between = _range.split('-')
 

@@ -10,7 +10,7 @@ from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
     already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError, AlreadyFlaggedForDeletionError
-from app.api.functions.taskfunctions import check_rider_match, check_parent_or_collaborator_or_admin_match
+from app.api.task.task_utilities.decorators import check_rider_match, check_parent_or_collaborator_or_admin_match
 from app.utilities import get_object, get_range
 from flask_praetorian import utilities
 

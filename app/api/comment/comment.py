@@ -5,8 +5,8 @@ from flask_praetorian import utilities as prae_utils
 from app import comment_ns as ns
 import flask_praetorian
 
-from app.api.functions.commentfunctions import comment_author_match_or_admin
-from app.api.functions.userfunctions import get_user_object_by_int_id
+from app.api.comment.comment_utilities.commentfunctions import comment_author_match_or_admin
+from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
 from app.utilities import get_object, add_item_to_delete_queue, get_unspecified_object, remove_item_from_delete_queue

@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import request
 from app import schemas, db, models, utilities
 from flask_restx import Resource, reqparse
 import flask_praetorian
@@ -6,8 +6,8 @@ from flask_praetorian import utilities
 from app import session_ns as ns
 from app.exceptions import InvalidRangeError, ObjectNotFoundError, SchemaValidationError
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.userfunctions import get_user_object, is_user_present, get_user_object_by_int_id
-from app.api.functions.sessionfunctions import session_id_match_or_admin
+from app.api.user.user_utilities.userfunctions import get_user_object, is_user_present
+from app.api.session.session_utilities.decorators import session_id_match_or_admin
 from app.api.functions.errors import forbidden_error, not_found, already_flagged_for_deletion_error, internal_error, schema_validation_error
 from app.exceptions import AlreadyFlaggedForDeletionError
 from app.utilities import get_object, get_range, get_all_objects

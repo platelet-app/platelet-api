@@ -1,24 +1,7 @@
-from app import models
-from app.exceptions import ObjectNotFoundError
 import functools
 from flask_praetorian import utilities
 from app.api.functions.errors import forbidden_error, internal_error
-from app.api.functions.userfunctions import get_user_object_by_int_id
-
-
-def get_task_object(_id):
-    task = models.Task.query.filter_by(uuid=_id).first()
-    if not task:
-        raise ObjectNotFoundError()
-    return task
-
-
-def get_all_tasks():
-    tasks = models.Task.query.all()
-    if not tasks:
-        return {}
-    return tasks
-
+from app import models
 
 def check_rider_match(func):
     @functools.wraps(func)

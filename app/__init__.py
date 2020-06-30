@@ -60,13 +60,26 @@ app.debug = True
 migrate = Migrate(app, db)
 
 from app import models
-from app.api import task, user, views, site, login, session, vehicle, comment, testing_views, deliverable, location, uuid_lookup, search, priority, patch, ping, server_settings
+from app.api.task import task
+from app.api.user import user
+from app.api.login import login
+from app.api.vehicle import vehicle
+from app.api.session import session
+from app.api.comment import comment
+from app.api.deliverable import deliverable
+from app.api.location import location
+from app.api.search import search
+from app.api.priority import priority
+from app.api.patch import patch
+from app.api.server_settings import server_settings
+from app.api import ping
+from app.api import uuid_lookup
 
 site_blueprint = Blueprint('site', __name__, url_prefix='/')
 
 guard.init_app(app, models.User)
 app.register_blueprint(site_blueprint)
-app.register_blueprint(testing_views.mod)
+#app.register_blueprint(testing_views.mod)
 
 
 @app.after_request
