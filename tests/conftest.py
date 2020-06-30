@@ -1,9 +1,5 @@
-import os
 import pytest
-from config import basedir
 from app import app, db, models, guard, schemas
-from app.api.functions.userfunctions import is_username_present
-from datetime import datetime
 from tests.testutils import get_test_json, generate_name
 import json
 
