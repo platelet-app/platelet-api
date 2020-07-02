@@ -1,6 +1,7 @@
 import flask
 from flask import Flask, Blueprint
 from flask_restx import Api
+from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
@@ -53,6 +54,8 @@ any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Loo
 search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch functions')
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
+socketio = SocketIO(app, cors_allowed_origins='*')
+
 
 FlaskBuzz.register_error_handler_with_flask_restplus(api)
 
@@ -74,6 +77,7 @@ from app.api.patch import patch
 from app.api.server_settings import server_settings
 from app.api import ping
 from app.api import uuid_lookup
+from app.api import sockets
 
 site_blueprint = Blueprint('site', __name__, url_prefix='/')
 

@@ -1,7 +1,8 @@
-from flask import jsonify
+from flask import jsonify, request
+from flask_socketio import emit
 from marshmallow import ValidationError
 
-from app import schemas, models
+from app import schemas, models, socketio
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
@@ -86,8 +87,18 @@ class Task(Resource):
         except ValidationError as e:
             return schema_validation_error(e)
 
+        request_json = request.get_json()
         db.session.commit()
-        return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+        socketio.emit('subscribed_response',
+                      {
+                          'object_uuid': str(task.uuid),
+                          'type': 'update',
+                          'data': request_json,
+                          'tab_id': request.headers['Tab-Identification']
+                       },
+                      room=str(task_id),
+                      namespace="/api/v0.1/subscribe")
+        return {'uuid': str(task.uuid), 'message': "Task {} updated.".format(task.uuid)}
 
 # TODO: make this do checks for the calling users
 @ns.route(

@@ -1,4 +1,8 @@
-from app import db
+import redis
+from redis import Connection
+from rq import Queue
+
+from app import db, socketio
 from datetime import datetime
 from enum import IntEnum, auto
 from sqlalchemy_utils import EmailType
@@ -54,12 +58,28 @@ class SearchableMixin:
         for obj in session._changes['delete']:
             if isinstance(obj, SearchableMixin):
                 remove_from_index(obj.__tablename__, obj)
-        session._changes = None
+
 
     @classmethod
     def reindex(cls):
         for obj in cls.query:
             add_to_index(cls.__tablename__, obj)
+
+
+class SocketsMixin:
+    @classmethod
+    def after_commit(cls, session):
+        for obj in session._changes['add']:
+            if isinstance(obj, SocketsMixin):
+                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid), namespace="/socket")
+        for obj in session._changes['update']:
+            if isinstance(obj, SocketsMixin):
+                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid), namespace="/socket")
+        for obj in session._changes['delete']:
+            if isinstance(obj, SocketsMixin):
+                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid), namespace="/socket")
+
+        session._changes = None
 
 
 db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
@@ -162,7 +182,7 @@ task_assignees = db.Table(
 )
 
 
-class Task(SearchableMixin, db.Model, CommonMixin):
+class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     time_of_call = db.Column(db.DateTime(timezone=True), index=True)
