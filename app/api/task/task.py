@@ -163,6 +163,8 @@ class TasksAssignees(Resource):
         task.assigned_users = filtered_assignees
         db.session.add(task)
         db.session.commit()
+        request_json = request.get_json()
+        emit_socket_broadcast(request_json, task_id, "remove_assigned_user")
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
 
