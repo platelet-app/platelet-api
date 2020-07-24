@@ -6,6 +6,7 @@ from app import schemas, models, socketio
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
+from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
@@ -88,16 +89,8 @@ class Task(Resource):
             return schema_validation_error(e)
 
         request_json = request.get_json()
+        emit_socket_broadcast(request_json, task_id, "update")
         db.session.commit()
-        socketio.emit('subscribed_response',
-                      {
-                          'object_uuid': str(task.uuid),
-                          'type': 'update',
-                          'data': request_json,
-                          'tab_id': request.headers['Tab-Identification']
-                       },
-                      room=str(task_id),
-                      namespace="/api/v0.1/subscribe")
         return {'uuid': str(task.uuid), 'message': "Task {} updated.".format(task.uuid)}
 
 # TODO: make this do checks for the calling users
@@ -140,6 +133,8 @@ class TasksAssignees(Resource):
         task.assigned_users.append(user)
         db.session.add(task)
         db.session.commit()
+        request_json = request.get_json()
+        emit_socket_broadcast(request_json, task_id, "assign_user")
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
     @flask_praetorian.roles_accepted('admin', 'coordinator')
