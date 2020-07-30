@@ -96,7 +96,7 @@ for deliverable in insert_data['deliverables']:
 for vehicle in insert_data['vehicles']:
     existing = None
     try:
-        existing = models.Vehicle.query.filter_by(name=deliverable['name']).first()
+        existing = models.Vehicle.query.filter_by(name=vehicle['name']).first()
     except:
         pass
     if existing:
