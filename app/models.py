@@ -236,10 +236,10 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     assigned_riders = db.relationship('User', secondary=task_rider_assignees, lazy='subquery',
-        backref=db.backref('tasks', lazy=True))
+        backref=db.backref('tasks_as_rider', lazy='dynamic'))
 
     assigned_coordinators = db.relationship('User', secondary=task_coordinator_assignees, lazy='subquery',
-                                    backref=db.backref('tasks_as_coordinator', lazy=True))
+                                    backref=db.backref('tasks_as_coordinator', lazy='dynamic'))
 
     comments = db.relationship(
         'Comment',
