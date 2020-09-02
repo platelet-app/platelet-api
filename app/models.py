@@ -175,8 +175,19 @@ class Priority(db.Model, CommonMixin):
         return Objects.PRIORITY
 
 
-task_assignees = db.Table(
-    'task_assignees',
+#class TaskParent(db.Model, CommonMixin, SocketsMixin):
+#    id = db.Column(db.Integer, primary_key=True)
+#    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+
+
+task_rider_assignees = db.Table(
+    'task_rider_assignees',
+    db.Column('task_uuid', UUID(as_uuid=True), db.ForeignKey('task.uuid'), primary_key=True),
+    db.Column('user_uuid', UUID(as_uuid=True), db.ForeignKey('user.uuid'), primary_key=True)
+)
+
+task_coordinator_assignees = db.Table(
+    'task_coordinator_assignees',
     db.Column('task_uuid', UUID(as_uuid=True), db.ForeignKey('task.uuid'), primary_key=True),
     db.Column('user_uuid', UUID(as_uuid=True), db.ForeignKey('user.uuid'), primary_key=True)
 )
@@ -185,6 +196,8 @@ task_assignees = db.Table(
 class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    author = db.relationship("User", foreign_keys=[author_uuid])
     time_of_call = db.Column(db.DateTime(timezone=True), index=True)
 
     time_picked_up = db.Column(db.DateTime(timezone=True))
@@ -219,12 +232,14 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     destination_contact_number = db.Column(db.String(64))
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
-    session_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('session.uuid'))
     priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
-    assigned_users = db.relationship('User', secondary=task_assignees, lazy='subquery',
+    assigned_riders = db.relationship('User', secondary=task_rider_assignees, lazy='subquery',
         backref=db.backref('tasks', lazy=True))
+
+    assigned_coordinators = db.relationship('User', secondary=task_coordinator_assignees, lazy='subquery',
+                                    backref=db.backref('tasks_as_coordinator', lazy=True))
 
     comments = db.relationship(
         'Comment',
@@ -282,7 +297,6 @@ class User(SearchableMixin, db.Model, CommonMixin):
     name = db.Column(db.String(64))
     display_name = db.Column(db.String(64), unique=True)
     dob = db.Column(db.Date)
-    sessions = db.relationship('Session', backref='coordinator', lazy='dynamic')
     assigned_vehicles = db.relationship('Vehicle', backref='assigned_user', lazy='dynamic')
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
@@ -340,8 +354,8 @@ class Session(SearchableMixin, db.Model, CommonMixin):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     coordinator_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     collaborators = db.relationship('User', secondary=session_collaborators, lazy='subquery',
-                                     backref=db.backref('collaborator_sessions', lazy=True))
-    tasks = db.relationship('Task', backref='parent_session', lazy='dynamic')
+                                     backref=db.backref('acollaborator_sessions', lazy=True))
+    #tasks = db.relationship('Task', backref='parent_session', lazy='dynamic')
 
     comments = db.relationship(
         'Comment',

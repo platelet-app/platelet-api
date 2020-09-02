@@ -203,11 +203,12 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         unknown = EXCLUDE
         model = models.Task
         fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'contact_name',
-                  'contact_number', 'priority', 'session_uuid', 'time_of_call', 'deliverables',
-                  'comments', 'links', 'assigned_rider', 'time_picked_up', 'time_dropped_off', 'rider',
-                  'priority_id', 'time_cancelled', 'time_rejected', "patient_name", "patient_contact_number",
-                  "destination_contact_number", "destination_contact_name",
-                  "time_created", "time_modified", "assigned_users", "assigned_users_display_string")
+                  'contact_number', 'priority', 'time_of_call', 'deliverables',
+                  'comments', 'links', 'time_picked_up', 'time_dropped_off', 'rider',
+                  'priority_id', 'time_cancelled', 'time_rejected', 'patient_name', 'patient_contact_number',
+                  'destination_contact_number', 'destination_contact_name',
+                  'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
+                  'assigned_users_display_string', 'author')
 
     pickup_address = ma.Nested(AddressSchema)
     dropoff_address = ma.Nested(AddressSchema)

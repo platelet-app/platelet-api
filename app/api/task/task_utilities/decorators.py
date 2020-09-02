@@ -3,14 +3,15 @@ from flask_praetorian import utilities
 from app.api.functions.errors import forbidden_error, internal_error
 from app import models
 
+
 def check_rider_match(func):
     @functools.wraps(func)
     def wrapper(self, task_id):
         if "coordinator" in utilities.current_rolenames() or "admin" in utilities.current_rolenames():
-            return func(self, task_id, skip_collab_check=False)
+            return func(self, task_id)
         assigned_riders = models.Task.query.filter_by(uuid=task_id).first().assigned_users
         if utilities.current_user().uuid in [rider.uuid for rider in assigned_riders]:
-            return func(self, task_id, skip_collab_check=True)
+            return func(self, task_id)
         else:
             return forbidden_error("Calling user is not a coordinator or assigned user.")
     return wrapper

@@ -20,7 +20,6 @@ from app import db
 
 task_schema = schemas.TaskSchema()
 tasks_schema = schemas.TaskSchema(many=True)
-#assigned_users_schema = schemas.AssignedUsersSchema(many=True)
 assigned_users_schema = schemas.UserSchema(many=True)
 
 TASK = models.Objects.TASK
@@ -74,7 +73,7 @@ class Task(Resource):
 
     @flask_praetorian.auth_required
     @check_rider_match
-    @check_parent_or_collaborator_or_admin_match
+    #@check_parent_or_collaborator_or_admin_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -93,7 +92,7 @@ class Task(Resource):
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': "Task {} updated.".format(task.uuid)}
 
-# TODO: make this do checks for the calling users
+
 @ns.route(
     '/<task_id>/assigned_users',
     endpoint="tasks_assign_user")
@@ -106,8 +105,8 @@ class TasksAssignees(Resource):
             return not_found(TASK, task_id)
         return assigned_users_schema.dump(task.assigned_users)
 
-    @flask_praetorian.roles_accepted('admin', 'coordinator')
-    @check_parent_or_collaborator_or_admin_match
+    @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
+    #@check_parent_or_collaborator_or_admin_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -137,8 +136,8 @@ class TasksAssignees(Resource):
         emit_socket_broadcast(request_json, task_id, "assign_user")
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
-    @flask_praetorian.roles_accepted('admin', 'coordinator')
-    @check_parent_or_collaborator_or_admin_match
+    @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
+    #@check_parent_or_collaborator_or_admin_match
     def delete(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -169,23 +168,23 @@ class TasksAssignees(Resource):
 
 
 @ns.route('s',
-          's/<session_user_id>',
+          's/<user_uuid>',
           endpoint="tasks_list")
 class Tasks(Resource):
     @flask_praetorian.auth_required
-    def get(self, session_user_id, _range=None, order="ascending"):
-        if not session_user_id:
-            return not_found(models.Objects.UNKNOWN)
+    def get(self, user_uuid, _range=None, order="ascending"):
+        if not user_uuid:
+            return not_found(models.Objects.USER)
         try:
-            session_user = get_unspecified_object(session_user_id)
-            if not session_user:
-                return not_found(models.Objects.UNKNOWN, session_user_id)
-            if session_user.flagged_for_deletion:
-                return not_found(session_user.object_type, session_user_id)
+            requested_user = get_object(models.Objects.USER, user_uuid)
+            if not requested_user:
+                return not_found(models.Objects.UNKNOWN, user_uuid)
+            if requested_user.flagged_for_deletion:
+                return not_found(requested_user.object_type, user_uuid)
         except ObjectNotFoundError:
-            return not_found(models.Objects.UNKNOWN, session_user_id)
+            return not_found(models.Objects.UNKNOWN, user_uuid)
         try:
-            items = get_range(session_user.tasks.all(), _range, order)
+            items = get_range(requested_user.tasks.all(), _range, order)
         except InvalidRangeError as e:
             return forbidden_error(e)
         except Exception as e:
@@ -199,11 +198,7 @@ class Tasks(Resource):
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
-        session = get_object(SESSION, task.session_uuid)
-        calling_user = utilities.current_user()
-        if calling_user.uuid in [u.uuid for u in session.collaborators] or calling_user.uuid == session.coordinator_uuid:
-            db.session.add(task)
-            db.session.commit()
-            return {'uuid': str(task.uuid), 'time_created': str(task.time_created), 'message': 'Task {} created'.format(task.uuid)}, 201
-        else:
-            return forbidden_error("You do not have permission to post new tasks on this session.", str(session.uuid))
+        task.author_uuid = utilities.current_user().uuid
+        db.session.add(task)
+        db.session.commit()
+        return {'uuid': str(task.uuid), 'time_created': str(task.time_created), 'message': 'Task {} created'.format(task.uuid)}, 201

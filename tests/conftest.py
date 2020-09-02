@@ -135,7 +135,7 @@ def login_header_coordinator():
     assert res.status == "200 OK"
     token = json.loads(res.data)
     assert "access_token" in token
-    header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
+    header = {"Tab-Identification": "asdf", "Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
     yield header
 
 
