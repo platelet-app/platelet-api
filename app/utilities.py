@@ -1,3 +1,5 @@
+from sqlalchemy import desc, asc
+
 from app import app, db, models
 from app.api.user.user_utilities.userfunctions import get_user_object, get_all_users
 from app.api.session.session_utilities.sessionfunctions import get_session_object, get_all_sessions
@@ -112,6 +114,23 @@ def get_all_objects(type, include_delete_flagged=False):
             return list(filter(lambda i: not i.flagged_for_deletion, items))
     else:
         raise ObjectNotFoundError("There is no object of this type")
+
+
+def get_page(sqlalchemy_query, page_number, order="descending"):
+    try:
+        page = int(page_number)
+    except TypeError:
+        page = 1
+
+    return sqlalchemy_query.paginate(page).items
+    if order == "descending":
+        return sqlalchemy_query.order_by(
+            desc(sqlalchemy_query.time_created)
+        ).limit(30).offset(page_number)
+    else:
+        return sqlalchemy_query.order_by(
+            asc(sqlalchemy_query.time_created)
+        ).limit(30).offset(page_number)
 
 
 def get_range(items, _range="0-100", order="descending"):

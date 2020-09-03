@@ -7,7 +7,7 @@ from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
 from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast
-from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object
+from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
     already_flagged_for_deletion_error
@@ -166,30 +166,12 @@ class TasksAssignees(Resource):
         emit_socket_broadcast(request_json, task_id, "remove_assigned_user")
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
-
 @ns.route('s',
-          's/<user_uuid>',
-          endpoint="tasks_list")
+          endpoint="tasks_list_all")
 class Tasks(Resource):
     @flask_praetorian.auth_required
-    def get(self, user_uuid, _range=None, order="ascending"):
-        if not user_uuid:
-            return not_found(models.Objects.USER)
-        try:
-            requested_user = get_object(models.Objects.USER, user_uuid)
-            if not requested_user:
-                return not_found(models.Objects.UNKNOWN, user_uuid)
-            if requested_user.flagged_for_deletion:
-                return not_found(requested_user.object_type, user_uuid)
-        except ObjectNotFoundError:
-            return not_found(models.Objects.UNKNOWN, user_uuid)
-        try:
-            items = get_range(requested_user.tasks.all(), _range, order)
-        except InvalidRangeError as e:
-            return forbidden_error(e)
-        except Exception as e:
-            return internal_error(e)
-
+    def get(self, order="descending"):
+        items = get_page(models.Task.query, 1, order)
         return tasks_schema.dump(items)
 
     @flask_praetorian.roles_accepted('coordinator', 'admin')
@@ -202,3 +184,30 @@ class Tasks(Resource):
         db.session.add(task)
         db.session.commit()
         return {'uuid': str(task.uuid), 'time_created': str(task.time_created), 'message': 'Task {} created'.format(task.uuid)}, 201
+
+
+@ns.route('s/<user_uuid>',
+          endpoint="tasks_list")
+class Tasks(Resource):
+    @flask_praetorian.auth_required
+    def get(self, user_uuid, order="descending"):
+        if not user_uuid:
+            return not_found(models.Objects.USER)
+        try:
+            requested_user = get_object(models.Objects.USER, user_uuid)
+            if not requested_user:
+                return not_found(models.Objects.USER, user_uuid)
+            if requested_user.flagged_for_deletion:
+                return not_found(requested_user.object_type, user_uuid)
+        except ObjectNotFoundError:
+            return not_found(models.Objects.USER, user_uuid)
+        try:
+            parser = reqparse.RequestParser()
+            parser.add_argument('page', type=int, location='args')
+            args = parser.parse_args()
+            page = args['page']
+            items = get_page(requested_user.tasks_as_rider, page if page else 1, order)
+        except Exception as e:
+            return internal_error(e)
+
+        return tasks_schema.dump(items)

@@ -214,9 +214,12 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     dropoff_address = ma.Nested(AddressSchema)
     rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'),
                       dump_only=True)
-    assigned_users = ma.Nested(UserSchema,
+    assigned_riders = ma.Nested(UserSchema,
                                exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
                                many=True, dump_only=True)
+    assigned_coordinators = ma.Nested(UserSchema,
+                                exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
+                                many=True, dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     time_picked_up = ma.DateTime(allow_none=True)
@@ -231,12 +234,17 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
-        'collection': ma.URLFor('tasks_list')
+        'collection': ma.URLFor('tasks_list_all')
     })
 
     @pre_dump
-    def concatenate_assigned_users_display_string(self, data, many):
-        data.assigned_users_display_string = reduce(display_names_reducer, enumerate(data.assigned_users), "")
+    def concatenate_assigned_riders_display_string(self, data, many):
+        data.assigned_users_display_string = reduce(display_names_reducer, enumerate(data.assigned_riders), "")
+        return data
+
+    @pre_dump
+    def concatenate_assigned_riders_display_string(self, data, many):
+        data.assigned_users_display_string = reduce(display_names_reducer, enumerate(data.assigned_coordinators), "")
         return data
 
     @validates("contact_number")
