@@ -166,15 +166,16 @@ class TasksAssignees(Resource):
         emit_socket_broadcast(request_json, task_id, "remove_assigned_user")
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
+
 @ns.route('s',
           endpoint="tasks_list_all")
 class Tasks(Resource):
-    @flask_praetorian.auth_required
+    @flask_praetorian.roles_accepted('coordinator', 'admin')
     def get(self, order="descending"):
         items = get_page(models.Task.query, 1, order)
         return tasks_schema.dump(items)
 
-    @flask_praetorian.roles_accepted('coordinator', 'admin')
+    @flask_praetorian.auth_required
     def post(self):
         try:
             task = load_request_into_object(TASK)
@@ -202,11 +203,23 @@ class Tasks(Resource):
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
         try:
+            # TODO: add page size querystring
             parser = reqparse.RequestParser()
-            parser.add_argument('page', type=int, location='args')
+            parser.add_argument("page", type=int, location="args")
+            parser.add_argument("role", type=str, location="args")
             args = parser.parse_args()
             page = args['page']
-            items = get_page(requested_user.tasks_as_rider, page if page else 1, order)
+            role = args['role']
+            if role == "rider":
+                items = get_page(requested_user.tasks_as_rider, page if page else 1, order)
+            elif role == "coordinator":
+                items = get_page(requested_user.tasks_as_coordinator, page if page else 1, order)
+            else:
+                # TODO: this messes up pagination figure out how to do it with sqlalchemy
+                items = get_page(requested_user.tasks_as_rider, page if page else 1, order)
+                items.extend(get_page(requested_user.tasks_as_coordinator, page if page else 1, order))
+                items.sort(key=lambda t: t.time_created)
+                items = items[0:20]
         except Exception as e:
             return internal_error(e)
 
