@@ -5,6 +5,33 @@ from app import models
 TASK = models.Objects.TASK
 
 
+def test_get_all_tasks(client, login_header_coordinator, user_rider_uuid, task_objs_assigned):
+    r = client.get("{}s".format(task_url, 1),
+                   headers=login_header_coordinator)
+    assert r.status_code == 200
+    result = json.loads(r.data)
+    assert len(result) == 20
+    r = client.get("{}s".format(task_url),
+                   headers=login_header_coordinator)
+    assert r.status_code == 200
+    result = json.loads(r.data)
+    assert len(result) == 20
+
+
+def test_get_riders_tasks(client, login_header_coordinator, user_rider_uuid, task_objs_assigned):
+    r = client.get("{}s/{}?page={}".format(task_url, user_rider_uuid, 1),
+                    headers=login_header_coordinator,)
+    assert r.status_code == 200
+    result = json.loads(r.data)
+    assert len(result) == 20
+    # test with no page given
+    r = client.get("{}s/{}".format(task_url, user_rider_uuid),
+                   headers=login_header_coordinator)
+    assert r.status_code == 200
+    result = json.loads(r.data)
+    assert len(result) == 20
+
+
 def test_add_new_task(client, login_header_coordinator):
     me = whoami(client, login_header_coordinator)
     r = client.post("{}s".format(session_url),

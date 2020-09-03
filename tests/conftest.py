@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from app import app, db, models, guard, schemas
 from tests.testutils import get_test_json, generate_name
@@ -60,6 +62,14 @@ for locale in json_data['locales']:
         db.session.flush()
     locale_model = models.Locale(**locale)
     db.session.add(locale_model)
+
+user_schema = schemas.UserSchema()
+users_models = {}
+for key in json_data['users']:
+    user = user_schema.load(dict(**json_data['users'][key], password="somepass", username=generate_name(), display_name=generate_name()))
+    users_models[key] = user
+    db.session.add(user)
+
 
 db.session.flush()
 
@@ -166,36 +176,19 @@ def user_coordinator():
 
 @pytest.fixture(scope="session")
 def user_rider_uuid():
-    schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name()))
-    db.session.add(user)
-    db.session.commit()
-    db.session.flush()
+    user = models.User.query.filter_by(roles="rider").first()
     yield str(user.uuid)
 
 
 @pytest.fixture(scope="session")
 def user_coordinator_uuid():
-    schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name()))
-    db.session.add(user)
-    db.session.commit()
-    db.session.flush()
+    user = models.User.query.filter_by(roles="coordinator").first()
     yield str(user.uuid)
-    db.session.flush()
 
 
 @pytest.fixture(scope="session")
 def all_user_uuids():
-    schema = schemas.UserSchema()
-    users = []
-    for key in json_data['users']:
-        user = schema.load(dict(**json_data['users'][key], password="somepass", username=generate_name(), display_name=generate_name()))
-        db.session.add(user)
-        db.session.commit()
-        db.session.flush()
-        users.append(user)
-
+    users = models.User.query.all()
     yield [str(i.uuid) for i in users]
 
 
@@ -216,6 +209,7 @@ def coordinator_session_uuid():
 @pytest.fixture(scope="session")
 def priorities_ids():
     yield [p.id for p in models.Priority.query.all()]
+
 
 @pytest.fixture(scope="function")
 def vehicle_obj():
@@ -256,6 +250,24 @@ def location_obj():
     db.session.commit()
     db.session.flush()
     yield location
+
+
+@pytest.fixture(scope="session")
+def task_objs_assigned():
+    result = []
+    for i in range(30):
+        schema = schemas.TaskSchema()
+        ts = schema.load(dict(**json_data['task_data']))
+        try:
+            ts.assigned_riders.append(users_models['rider'])
+        except KeyError:
+            raise KeyError("No rider is saved in the database for some reason.")
+        assert ts
+        db.session.add(ts)
+        result.append(ts)
+
+    db.session.commit()
+    yield result
 
 
 @pytest.fixture(scope="session")

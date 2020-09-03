@@ -14,6 +14,7 @@
   ],
   "users": {
     "admin": {
+      "uuid": "13e9b391-42dd-4c19-83f4-abf72c73c924",
       "name": "Someone Person",
       "address": {
         "line1": "87 Iffley Road",
@@ -27,6 +28,7 @@
       "dob": "01/01/1988"
     },
     "coordinator": {
+      "uuid": "6f537d0a-bdcf-4bc7-8cc4-78f0a8389e59",
       "name": "Josie Whittle",
       "address": {
         "line1": "87 Iffley Road",
@@ -40,6 +42,7 @@
       "dob": "14/10/1980"
     },
       "rider": {
+        "uuid": "c60b7ae4-5ebc-4454-bb78-b876f79c50d7",
         "name": "Blessing McKnight",
         "address": {
           "line1": "79 Somewhere Road",
