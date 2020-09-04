@@ -1,4 +1,7 @@
 import json
+
+import dateutil
+
 from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, \
     attr_check, generate_name, get_object
 import tests.testutils
@@ -65,7 +68,7 @@ def test_get_user(client, user_rider_uuid, login_header_admin):
     users_roles = user_model.roles.split(",")
     for role in data['roles']:
         assert role in users_roles
-    #assert data['tasks_etag']
+    # assert data['tasks_etag']
 
 
 def test_get_users(client, all_user_uuids, login_header_admin):
@@ -98,6 +101,22 @@ def test_get_users(client, all_user_uuids, login_header_admin):
                         assert role in users_roles
 
     assert (len(data) == len(list(filter(lambda u: not u.flagged_for_deletion, users))))
+
+
+def test_get_users_ordered(client, all_user_uuids, login_header_admin):
+    r_latest = client.get('{}s?order={}'.format(user_url, "latest"), headers=login_header_admin)
+    print_response(r_latest)
+    assert (r_latest.status_code == 200)
+    data = json.loads(r_latest.data)
+    users = models.User.query.all()
+    users.sort(key=lambda u: u.time_created)
+    data.sort(key=lambda u: dateutil.parser.parse(u['time_created']))
+    for i, u in enumerate(users):
+        assert str(u.uuid) == data[i]['uuid']
+    users.reverse()
+    data.reverse()
+    for i, u in enumerate(users):
+        assert str(u.uuid) == data[i]['uuid']
 
 
 def test_add_invalid_user_existing_username(client, login_header_admin, user_coordinator):
