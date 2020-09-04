@@ -103,6 +103,24 @@ def test_get_users(client, all_user_uuids, login_header_admin):
     assert (len(data) == len(list(filter(lambda u: not u.flagged_for_deletion, users))))
 
 
+def test_get_users_role(client, all_user_uuids, login_header_admin):
+    r_coord = client.get('{}s?role={}'.format(user_url, "coordinator"), headers=login_header_admin)
+    assert (r_coord.status_code == 200)
+    data = json.loads(r_coord.data)
+    for u in data:
+        assert "coordinator" in u['roles']
+    r_rider = client.get('{}s?role={}'.format(user_url, "rider"), headers=login_header_admin)
+    assert (r_rider.status_code == 200)
+    data = json.loads(r_rider.data)
+    for u in data:
+        assert "rider" in u['roles']
+    r_admin = client.get('{}s?role={}'.format(user_url, "admin"), headers=login_header_admin)
+    assert (r_admin.status_code == 200)
+    data = json.loads(r_admin.data)
+    for u in data:
+        assert "admin" in u['roles']
+
+
 def test_get_users_ordered(client, all_user_uuids, login_header_admin):
     r_latest = client.get('{}s?order={}'.format(user_url, "latest"), headers=login_header_admin)
     print_response(r_latest)

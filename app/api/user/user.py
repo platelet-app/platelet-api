@@ -138,16 +138,17 @@ class Users(Resource):
             parser = reqparse.RequestParser()
             parser.add_argument("page", type=int, location="args")
             parser.add_argument("order", type=str, location="args")
-            #parser.add_argument("role", type=str, location="args")
+            parser.add_argument("role", type=str, location="args")
             args = parser.parse_args()
             page = args['page'] if args['page'] else 1
             order = args['order'] if args['order'] else "newest"
-            #role = args['role']
+            role = args['role']
             items = get_page(get_query(USER, filter_deleted=True), page, model=models.User, order=order)
+            if role:
+                items = filter(lambda u: role in u.roles.split(","), items)
         except InvalidRangeError as e:
             return forbidden_error(e)
         except Exception as e:
-            raise
             return internal_error(e)
 
         return users_schema.dump(items, many=True)
