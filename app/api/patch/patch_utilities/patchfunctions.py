@@ -1,8 +1,8 @@
 from app import models
 
 
-def get_all_patches():
-    patches = models.Patch.query.all()
-    if not patches:
-        return {}
-    return patches
+def get_all_patches(filter_deleted=False):
+    if filter_deleted:
+        return models.Patch.query.filter_by(flagged_for_deletion=False)
+    else:
+        return models.Patch.query.all()

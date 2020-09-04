@@ -171,8 +171,15 @@ class TasksAssignees(Resource):
           endpoint="tasks_list_all")
 class Tasks(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
-    def get(self, order="descending"):
-        items = get_page(models.Task.query, 1, order)
+    def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("page", type=int, location="args")
+        parser.add_argument("role", type=str, location="args")
+        parser.add_argument("order", type=str, location="args")
+        args = parser.parse_args()
+        page = args['page'] if args['page'] else 1
+        order = args['order'] if args['order'] else "newest"
+        items = get_page(models.Task.query, page, order=order, model=models.Task)
         return tasks_schema.dump(items)
 
     @flask_praetorian.auth_required
@@ -191,7 +198,7 @@ class Tasks(Resource):
           endpoint="tasks_list")
 class Tasks(Resource):
     @flask_praetorian.auth_required
-    def get(self, user_uuid, order="descending"):
+    def get(self, user_uuid):
         if not user_uuid:
             return not_found(models.Objects.USER)
         try:
@@ -207,17 +214,19 @@ class Tasks(Resource):
             parser = reqparse.RequestParser()
             parser.add_argument("page", type=int, location="args")
             parser.add_argument("role", type=str, location="args")
+            parser.add_argument("order", type=str, location="args")
             args = parser.parse_args()
-            page = args['page']
+            page = args['page'] if args['page'] else 1
             role = args['role']
+            order = args['order'] if args['order'] else "descending"
             if role == "rider":
-                items = get_page(requested_user.tasks_as_rider, page if page else 1, order)
+                items = get_page(requested_user.tasks_as_rider, page, order=order, model=models.Task)
             elif role == "coordinator":
-                items = get_page(requested_user.tasks_as_coordinator, page if page else 1, order)
+                items = get_page(requested_user.tasks_as_coordinator, page, order=order, model=models.Task)
             else:
                 # TODO: this messes up pagination figure out how to do it with sqlalchemy
-                items = get_page(requested_user.tasks_as_rider, page if page else 1, order)
-                items.extend(get_page(requested_user.tasks_as_coordinator, page if page else 1, order))
+                items = get_page(requested_user.tasks_as_rider, page, order=order, model=models.Task)
+                items.extend(get_page(requested_user.tasks_as_coordinator, page, order=order, model=models.Task))
                 items.sort(key=lambda t: t.time_created)
                 items = items[0:20]
         except Exception as e:

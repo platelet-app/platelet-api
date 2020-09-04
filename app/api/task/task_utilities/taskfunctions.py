@@ -11,11 +11,11 @@ def get_task_object(_id):
     return task
 
 
-def get_all_tasks():
-    tasks = models.Task.query.all()
-    if not tasks:
-        return {}
-    return tasks
+def get_all_tasks(filter_deleted=False):
+    if filter_deleted:
+        return models.Task.query.filter_by(flagged_for_deletion=False)
+    else:
+        return models.Task.query.all()
 
 
 def calculate_tasks_etag(data):

@@ -3,15 +3,15 @@ from marshmallow import ValidationError
 from app import schemas, db, models
 from app import user_ns as ns
 from app import root_ns
-from flask_restx import Resource
+from flask_restx import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id, user_id_match_or_admin
 from app.api.functions.errors import not_found, schema_validation_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
-from app.utilities import add_item_to_delete_queue, get_object, get_all_objects, get_range, \
-    remove_item_from_delete_queue
+from app.utilities import add_item_to_delete_queue, get_object, \
+    remove_item_from_delete_queue, get_page, get_query
 from app import guard
 from flask_praetorian import utilities as prae_util
 
@@ -130,17 +130,24 @@ class User(Resource):
 
 @ns.route(
     's',
-    's/<_range>',
-    's/<_range>/<order>',
     endpoint='users')
 class Users(Resource):
     @flask_praetorian.auth_required
-    def get(self, _range=None, order="ascending"):
+    def get(self):
         try:
-            items = get_range(get_all_objects(USER), _range, order)
+            parser = reqparse.RequestParser()
+            parser.add_argument("page", type=int, location="args")
+            parser.add_argument("order", type=str, location="args")
+            #parser.add_argument("role", type=str, location="args")
+            args = parser.parse_args()
+            page = args['page'] if args['page'] else 1
+            order = args['order'] if args['order'] else "newest"
+            #role = args['role']
+            items = get_page(get_query(USER, filter_deleted=True), page, model=models.User, order=order)
         except InvalidRangeError as e:
             return forbidden_error(e)
         except Exception as e:
+            raise
             return internal_error(e)
 
         return users_schema.dump(items, many=True)

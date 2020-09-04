@@ -1,3 +1,5 @@
+import logging
+
 from sqlalchemy import desc, asc
 
 from app import app, db, models
@@ -92,45 +94,67 @@ def get_object(type, _id):
         raise
 
 
-def get_all_objects(type, include_delete_flagged=False):
-
+def get_query(model_type, filter_deleted=True):
     switch = {
-        models.Objects.SESSION: get_all_sessions(),
-        models.Objects.USER: get_all_users(),
-        models.Objects.TASK: get_all_tasks(),
-        models.Objects.VEHICLE: get_all_vehicles(),
-        models.Objects.LOCATION: get_all_locations(),
-        models.Objects.PRIORITY: get_all_priorities(),
-        models.Objects.PATCH: get_all_patches(),
-        models.Objects.DELIVERABLE_TYPE: get_all_deliverable_types()
+        models.Objects.USER: models.User.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.User.query,
+        models.Objects.TASK: models.Task.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Task.query,
+        models.Objects.VEHICLE: models.Vehicle.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Vehicle.query,
+        models.Objects.LOCATION: models.Location.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Location.query,
+        models.Objects.PRIORITY: models.Priority.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Priority.query,
+        models.Objects.PATCH: models.Patch.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Patch.query,
+        models.Objects.DELIVERABLE_TYPE: models.Deliverable.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Deliverable.query,
     }
 
-    items = switch.get(type, lambda: None)
+    items = switch.get(model_type, lambda: None)
 
-    if items is not None:
-        if include_delete_flagged:
-            return items
-        else:
-            return list(filter(lambda i: not i.flagged_for_deletion, items))
-    else:
+    if items is None:
         raise ObjectNotFoundError("There is no object of this type")
+    else:
+        return items
 
 
-def get_page(sqlalchemy_query, page_number, order="descending"):
+def get_all_objects(model_type, filter_deleted=False):
+
+    switch = {
+        models.Objects.USER: get_all_users(filter_deleted=filter_deleted),
+        models.Objects.TASK: get_all_tasks(filter_deleted=filter_deleted),
+        models.Objects.VEHICLE: get_all_vehicles(filter_deleted=filter_deleted),
+        models.Objects.LOCATION: get_all_locations(filter_deleted=filter_deleted),
+        models.Objects.PRIORITY: get_all_priorities(filter_deleted=filter_deleted),
+        models.Objects.PATCH: get_all_patches(filter_deleted=filter_deleted),
+        models.Objects.DELIVERABLE_TYPE: get_all_deliverable_types(filter_deleted=filter_deleted)
+    }
+
+    items = switch.get(model_type, lambda: None)
+
+    if items is None:
+        raise ObjectNotFoundError("There is no object of this type")
+    else:
+        return items
+
+
+def get_page(sqlalchemy_query, page_number, model=None, order="newest"):
+    page = 1
     try:
         page = int(page_number)
     except TypeError:
-        page = 1
+        pass
+
+    #return sqlalchemy_query.paginate(page).items
+    if model:
+        try:
+            if order == "newest":
+                return sqlalchemy_query.order_by(
+                    desc(model.time_created)
+                ).paginate(page).items
+            else:
+                return sqlalchemy_query.order_by(
+                    asc(model.time_created)
+                ).paginate(page).items
+        except AttributeError:
+            logging.warning("Could not sort model by creation_time".format(model))
 
     return sqlalchemy_query.paginate(page).items
-    if order == "descending":
-        return sqlalchemy_query.order_by(
-            desc(sqlalchemy_query.time_created)
-        ).limit(30).offset(page_number)
-    else:
-        return sqlalchemy_query.order_by(
-            asc(sqlalchemy_query.time_created)
-        ).limit(30).offset(page_number)
 
 
 def get_range(items, _range="0-100", order="descending"):
