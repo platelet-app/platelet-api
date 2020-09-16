@@ -11,6 +11,7 @@ from config import Config
 import flask_cors
 from flask_buzz import FlaskBuzz
 from elasticsearch import Elasticsearch
+from engineio.payload import Payload
 
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
@@ -54,6 +55,7 @@ any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Loo
 search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch functions')
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
+Payload.max_decode_packets = 50
 socketio = SocketIO(app, cors_allowed_origins='*')
 
 

@@ -30,6 +30,10 @@ def test_get_riders_tasks(client, login_header_coordinator, user_rider_uuid, tas
     assert r.status_code == 200
     result = json.loads(r.data)
     assert len(result) == 20
+    # test page 2
+    r = client.get("{}s/{}?page={}".format(task_url, user_rider_uuid, 2),
+                   headers=login_header_coordinator,)
+    assert r.status_code == 200
 
 
 def test_add_new_task(client, login_header_coordinator):

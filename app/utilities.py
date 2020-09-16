@@ -140,21 +140,29 @@ def get_page(sqlalchemy_query, page_number, model=None, order="newest"):
     except TypeError:
         pass
 
-    #return sqlalchemy_query.paginate(page).items
-    if model:
-        try:
-            if order == "newest":
-                return sqlalchemy_query.order_by(
-                    desc(model.time_created)
-                ).paginate(page).items
-            else:
-                return sqlalchemy_query.order_by(
-                    asc(model.time_created)
-                ).paginate(page).items
-        except AttributeError:
-            logging.warning("Could not sort model by creation_time".format(model))
+    try:
+        if model:
+            try:
+                if order == "newest":
+                    return sqlalchemy_query.order_by(
+                        desc(model.time_created)
+                    ).paginate(page).items
+                else:
+                    return sqlalchemy_query.order_by(
+                        asc(model.time_created)
+                    ).paginate(page).items
+            except AttributeError:
+                logging.warning("Could not sort model by creation_time".format(model))
 
-    return sqlalchemy_query.paginate(page).items
+        return sqlalchemy_query.paginate(page).items
+    except Exception as e:
+        # SQLAlchemy returns its own kind of http exception so we catch it
+        if hasattr(e, "code"):
+            if e.code == 404:
+                raise ObjectNotFoundError
+        else:
+            raise
+
 
 
 def get_range(items, _range="0-100", order="descending"):

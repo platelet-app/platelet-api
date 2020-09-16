@@ -103,7 +103,7 @@ class TasksAssignees(Resource):
             task = get_object(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
-        return assigned_users_schema.dump(task.assigned_users)
+        return assigned_users_schema.dump(task.assigned_riders)
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
     #@check_parent_or_collaborator_or_admin_match
@@ -129,7 +129,7 @@ class TasksAssignees(Resource):
         if "rider" not in user.roles:
             return forbidden_error("Can not assign a non-rider as an assignee.", user_uuid)
 
-        task.assigned_users.append(user)
+        task.assigned_riders.append(user)
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
@@ -157,9 +157,9 @@ class TasksAssignees(Resource):
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
 
-        filtered_assignees = list(filter(lambda u: u.uuid != user.uuid, task.assigned_users))
+        filtered_assignees = list(filter(lambda u: u.uuid != user.uuid, task.assigned_riders))
 
-        task.assigned_users = filtered_assignees
+        task.assigned_riders = filtered_assignees
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
@@ -224,11 +224,10 @@ class Tasks(Resource):
             elif role == "coordinator":
                 items = get_page(requested_user.tasks_as_coordinator, page, order=order, model=models.Task)
             else:
-                # TODO: this messes up pagination figure out how to do it with sqlalchemy
-                items = get_page(requested_user.tasks_as_rider, page, order=order, model=models.Task)
-                items.extend(get_page(requested_user.tasks_as_coordinator, page, order=order, model=models.Task))
-                items.sort(key=lambda t: t.time_created)
-                items = items[0:20]
+                combined_query = requested_user.tasks_as_rider.union_all(requested_user.tasks_as_coordinator)
+                items = get_page(combined_query, page, order=order, model=models.Task)
+        except ObjectNotFoundError:
+            return not_found(TASK)
         except Exception as e:
             return internal_error(e)
 
