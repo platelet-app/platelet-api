@@ -15,7 +15,6 @@ users_schema = schemas.UserSchema(many=True, exclude=("address",
                                                       "roles",
                                                       "patch",))
 
-sessions_schema = schemas.SessionSchema(many=True)
 
 tasks_schema = schemas.TaskSchema(many=True)
 
@@ -46,16 +45,6 @@ class Query(Resource):
         result = users_schema.dump(query.all()).data
         return jsonify({"total": total, "results": result})
 
-@ns.route('/sessions',
-          endpoint='search_sessions_query')
-class Query(Resource):
-    @flask_praetorian.auth_required
-    def get(self):
-        request_json = request.get_json()
-        query_data = search_schema.load(request_json).data
-        query, total = models.Session.search(query_data['query'], int(query_data['page']) if 'page' in query_data else 1, 100)
-        result = sessions_schema.dump(query.all()).data
-        return jsonify({"total": total, "results": result})
 
 @ns.route('/tasks',
           endpoint='search_tasks_query')

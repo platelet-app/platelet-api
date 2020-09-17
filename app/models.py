@@ -13,7 +13,6 @@ import uuid
 
 class Objects(IntEnum):
     USER = auto()
-    SESSION = auto()
     TASK = auto()
     VEHICLE = auto()
     COMMENT = auto()
@@ -340,39 +339,6 @@ class User(SearchableMixin, db.Model, CommonMixin):
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
-
-
-session_collaborators = db.Table(
-    'session_collaborators',
-    db.Column('session_uuid', UUID(as_uuid=True), db.ForeignKey('session.uuid'), primary_key=True),
-    db.Column('user_uuid', UUID(as_uuid=True), db.ForeignKey('user.uuid'), primary_key=True)
-)
-
-
-class Session(SearchableMixin, db.Model, CommonMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
-    coordinator_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    collaborators = db.relationship('User', secondary=session_collaborators, lazy='subquery',
-                                     backref=db.backref('acollaborator_sessions', lazy=True))
-    #tasks = db.relationship('Task', backref='parent_session', lazy='dynamic')
-
-    comments = db.relationship(
-        'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Session.uuid)".format(Objects.SESSION)
-    )
-    __searchable__ = ['time_created']
-
-    @property
-    def task_count(self):
-        return len([task for task in self.tasks.all() if not task.flagged_for_deletion])
-
-    @property
-    def object_type(self):
-        return Objects.SESSION
-
-    def __repr__(self):
-        return '<Session {} {}>'.format(self.uuid, self.time_created)
 
 
 class DeleteFlags(SearchableMixin, db.Model):

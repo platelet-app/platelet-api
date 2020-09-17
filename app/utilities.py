@@ -4,7 +4,6 @@ from sqlalchemy import desc, asc
 
 from app import app, db, models
 from app.api.user.user_utilities.userfunctions import get_user_object, get_all_users
-from app.api.session.session_utilities.sessionfunctions import get_session_object, get_all_sessions
 from app.api.task.task_utilities.taskfunctions import get_task_object, get_all_tasks
 from app.api.vehicle.vehicle_utilities.vehiclefunctions import get_vehicle_object, get_all_vehicles
 from app.api.location.location_utilities.locationfunctions import get_location_object, get_all_locations
@@ -73,9 +72,7 @@ def get_object(type, _id):
         raise ObjectNotFoundError
 
     try:
-        if type == models.Objects.SESSION:
-            return get_session_object(_id)
-        elif type == models.Objects.USER:
+        if type == models.Objects.USER:
             return get_user_object(_id)
         elif type == models.Objects.TASK:
             return get_task_object(_id)

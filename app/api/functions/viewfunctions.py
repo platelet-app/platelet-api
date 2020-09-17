@@ -9,7 +9,6 @@ from app import logger
 user_schema = schemas.UserSchema()
 vehicle_schema = schemas.VehicleSchema()
 task_schema = schemas.TaskSchema()
-session_schema = schemas.SessionSchema()
 address_schema = schemas.AddressSchema()
 user_username_schema = schemas.UserUsernameSchema()
 user_address_schema = schemas.UserAddressSchema()
@@ -26,8 +25,6 @@ def load_request_into_object(model_enum, instance=None, partial=True):
 
     if model_enum is models.Objects.USER:
         return user_schema.load(request_json, instance=instance if instance else None, partial=partial)
-    if model_enum is models.Objects.SESSION:
-        return session_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.TASK:
         return task_schema.load(request_json, instance=instance if instance else None, partial=partial)
     if model_enum is models.Objects.VEHICLE:
@@ -62,8 +59,6 @@ def load_request_into_dict(model_enum):
 
     if model_enum is models.Objects.USER:
         return user_schema.load(request_json)
-    if model_enum is models.Objects.SESSION:
-        return session_schema.load(request_json)
     if model_enum is models.Objects.TASK:
         return task_schema.load(request_json)
     if model_enum is models.Objects.VEHICLE:

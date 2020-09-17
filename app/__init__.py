@@ -69,7 +69,6 @@ from app.api.task import task
 from app.api.user import user
 from app.api.login import login
 from app.api.vehicle import vehicle
-from app.api.session import session
 from app.api.comment import comment
 from app.api.deliverable import deliverable
 from app.api.location import location

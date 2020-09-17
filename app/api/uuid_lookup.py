@@ -8,7 +8,6 @@ from app.api.functions.errors import not_found
 
 user_dump_schema = schemas.UserSchema(exclude=("password",))
 vehicle_schema = schemas.VehicleSchema()
-session_schema = schemas.SessionSchema()
 task_schema = schemas.TaskSchema()
 comment_schema = schemas.CommentSchema()
 deliverable_schema = schemas.DeliverableSchema()
@@ -33,14 +32,10 @@ class AnyObject(Resource):
         else:
             if obj.object_type == models.Objects.USER:
                 return jsonify(user_dump_schema.dump(obj).data)
-            if obj.object_type == models.Objects.SESSION:
-                return jsonify(session_schema.dump(obj).data)
             if obj.object_type == models.Objects.VEHICLE:
                 return jsonify(vehicle_schema.dump(obj).data)
             if obj.object_type == models.Objects.TASK:
                 return jsonify(task_schema.dump(obj).data)
-            if obj.object_type == models.Objects.NOTE:
-                return jsonify(note_schema.dump(obj).data)
             if obj.object_type == models.Objects.LOCATION:
                 return jsonify(location_schema.dump(obj).data)
             if obj.object_type == models.Objects.DELIVERABLE:

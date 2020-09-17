@@ -309,51 +309,19 @@ class UserAddressSchema(ma.SQLAlchemySchema):
     address = ma.Nested(AddressSchema, exclude=("ward",))
 
 
-class SessionSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
-    class Meta:
-        unknown = EXCLUDE
-        model = models.Session
-        fields = ('uuid', 'coordinator_uuid',
-                  'time_created', 'tasks', 'comments',
-                  'links', 'task_count', 'last_active',
-                  'time_created', 'time_modified', 'tasks_etag',
-                  'collaborators', 'is_owner')
 
-    tasks = ma.Nested(TaskSchema, dump_only=True, many=True,
-                      exclude=('comments', 'deliverables'))
-    comments = ma.Nested(CommentSchema, dump_only=True, many=True)
-    collaborators = ma.Nested(UserSchema, dump_only=True, many=True, exclude=(
-        "address",
-        "time_created",
-        "dob",
-        "username",
-        "patch",
-        "contact_number",
-        "email",
-        "assigned_vehicles",
-        "comments",
-        "patch_id",
-        "time_modified",
-        "roles",
-        "name"))
-
-    links = ma.Hyperlinks({
-        'self': ma.URLFor('session_detail', session_id='<uuid>'),
-        'collection': ma.URLFor('sessions_list')
-    })
-
-    @pre_dump
-    def get_last_active(self, data, many):
-        session = get_object(models.Objects.SESSION, data.uuid)
-        tasks_plus_deleted = session.tasks.all()
-        last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)
-        data.last_active = last_changed_task[-1].time_modified if last_changed_task else session.time_modified
-        return data
-
-    @pre_dump
-    def get_tasks_etag(self, data, many):
-        data.tasks_etag = calculate_tasks_etag(data.tasks.all())
-        return data
+#    @pre_dump
+#    def get_last_active(self, data, many):
+#        session = get_object(models.Objects.SESSION, data.uuid)
+#        tasks_plus_deleted = session.tasks.all()
+#        last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)
+#        data.last_active = last_changed_task[-1].time_modified if last_changed_task else session.time_modified
+#        return data
+#
+#    @pre_dump
+#    def get_tasks_etag(self, data, many):
+#        data.tasks_etag = calculate_tasks_etag(data.tasks.all())
+#        return data
 
 
 class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):

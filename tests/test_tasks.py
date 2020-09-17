@@ -37,15 +37,8 @@ def test_get_riders_tasks(client, login_header_coordinator, user_rider_uuid, tas
 
 
 def test_add_new_task(client, login_header_coordinator):
-    me = whoami(client, login_header_coordinator)
-    r = client.post("{}s".format(session_url),
-                    data=json.dumps({"coordinator_uuid": me}),
-                    headers=login_header_coordinator)
-    print_response(r)
-    assert r.status_code == 201
-    session_uuid = json.loads(r.data)['uuid']
     r2 = client.post("{}s".format(task_url),
-                     data=json.dumps({"session_uuid": session_uuid}),
+                     data=json.dumps({}),
                      headers=login_header_coordinator)
     print_response(r2)
     assert r2.status_code == 201
@@ -53,15 +46,8 @@ def test_add_new_task(client, login_header_coordinator):
 
 
 def test_update_task(client, login_header_coordinator, task_data):
-    me = whoami(client, login_header_coordinator)
-    r = client.post("{}s".format(session_url),
-                    data=json.dumps({"coordinator_uuid": me}),
-                    headers=login_header_coordinator)
-    print_response(r)
-    assert r.status_code == 201
-    session_uuid = json.loads(r.data)['uuid']
     r2 = client.post("{}s".format(task_url),
-                     data=json.dumps({"session_uuid": session_uuid}),
+                     data=json.dumps({}),
                      headers=login_header_coordinator)
     print_response(r2)
     assert r2.status_code == 201

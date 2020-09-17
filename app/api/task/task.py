@@ -23,7 +23,6 @@ tasks_schema = schemas.TaskSchema(many=True)
 assigned_users_schema = schemas.UserSchema(many=True)
 
 TASK = models.Objects.TASK
-SESSION = models.Objects.SESSION
 DELETE_FLAG = models.Objects.DELETE_FLAG
 
 @ns.route('/<task_id>/restore', endpoint="task_undelete")
