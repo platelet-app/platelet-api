@@ -117,7 +117,8 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         fields = ('uuid', 'username', 'address', 'password', 'name', 'email',
                   'dob', 'patch', 'roles', 'comments', 'display_name',
                   'assigned_vehicles', 'patch_id', 'contact_number',
-                  'time_created', 'time_modified', 'links', 'password_reset_on_login')
+                  'time_created', 'time_modified', 'links', 'password_reset_on_login',
+                  'profile_picture_url')
 
     username = ma.Str(required=True)
     email = ma.Email(allow_none=True)

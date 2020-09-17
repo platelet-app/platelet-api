@@ -305,6 +305,10 @@ class User(SearchableMixin, db.Model, CommonMixin):
     roles = db.Column(db.String())
     is_active = db.Column(db.Boolean, default=True, server_default='true')
 
+    # profile pictures
+    profile_picture_url = db.Column(db.String(128))
+    
+
     #tasks = db.relationship('Task', backref='rider', lazy='dynamic')
     comments = db.relationship(
         'Comment',
