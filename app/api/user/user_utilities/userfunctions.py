@@ -1,9 +1,17 @@
 import functools
+import os
+import random
+import string
+
 from flask_praetorian import utilities
 from app import models
 from app.api.functions.errors import forbidden_error
 from app.exceptions import ObjectNotFoundError
+from ....cloud import AwsStore
 
+def get_random_string(length):
+    letters = string.ascii_letters
+    return ''.join(random.choice(letters) for i in range(length))
 
 def user_id_match_or_admin(func):
     @functools.wraps(func)
@@ -54,3 +62,29 @@ def is_user_present(id):
     if models.User.query.filter_by(uuid=id).first():
         return True
     return False
+
+
+def upload_profile_picture(profile_picture):
+    region = os.environ['CLOUD_REGION']
+    store_name = os.environ['CLOUD_STORE']
+    file_name = get_random_string(30)
+    save_path = os.path.join(os.environ['PROFILE_UPLOAD_FOLDER'], file_name)
+    profile_picture.save(save_path)
+    if os.environ['CLOUD_PLATFORM'] == "aws":
+        access_key = os.environ['AWS_ACCESS_KEY']
+        secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
+        try:
+            endpoint = os.environ['AWS_TEST_URL']
+        except KeyError:
+            endpoint = None
+        store = AwsStore(region=region,
+                         access_key_id=access_key,
+                         secret_access_key=secret_access_key,
+                         bucket_name=store_name,
+                         endpoint=endpoint
+                         )
+        store.upload(save_path, file_name)
+    else:
+        raise EnvironmentError("Cloud type not specified or not supported.")
+
+    return file_name

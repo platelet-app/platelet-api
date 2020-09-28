@@ -33,4 +33,5 @@ def emit_socket_broadcast(data, uuid, type):
                       'tab_id': request.headers['Tab-Identification']
                   },
                   room=str(uuid),
-                  namespace="/api/v0.1/subscribe")
+                  namespace="/api/v0.1/subscribe",
+                  )

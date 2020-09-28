@@ -1,18 +1,21 @@
-from flask import jsonify
+from flask import jsonify, request
 from marshmallow import ValidationError
+from werkzeug.datastructures import FileStorage
+
 from app import schemas, db, models
 from app import user_ns as ns
 from app import root_ns
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id, user_id_match_or_admin
+from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id, user_id_match_or_admin, \
+    upload_profile_picture
 from app.api.functions.errors import not_found, schema_validation_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
 from app.utilities import add_item_to_delete_queue, get_object, \
     remove_item_from_delete_queue, get_page, get_query
-from app import guard
+from app import guard, api
 from flask_praetorian import utilities as prae_util
 
 USER = models.Objects.USER
@@ -45,6 +48,9 @@ user_address_schema = schemas.UserSchema(exclude=("username",
                                                    "links",
                                                    ))
 tasks_schema = schemas.TaskSchema(many=True)
+
+upload_parser = ns.parser()
+upload_parser.add_argument('file', location='files', type=FileStorage, required=True)
 
 
 @root_ns.route(
@@ -164,18 +170,32 @@ class Users(Resource):
 
         db.session.add(user)
         db.session.commit()
-
         return {'uuid': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
 
 
-@ns.route('/<user_id>/tasks')
-class AssignedTasksList(Resource):
+
+@ns.route('/<user_id>/profile_picture')
+class UserProfilePicture(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id):
-        try:
-            return jsonify(tasks_schema.dump(get_object(USER, user_id).tasks))
-        except ObjectNotFoundError:
-            return not_found(USER, user_id)
+        parser = reqparse.RequestParser()
+        
+        parser.add_argument("size", type=int, location="args")
+
+    @flask_praetorian.auth_required
+    @user_id_match_or_admin
+    def post(self, user_id):
+        print(request.files)
+        uploaded_file = request.files['file']
+        key = upload_profile_picture(uploaded_file)
+        user = get_object(USER, user_id)
+        # TODO: Figure out temporary public links
+        user.profile_picture_url = key
+        db.session.commit()
+        return {'uuid': str(user.uuid), 'message': 'Profile picture uploaded for user {}.'.format(user.username)}, 201
+
+        
+
 
 
 @ns.route('/<user_id>/username')

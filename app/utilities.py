@@ -1,4 +1,6 @@
 import logging
+import random
+import string
 
 from sqlalchemy import desc, asc
 
@@ -161,7 +163,6 @@ def get_page(sqlalchemy_query, page_number, model=None, order="newest"):
             raise
 
 
-
 def get_range(items, _range="0-100", order="descending"):
     start = 0
     end = 100
@@ -184,3 +185,5 @@ def get_range(items, _range="0-100", order="descending"):
         items.reverse()
 
     return items[start:end]
+
+
