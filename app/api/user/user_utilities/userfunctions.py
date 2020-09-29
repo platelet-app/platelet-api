@@ -65,26 +65,20 @@ def is_user_present(id):
 
 
 def upload_profile_picture(profile_picture):
-    region = os.environ['CLOUD_REGION']
-    store_name = os.environ['CLOUD_STORE']
     file_name = get_random_string(30)
     save_path = os.path.join(os.environ['PROFILE_UPLOAD_FOLDER'], file_name)
     profile_picture.save(save_path)
     if os.environ['CLOUD_PLATFORM'] == "aws":
-        access_key = os.environ['AWS_ACCESS_KEY']
-        secret_access_key = os.environ['AWS_SECRET_ACCESS_KEY']
-        try:
-            endpoint = os.environ['AWS_TEST_URL']
-        except KeyError:
-            endpoint = None
-        store = AwsStore(region=region,
-                         access_key_id=access_key,
-                         secret_access_key=secret_access_key,
-                         bucket_name=store_name,
-                         endpoint=endpoint
-                         )
+        store = AwsStore()
         store.upload(save_path, file_name)
     else:
         raise EnvironmentError("Cloud type not specified or not supported.")
 
     return file_name
+
+
+def get_presigned_profile_picture_url(user_uuid):
+    user = get_user_object(user_uuid)
+    if os.environ['CLOUD_PLATFORM'] == "aws":
+        store = AwsStore()
+        return store.get_presigned_url(user.profile_picture_key)

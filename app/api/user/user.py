@@ -9,7 +9,7 @@ from flask_restx import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id, user_id_match_or_admin, \
-    upload_profile_picture
+    upload_profile_picture, get_presigned_profile_picture_url
 from app.api.functions.errors import not_found, schema_validation_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
@@ -39,14 +39,14 @@ user_username_schema = schemas.UserSchema(exclude=("address",
                                                    "links",
                                                    ))
 user_address_schema = schemas.UserSchema(exclude=("username",
-                                                   "dob",
-                                                   "email",
-                                                   "password",
-                                                   "name",
-                                                   "roles",
-                                                   "patch",
-                                                   "links",
-                                                   ))
+                                                  "dob",
+                                                  "email",
+                                                  "password",
+                                                  "name",
+                                                  "roles",
+                                                  "patch",
+                                                  "links",
+                                                  ))
 tasks_schema = schemas.TaskSchema(many=True)
 
 upload_parser = ns.parser()
@@ -68,6 +68,7 @@ class Myself(Resource):
         result['login_expiry'] = jwt_details['rf_exp'] if jwt_details else None
         return jsonify(result)
 
+
 @ns.route('/<user_id>/restore', endpoint="user_undelete")
 class UserRestore(Resource):
     @flask_praetorian.roles_accepted("admin", "coordinator")
@@ -82,6 +83,7 @@ class UserRestore(Resource):
         else:
             return {'uuid': str(user.uuid), 'message': 'User {} not flagged for deletion.'.format(user.uuid)}, 200
         return {'uuid': str(user.uuid), 'message': 'User {} deletion flag removed.'.format(user.uuid)}, 200
+
 
 @ns.route(
     '/<user_id>',
@@ -173,29 +175,23 @@ class Users(Resource):
         return {'uuid': str(user.uuid), 'message': 'User {} created'.format(user.username)}, 201
 
 
-
 @ns.route('/<user_id>/profile_picture')
 class UserProfilePicture(Resource):
     @flask_praetorian.auth_required
     def get(self, user_id):
         parser = reqparse.RequestParser()
-        
         parser.add_argument("size", type=int, location="args")
+        return {'uuid': str(user_id), 'user_profile_picture_url': get_presigned_profile_picture_url(user_id)}, 200
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
     def post(self, user_id):
-        print(request.files)
         uploaded_file = request.files['file']
         key = upload_profile_picture(uploaded_file)
         user = get_object(USER, user_id)
-        # TODO: Figure out temporary public links
-        user.profile_picture_url = key
+        user.profile_picture_key = key
         db.session.commit()
         return {'uuid': str(user.uuid), 'message': 'Profile picture uploaded for user {}.'.format(user.username)}, 201
-
-        
-
 
 
 @ns.route('/<user_id>/username')
@@ -216,4 +212,3 @@ class UserAddressField(Resource):
             return jsonify(user_address_schema.dump(get_object(USER, user_id)).data)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
-

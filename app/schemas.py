@@ -1,9 +1,13 @@
+import os
 from functools import reduce
 
+import boto3
 import phonenumbers
 from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates, validate, pre_load
 from phonenumbers import NumberParseException
 
+from app.api.user.user_utilities.userfunctions import get_presigned_profile_picture_url
+from app.cloud import AwsStore
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, flask_version
@@ -118,7 +122,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
                   'dob', 'patch', 'roles', 'comments', 'display_name',
                   'assigned_vehicles', 'patch_id', 'contact_number',
                   'time_created', 'time_modified', 'links', 'password_reset_on_login',
-                  'profile_picture_url')
+                  'profile_picture_key')
 
     username = ma.Str(required=True)
     email = ma.Email(allow_none=True)
@@ -162,6 +166,13 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
             data['roles'] = data['roles'].split(",")
         except KeyError:
             return data
+        return data
+
+    @post_dump
+    def profile_picture_protected_url(self, data, many):
+        if os.environ['CLOUD_PLATFORM'] == "aws":
+            aws_store = AwsStore()
+            data['profile_picture_url'] = aws_store.get_presigned_url(data['profile_picture_key'])
         return data
 
 
