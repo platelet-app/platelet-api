@@ -1,18 +1,22 @@
+import imghdr
+import os
+
 from flask import jsonify, request
 from marshmallow import ValidationError
 from werkzeug.datastructures import FileStorage
 
-from app import schemas, db, models
+from app import schemas, db, models, redis_queue
 from app import user_ns as ns
 from app import root_ns
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id, user_id_match_or_admin, \
-    upload_profile_picture, get_presigned_profile_picture_url
+    upload_profile_picture, get_presigned_profile_picture_url, get_random_string
 from app.api.functions.errors import not_found, schema_validation_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
-from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError, \
+    InvalidFileUploadError
 from app.utilities import add_item_to_delete_queue, get_object, \
     remove_item_from_delete_queue, get_page, get_query
 from app import guard, api
@@ -186,12 +190,37 @@ class UserProfilePicture(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
     def post(self, user_id):
-        uploaded_file = request.files['file']
-        key = upload_profile_picture(uploaded_file)
-        user = get_object(USER, user_id)
-        user.profile_picture_key = key
-        db.session.commit()
-        return {'uuid': str(user.uuid), 'message': 'Profile picture uploaded for user {}.'.format(user.username)}, 201
+        try:
+            uploaded_file = request.files['file']
+        except KeyError:
+            return forbidden_error("A image file must be provided.")
+        try:
+            crop_dimensions = request.form['crop_dimensions']
+        except KeyError:
+            return forbidden_error("Crop dimensions must be provided.")
+        crop_dimensions_list = crop_dimensions.split(",")
+        for i, dim in enumerate(crop_dimensions_list):
+            try:
+                crop_dimensions_list[i] = int(dim)
+            except ValueError:
+                return schema_validation_error("Crop dimensions must be integers.")
+
+
+        file_name = get_random_string(30)
+        save_path = os.path.join(os.environ['PROFILE_UPLOAD_FOLDER'], file_name)
+        uploaded_file.save(save_path)
+
+        # Validate it is an actual image
+        image_types = ["jpg", "gif", "png"]
+        if not imghdr.what(save_path) in image_types:
+            return forbidden_error("Profile picture uploads must be either a jpg, gif or png")
+
+        # Put it into the queue for cropping, resizing and uploading
+        upload_profile_picture(save_path, tuple(crop_dimensions_list), user_id)
+        job = redis_queue.enqueue_call(
+            func=upload_profile_picture, args=(save_path, tuple(crop_dimensions_list), user_id), result_ttl=5000
+        )
+        return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': job.get_id()}, 201
 
 
 @ns.route('/<user_id>/username')

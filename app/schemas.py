@@ -122,7 +122,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
                   'dob', 'patch', 'roles', 'comments', 'display_name',
                   'assigned_vehicles', 'patch_id', 'contact_number',
                   'time_created', 'time_modified', 'links', 'password_reset_on_login',
-                  'profile_picture_key')
+                  'profile_picture_url', 'profile_picture_thumbnail_url')
 
     username = ma.Str(required=True)
     email = ma.Email(allow_none=True)
@@ -134,6 +134,8 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     password = ma.Str(load_only=True)
     password_reset_on_login = ma.Bool(dump_only=True)
     patch_id = ma.Int(allow_none=True)
+    profile_picture_url = ma.Str(dump_only=True)
+    profile_picture_thumbnail_url = ma.Str(dump_only=True)
 
     links = ma.Hyperlinks(
         {"self": ma.URLFor("user", user_id="<uuid>"), "collection": ma.URLFor("users")}
@@ -160,6 +162,20 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
             data.tasks_etag = calculate_tasks_etag(data.tasks)
         return data
 
+    @pre_dump
+    def profile_picture_protected_url(self, data, many):
+        if os.environ['CLOUD_PLATFORM'] == "aws":
+            aws_store = AwsStore()
+            data.profile_picture_url = aws_store.get_presigned_url(data.profile_picture_key)
+        return data
+
+    @pre_dump
+    def profile_picture_protected_thumbnail_url(self, data, many):
+        if os.environ['CLOUD_PLATFORM'] == "aws":
+            aws_store = AwsStore()
+            data.profile_picture_thumbnail_url = aws_store.get_presigned_url(data.profile_picture_thumbnail_key)
+        return data
+
     @post_dump
     def split_roles(self, data, many):
         try:
@@ -168,12 +184,6 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
             return data
         return data
 
-    @post_dump
-    def profile_picture_protected_url(self, data, many):
-        if os.environ['CLOUD_PLATFORM'] == "aws":
-            aws_store = AwsStore()
-            data['profile_picture_url'] = aws_store.get_presigned_url(data['profile_picture_key'])
-        return data
 
 
 class VehicleSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):

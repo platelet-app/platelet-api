@@ -307,7 +307,8 @@ class User(SearchableMixin, db.Model, CommonMixin):
 
     # profile pictures
     profile_picture_key = db.Column(db.String(128))
-    
+    profile_picture_thumbnail_key = db.Column(db.String(128))
+
 
     #tasks = db.relationship('Task', backref='rider', lazy='dynamic')
     comments = db.relationship(

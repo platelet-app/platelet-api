@@ -1,13 +1,18 @@
 import functools
+import imghdr
 import os
 import random
 import string
+from time import sleep
+from PIL import Image
 
 from flask_praetorian import utilities
 from app import models
 from app.api.functions.errors import forbidden_error
-from app.exceptions import ObjectNotFoundError
+from app.exceptions import ObjectNotFoundError, InvalidFileUploadError
 from ....cloud import AwsStore
+from app import db
+
 
 def get_random_string(length):
     letters = string.ascii_letters
@@ -64,17 +69,31 @@ def is_user_present(id):
     return False
 
 
-def upload_profile_picture(profile_picture):
-    file_name = get_random_string(30)
-    save_path = os.path.join(os.environ['PROFILE_UPLOAD_FOLDER'], file_name)
-    profile_picture.save(save_path)
+def upload_profile_picture(picture_file_path, crop_dimensions, user_id):
+    image = Image.open(picture_file_path)
+    cropped = image.crop(crop_dimensions)
+    cropped.resize((300, 300))
+
+    # save and convert to jpg here
+    cropped_filename = os.path.join(os.path.dirname(picture_file_path), "{}_cropped.jpg".format(picture_file_path))
+    thumbnail_filename = os.path.join(os.path.dirname(picture_file_path), "{}_thumbnail.jpg".format(picture_file_path))
+    cropped.save(cropped_filename)
+    cropped.resize((128, 128))
+    cropped.save(thumbnail_filename)
+    key_name = "{}_{}.jpg".format(os.path.basename(picture_file_path), user_id)
+    thumbnail_key_name = "{}_{}_thumbnail.jpg".format(os.path.basename(picture_file_path), user_id)
+
     if os.environ['CLOUD_PLATFORM'] == "aws":
         store = AwsStore()
-        store.upload(save_path, file_name)
+        store.upload(cropped_filename, key_name)
+        store.upload(thumbnail_filename, thumbnail_key_name)
     else:
-        raise EnvironmentError("Cloud type not specified or not supported.")
-
-    return file_name
+        raise EnvironmentError("Cloud type not specified or unsupported.")
+    user = get_user_object(user_id)
+    user.profile_picture_key = key_name
+    user.profile_picture_thumbnail_key = thumbnail_key_name
+    db.session.commit()
+    return key_name
 
 
 def get_presigned_profile_picture_url(user_uuid):

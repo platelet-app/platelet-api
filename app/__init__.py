@@ -12,6 +12,10 @@ import flask_cors
 from flask_buzz import FlaskBuzz
 from elasticsearch import Elasticsearch
 from engineio.payload import Payload
+from rq import Queue
+from rq.job import Job
+from redis_worker import conn
+
 
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
@@ -64,6 +68,8 @@ FlaskBuzz.register_error_handler_with_flask_restplus(api)
 app.debug = True
 migrate = Migrate(app, db)
 
+redis_queue = Queue(connection=conn)
+
 from app import models
 from app.api.task import task
 from app.api.user import user
@@ -77,6 +83,7 @@ from app.api.priority import priority
 from app.api.patch import patch
 from app.api.server_settings import server_settings
 from app.api import ping
+from app.api import redis
 from app.api import uuid_lookup
 from app.api import sockets
 
