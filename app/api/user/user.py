@@ -5,7 +5,7 @@ from flask import jsonify, request
 from marshmallow import ValidationError
 from werkzeug.datastructures import FileStorage
 
-from app import schemas, db, models, redis_queue
+from app import schemas, db, models, redis_queue, app
 from app import user_ns as ns
 from app import root_ns
 from flask_restx import Resource, reqparse
@@ -65,7 +65,7 @@ class Myself(Resource):
     def get(self):
         jwt_details = flask_praetorian.utilities.get_jwt_data_from_app_context()
         try:
-            user = get_user_object_by_int_id(prae_util.current_user_id())
+            user = prae_util.current_user()
         except ObjectNotFoundError:
             return not_found(USER, None)
         result = user_dump_schema.dump(user)
@@ -207,7 +207,7 @@ class UserProfilePicture(Resource):
 
 
         file_name = get_random_string(30)
-        save_path = os.path.join(os.environ['PROFILE_UPLOAD_FOLDER'], file_name)
+        save_path = os.path.join(app.config['PROFILE_PROCESSING_DIRECTORY'], file_name)
         uploaded_file.save(save_path)
 
         # Validate it is an actual image

@@ -1,5 +1,4 @@
 import functools
-import imghdr
 import os
 import random
 import string
@@ -10,8 +9,8 @@ from flask_praetorian import utilities
 from app import models
 from app.api.functions.errors import forbidden_error
 from app.exceptions import ObjectNotFoundError, InvalidFileUploadError
-from ....cloud import AwsStore
-from app import db
+from app import db, app
+from ....cloud.utilities import get_cloud_store
 
 
 def get_random_string(length):
@@ -83,12 +82,9 @@ def upload_profile_picture(picture_file_path, crop_dimensions, user_id):
     key_name = "{}_{}.jpg".format(os.path.basename(picture_file_path), user_id)
     thumbnail_key_name = "{}_{}_thumbnail.jpg".format(os.path.basename(picture_file_path), user_id)
 
-    if os.environ['CLOUD_PLATFORM'] == "aws":
-        store = AwsStore()
-        store.upload(cropped_filename, key_name)
-        store.upload(thumbnail_filename, thumbnail_key_name)
-    else:
-        raise EnvironmentError("Cloud type not specified or unsupported.")
+    store = get_cloud_store(app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
+    store.upload(cropped_filename, key_name)
+    store.upload(thumbnail_filename, thumbnail_key_name)
     user = get_user_object(user_id)
     user.profile_picture_key = key_name
     user.profile_picture_thumbnail_key = thumbnail_key_name
@@ -98,6 +94,6 @@ def upload_profile_picture(picture_file_path, crop_dimensions, user_id):
 
 def get_presigned_profile_picture_url(user_uuid):
     user = get_user_object(user_uuid)
-    if os.environ['CLOUD_PLATFORM'] == "aws":
-        store = AwsStore()
-        return store.get_presigned_url(user.profile_picture_key)
+
+    store = get_cloud_store(bucket_name=app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
+    return store.get_presigned_url(user.profile_picture_key)

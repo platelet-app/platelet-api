@@ -8,9 +8,10 @@ from phonenumbers import NumberParseException
 
 from app.api.user.user_utilities.userfunctions import get_presigned_profile_picture_url
 from app.cloud import AwsStore
+from app.cloud.utilities import get_cloud_store
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
-from app import models, ma, flask_version
+from app import models, ma, flask_version, app
 from app.utilities import get_object, get_all_objects
 from app.api.task.task_utilities.taskfunctions import calculate_tasks_etag
 
@@ -164,16 +165,19 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     @pre_dump
     def profile_picture_protected_url(self, data, many):
-        if os.environ['CLOUD_PLATFORM'] == "aws":
-            aws_store = AwsStore()
-            data.profile_picture_url = aws_store.get_presigned_url(data.profile_picture_key)
+        if not many and data.profile_picture_key:
+                aws_store = get_cloud_store(app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
+                data.profile_picture_url = aws_store.get_presigned_url(data.profile_picture_key)
         return data
 
     @pre_dump
     def profile_picture_protected_thumbnail_url(self, data, many):
-        if os.environ['CLOUD_PLATFORM'] == "aws":
-            aws_store = AwsStore()
+        if data.profile_picture_thumbnail_key:
+            aws_store = get_cloud_store(app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
             data.profile_picture_thumbnail_url = aws_store.get_presigned_url(data.profile_picture_thumbnail_key)
+        else:
+            data.profile_picture_thumbnail_url = None
+
         return data
 
     @post_dump
@@ -183,7 +187,6 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         except KeyError:
             return data
         return data
-
 
 
 class VehicleSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
