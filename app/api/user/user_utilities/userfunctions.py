@@ -1,4 +1,5 @@
 import functools
+import logging
 import os
 import random
 import string
@@ -83,12 +84,16 @@ def upload_profile_picture(picture_file_path, crop_dimensions, user_id):
     thumbnail_key_name = "{}_{}_thumbnail.jpg".format(os.path.basename(picture_file_path), user_id)
 
     store = get_cloud_store(app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
-    store.upload(cropped_filename, key_name)
-    store.upload(thumbnail_filename, thumbnail_key_name)
+    store.upload(cropped_filename, key_name, delete_original=True)
+    store.upload(thumbnail_filename, thumbnail_key_name, delete_original=True)
     user = get_user_object(user_id)
     user.profile_picture_key = key_name
     user.profile_picture_thumbnail_key = thumbnail_key_name
     db.session.commit()
+    try:
+        os.remove(picture_file_path)
+    except IOError as e:
+        logging.warning("Could not delete file {}. Reason: {}".format(picture_file_path, e))
     return key_name
 
 
