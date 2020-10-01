@@ -92,7 +92,9 @@ def upload_profile_picture(picture_file_path, crop_dimensions, user_id):
     db.session.commit()
     try:
         os.remove(picture_file_path)
-    except IOError as e:
+    except FileNotFoundError:
+        logging.warning("File {} does not exist.".format(picture_file_path))
+    except Exception as e:
         logging.warning("Could not delete file {}. Reason: {}".format(picture_file_path, e))
     return key_name
 
@@ -101,4 +103,4 @@ def get_presigned_profile_picture_url(user_uuid):
     user = get_user_object(user_uuid)
 
     store = get_cloud_store(bucket_name=app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
-    return store.get_presigned_url(user.profile_picture_key)
+    return store.get_presigned_image_url(user.profile_picture_key)

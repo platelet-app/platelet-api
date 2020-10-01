@@ -167,14 +167,14 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     def profile_picture_protected_url(self, data, many):
         if not many and data.profile_picture_key:
                 aws_store = get_cloud_store(app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
-                data.profile_picture_url = aws_store.get_presigned_url(data.profile_picture_key)
+                data.profile_picture_url = aws_store.get_presigned_image_url(data.profile_picture_key)
         return data
 
     @pre_dump
     def profile_picture_protected_thumbnail_url(self, data, many):
         if data.profile_picture_thumbnail_key:
             aws_store = get_cloud_store(app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
-            data.profile_picture_thumbnail_url = aws_store.get_presigned_url(data.profile_picture_thumbnail_key)
+            data.profile_picture_thumbnail_url = aws_store.get_presigned_image_url(data.profile_picture_thumbnail_key)
         else:
             data.profile_picture_thumbnail_url = None
 

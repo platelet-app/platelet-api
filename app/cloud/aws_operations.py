@@ -17,7 +17,8 @@ class AwsStore:
         self.endpoint = app.config['AWS_ENDPOINT']
 
         self.s3 = boto3.Session(aws_access_key_id=self.aws_access_key_id,
-                                aws_secret_access_key=self.aws_secret_access_key).resource('s3', endpoint_url=self.endpoint)
+                                aws_secret_access_key=self.aws_secret_access_key).resource('s3',
+                                                                                           endpoint_url=self.endpoint)
         self.s3_client = boto3.client("s3")
         self.bucket_obj = self.s3.Bucket(name=bucket_name)
 
@@ -53,8 +54,10 @@ class AwsStore:
             else:
                 logging.warning("[AWS]: File {} no longer exists and cannot be deleted.".format(file_path))
 
-    def get_presigned_url(self, key):
+    def get_presigned_image_url(self, key):
         return self.s3_client.generate_presigned_url("get_object",
-                                              Params={'Bucket': self.bucket_name,
-                                                      'Key': key},
-                                              ExpiresIn=3600)
+                                                     Params={'Bucket': self.bucket_name,
+                                                             'Key': key,
+                                                             'ResponseContentType': "image/jpg"},
+                                                     ExpiresIn=3600
+                                                     )
