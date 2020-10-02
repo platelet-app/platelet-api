@@ -245,13 +245,12 @@ class UserProfilePicture(Resource):
             return forbidden_error("Profile picture uploads must be either a jpg, gif or png")
 
         # Put it into the queue for cropping, resizing and uploading
-        upload_profile_picture(save_path, user_id)
-       # job = redis_queue.enqueue_call(
-       #     # TODO: ttl config
-       #     func=upload_profile_picture, args=(save_path, user_id), result_ttl=50000
-       # )
-        #return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': job.get_id()}, 201
-        return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': "aaa"}, 200
+       # upload_profile_picture(save_path, user_id)
+        job = redis_queue.enqueue_call(
+            # TODO: ttl config
+            func=upload_profile_picture, args=(save_path, user_id), result_ttl=50000
+        )
+        return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': job.get_id()}, 201
 
 
 @ns.route('/<user_id>/username')

@@ -3,15 +3,13 @@ import logging
 import os
 import random
 import string
-from time import sleep
 from PIL import Image
 
 from flask_praetorian import utilities
 from app import models
 from app.api.functions.errors import forbidden_error
 from app.exceptions import ObjectNotFoundError, InvalidFileUploadError
-from app import db, app
-from ....cloud.utilities import get_cloud_store
+from app import db, app, profile_picture_store
 
 
 def get_random_string(length):
@@ -86,9 +84,8 @@ def upload_profile_picture(picture_file_path, user_id, crop_dimensions=None):
     key_name = "{}_{}.jpg".format(os.path.basename(picture_file_path), user_id)
     thumbnail_key_name = "{}_{}_thumbnail.jpg".format(os.path.basename(picture_file_path), user_id)
 
-    store = get_cloud_store(app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
-    store.upload(cropped_filename, key_name, delete_original=True)
-    store.upload(thumbnail_filename, thumbnail_key_name, delete_original=True)
+    profile_picture_store.upload(cropped_filename, key_name, delete_original=True)
+    profile_picture_store.upload(thumbnail_filename, thumbnail_key_name, delete_original=True)
     user = get_user_object(user_id)
     user.profile_picture_key = key_name
     user.profile_picture_thumbnail_key = thumbnail_key_name
@@ -104,6 +101,4 @@ def upload_profile_picture(picture_file_path, user_id, crop_dimensions=None):
 
 def get_presigned_profile_picture_url(user_uuid):
     user = get_user_object(user_uuid)
-
-    store = get_cloud_store(bucket_name=app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'])
-    return store.get_presigned_image_url(user.profile_picture_key)
+    return profile_picture_store.get_presigned_image_url(user.profile_picture_key)

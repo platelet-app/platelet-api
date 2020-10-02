@@ -4,17 +4,16 @@ import time
 import boto3
 import logging
 import boto.ec2
-from app import app
 
 
 class AwsStore:
-    def __init__(self, bucket_name, max_retries=10):
-        self.aws_region = app.config['AWS_DEFAULT_REGION']
-        self.aws_access_key_id = app.config['AWS_ACCESS_KEY_ID']
-        self.aws_secret_access_key = app.config['AWS_SECRET_ACCESS_KEY']
+    def __init__(self, bucket_name, region, access_key_id, secret_access_key_id, endpoint, max_retries=10):
+        self.aws_region = region
+        self.aws_access_key_id = access_key_id
+        self.aws_secret_access_key = secret_access_key_id
         self.bucket_name = bucket_name
         self.max_retries = max_retries
-        self.endpoint = app.config['AWS_ENDPOINT']
+        self.endpoint = endpoint
 
         self.s3 = boto3.Session(aws_access_key_id=self.aws_access_key_id,
                                 aws_secret_access_key=self.aws_secret_access_key).resource('s3',
