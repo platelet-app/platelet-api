@@ -1,5 +1,6 @@
 import imghdr
 import os
+import base64
 
 from flask import jsonify, request
 from marshmallow import ValidationError
@@ -216,11 +217,41 @@ class UserProfilePicture(Resource):
             return forbidden_error("Profile picture uploads must be either a jpg, gif or png")
 
         # Put it into the queue for cropping, resizing and uploading
-        upload_profile_picture(save_path, tuple(crop_dimensions_list), user_id)
+        crop_dimensions_tuple = tuple(crop_dimensions_list)
         job = redis_queue.enqueue_call(
-            func=upload_profile_picture, args=(save_path, tuple(crop_dimensions_list), user_id), result_ttl=5000
+            func=upload_profile_picture,
+            args=(save_path, user_id),
+            kwargs=({"crop_dimensions": crop_dimensions_tuple}),
+            result_ttl=5000
         )
         return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': job.get_id()}, 201
+
+    @flask_praetorian.auth_required
+    @user_id_match_or_admin
+    def put(self, user_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument("image_data")
+        args = parser.parse_args()
+
+        file_name = get_random_string(30)
+        save_path = os.path.join(app.config['PROFILE_PROCESSING_DIRECTORY'], file_name)
+        with open(save_path, "wb") as fh:
+            fh.write(base64.decodebytes(bytes(args['image_data'], 'utf-8')))
+
+        # Validate it is an actual image
+        image_types = ["jpeg", "gif", "png"]
+        print(imghdr.what(save_path))
+        if not imghdr.what(save_path) in image_types:
+            return forbidden_error("Profile picture uploads must be either a jpg, gif or png")
+
+        # Put it into the queue for cropping, resizing and uploading
+        upload_profile_picture(save_path, user_id)
+       # job = redis_queue.enqueue_call(
+       #     # TODO: ttl config
+       #     func=upload_profile_picture, args=(save_path, user_id), result_ttl=50000
+       # )
+        #return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': job.get_id()}, 201
+        return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': "aaa"}, 200
 
 
 @ns.route('/<user_id>/username')

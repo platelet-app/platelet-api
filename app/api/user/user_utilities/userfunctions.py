@@ -69,17 +69,20 @@ def is_user_present(id):
     return False
 
 
-def upload_profile_picture(picture_file_path, crop_dimensions, user_id):
+def upload_profile_picture(picture_file_path, user_id, crop_dimensions=None):
     image = Image.open(picture_file_path)
-    cropped = image.crop(crop_dimensions)
-    cropped.resize((300, 300))
+    if crop_dimensions:
+        image = image.crop(crop_dimensions)
+
+    # TODO: make this configurable
+    image = image.resize((300, 300))
 
     # save and convert to jpg here
     cropped_filename = os.path.join(os.path.dirname(picture_file_path), "{}_cropped.jpg".format(picture_file_path))
     thumbnail_filename = os.path.join(os.path.dirname(picture_file_path), "{}_thumbnail.jpg".format(picture_file_path))
-    cropped.save(cropped_filename)
-    cropped.resize((128, 128))
-    cropped.save(thumbnail_filename)
+    image.save(cropped_filename)
+    image = image.resize((128, 128))
+    image.save(thumbnail_filename)
     key_name = "{}_{}.jpg".format(os.path.basename(picture_file_path), user_id)
     thumbnail_key_name = "{}_{}_thumbnail.jpg".format(os.path.basename(picture_file_path), user_id)
 
