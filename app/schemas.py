@@ -6,7 +6,7 @@ from phonenumbers import NumberParseException
 
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
-from app import models, ma, profile_picture_store
+from app import models, ma, profile_picture_store, app
 from app.utilities import get_all_objects
 from app.api.task.task_utilities.taskfunctions import calculate_tasks_etag
 
@@ -160,8 +160,11 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     @pre_dump
     def profile_picture_protected_url(self, data, many):
-        if not many and data.profile_picture_key:
+        if not many:
+            if data.profile_picture_key:
                 data.profile_picture_url = profile_picture_store.get_presigned_image_url(data.profile_picture_key)
+            else:
+                data.profile_picture_url = app.config['DEFAULT_PROFILE_PICTURE_URL']
         return data
 
     @pre_dump
