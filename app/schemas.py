@@ -112,10 +112,6 @@ class PatchSchema(ma.SQLAlchemySchema, PostLoadMixin):
 
 
 class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.profile_picture_store = cloud_stores.get_profile_picture_store()
-
     class Meta:
         unknown = EXCLUDE
         model = models.User
@@ -165,17 +161,19 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     @pre_dump
     def profile_picture_protected_url(self, data, many):
+        store = cloud_stores.get_profile_picture_store()
         if not many:
-            if False and data.profile_picture_key and self.profile_picture_store:
-                data.profile_picture_url = self.profile_picture_store.get_presigned_image_url(data.profile_picture_key)
+            if data.profile_picture_key and store:
+                data.profile_picture_url = store.get_presigned_image_url(data.profile_picture_key)
             else:
                 data.profile_picture_url = app.config['DEFAULT_PROFILE_PICTURE_URL']
         return data
 
     @pre_dump
     def profile_picture_protected_thumbnail_url(self, data, many):
-        if False and data.profile_picture_thumbnail_key and self.profile_picture_store:
-            data.profile_picture_thumbnail_url = self.profile_picture_store.get_presigned_image_url(data.profile_picture_thumbnail_key)
+        store = cloud_stores.get_profile_picture_store()
+        if data.profile_picture_thumbnail_key and store:
+            data.profile_picture_thumbnail_url = store.get_presigned_image_url(data.profile_picture_thumbnail_key)
         else:
             data.profile_picture_thumbnail_url = None
 
