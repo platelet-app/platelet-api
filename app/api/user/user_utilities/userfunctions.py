@@ -8,8 +8,9 @@ from PIL import Image
 from flask_praetorian import utilities
 from app import models
 from app.api.functions.errors import forbidden_error
+from app import cloud_stores
 from app.exceptions import ObjectNotFoundError, InvalidFileUploadError
-from app import db, app, profile_picture_store
+from app import db
 
 
 def get_random_string(length):
@@ -68,6 +69,8 @@ def is_user_present(id):
 
 
 def upload_profile_picture(picture_file_path, user_id, crop_dimensions=None):
+    # get the profile pics store ready
+    cloud_stores.initialise_profile_pictures_store()
     image = Image.open(picture_file_path)
     if crop_dimensions:
         image = image.crop(crop_dimensions)
@@ -83,6 +86,7 @@ def upload_profile_picture(picture_file_path, user_id, crop_dimensions=None):
     image.save(thumbnail_filename)
     key_name = "{}_{}.jpg".format(os.path.basename(picture_file_path), user_id)
     thumbnail_key_name = "{}_{}_thumbnail.jpg".format(os.path.basename(picture_file_path), user_id)
+    profile_picture_store = cloud_stores.get_profile_picture_store()
 
     profile_picture_store.upload(cropped_filename, key_name, delete_original=True)
     profile_picture_store.upload(thumbnail_filename, thumbnail_key_name, delete_original=True)
@@ -100,5 +104,7 @@ def upload_profile_picture(picture_file_path, user_id, crop_dimensions=None):
 
 
 def get_presigned_profile_picture_url(user_uuid):
+    # get the profile pics store ready
+    cloud_stores.initialise_profile_pictures_store()
     user = get_user_object(user_uuid)
-    return profile_picture_store.get_presigned_image_url(user.profile_picture_key)
+    return cloud_stores.get_profile_picture_store.get_presigned_image_url(user.profile_picture_key)

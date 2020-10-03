@@ -4,9 +4,10 @@ import phonenumbers
 from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates, validate, pre_load
 from phonenumbers import NumberParseException
 
+from app import cloud_stores
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
-from app import models, ma, profile_picture_store, app
+from app import models, ma, app
 from app.utilities import get_all_objects
 from app.api.task.task_utilities.taskfunctions import calculate_tasks_etag
 
@@ -111,6 +112,10 @@ class PatchSchema(ma.SQLAlchemySchema, PostLoadMixin):
 
 
 class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.profile_picture_store = cloud_stores.get_profile_picture_store()
+
     class Meta:
         unknown = EXCLUDE
         model = models.User
@@ -161,16 +166,16 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     @pre_dump
     def profile_picture_protected_url(self, data, many):
         if not many:
-            if data.profile_picture_key:
-                data.profile_picture_url = profile_picture_store.get_presigned_image_url(data.profile_picture_key)
+            if False and data.profile_picture_key and self.profile_picture_store:
+                data.profile_picture_url = self.profile_picture_store.get_presigned_image_url(data.profile_picture_key)
             else:
                 data.profile_picture_url = app.config['DEFAULT_PROFILE_PICTURE_URL']
         return data
 
     @pre_dump
     def profile_picture_protected_thumbnail_url(self, data, many):
-        if data.profile_picture_thumbnail_key:
-            data.profile_picture_thumbnail_url = profile_picture_store.get_presigned_image_url(data.profile_picture_thumbnail_key)
+        if False and data.profile_picture_thumbnail_key and self.profile_picture_store:
+            data.profile_picture_thumbnail_url = self.profile_picture_store.get_presigned_image_url(data.profile_picture_thumbnail_key)
         else:
             data.profile_picture_thumbnail_url = None
 

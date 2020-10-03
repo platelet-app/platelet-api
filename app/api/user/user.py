@@ -97,6 +97,9 @@ class User(Resource):
     @flask_praetorian.auth_required
     @ns.doc(params={'user_id': 'ID for the user'})
     def get(self, user_id):
+        # we know this is going to return profile picture urls so initialise the store here
+        from app import cloud_stores
+        cloud_stores.initialise_profile_pictures_store()
         try:
             return jsonify(user_dump_schema.dump(get_object(USER, user_id)))
         except ObjectNotFoundError:
@@ -147,6 +150,9 @@ class User(Resource):
 class Users(Resource):
     @flask_praetorian.auth_required
     def get(self):
+        # we know this is going to return profile picture urls so initialise the store here
+        from app import cloud_stores
+        cloud_stores.initialise_profile_pictures_store()
         try:
             parser = reqparse.RequestParser()
             parser.add_argument("page", type=int, location="args")

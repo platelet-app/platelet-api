@@ -8,7 +8,7 @@ from flask_migrate import Migrate
 import flask_praetorian
 import logging
 
-from app.cloud import AwsStore
+from app.cloud.utilities import CloudStores
 from config import Config
 import flask_cors
 from flask_buzz import FlaskBuzz
@@ -72,14 +72,14 @@ migrate = Migrate(app, db)
 
 redis_queue = Queue(connection=conn)
 
-if app.config['CLOUD_PLATFORM'] == "aws":
-    profile_picture_store = AwsStore(
-        bucket_name=app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'],
-        region=app.config['AWS_DEFAULT_REGION'],
-        access_key_id=app.config['AWS_ACCESS_KEY_ID'],
-        secret_access_key_id=app.config['AWS_SECRET_ACCESS_KEY'],
-        endpoint=app.config['AWS_ENDPOINT']
-    )
+cloud_stores = CloudStores(
+    platform=app.config["CLOUD_PLATFORM"],
+    profile_picture_store_name=app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'],
+    region=app.config['AWS_DEFAULT_REGION'],
+    access_key_id=app.config['AWS_ACCESS_KEY_ID'],
+    secret_access_key_id=app.config['AWS_SECRET_ACCESS_KEY'],
+    endpoint=app.config['AWS_ENDPOINT']
+)
 
 from app import models
 from app.api.task import task
