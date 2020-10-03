@@ -1,9 +1,9 @@
 import functools
 from flask_praetorian import utilities
-from app import models, schemas
+from app import models, schemas, socketio
 from app.api.functions.errors import forbidden_error
 from app.exceptions import ObjectNotFoundError
-from flask import json
+from flask import json, request
 import hashlib
 
 def comment_author_match_or_admin(func):
@@ -32,3 +32,14 @@ def calculate_comments_etag(data):
     return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
 
 
+def emit_socket_broadcast(data, uuid, type):
+    socketio.emit('subscribed_response',
+                  {
+                      'object_uuid': str(uuid),
+                      'type': type,
+                      'data': data,
+                      'tab_id': request.headers['Tab-Identification']
+                  },
+                  room=str(uuid),
+                  namespace="/api/v0.1/subscribe_comments",
+                  )

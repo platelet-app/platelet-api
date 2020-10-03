@@ -5,7 +5,7 @@ from flask_praetorian import utilities as prae_utils
 from app import comment_ns as ns
 import flask_praetorian
 
-from app.api.comment.comment_utilities.commentfunctions import comment_author_match_or_admin
+from app.api.comment.comment_utilities.commentfunctions import comment_author_match_or_admin, emit_socket_broadcast
 from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
@@ -96,6 +96,7 @@ class Comments(Resource):
 
         db.session.add(comment)
         db.session.commit()
+        emit_socket_broadcast(comment_schema.dump(comment), comment.parent_uuid, "post")
 
         return {'uuid': str(comment.uuid), 'message': 'Comment {} created'.format(comment.uuid)}, 201
 

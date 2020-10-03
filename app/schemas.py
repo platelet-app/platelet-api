@@ -142,11 +142,13 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     @validates("display_name")
     def check_display_name_unique(self, value):
+        # TODO: this trips up even if the user being changed is the same as the one with the display_name
         users = get_all_objects(models.Objects.USER)
         if any(list(filter(lambda u: u.display_name == value, users))):
             raise ValidationError("This display name is already taken.")
 
     @validates("username")
+    # TODO: this trips up even if the user being changed is the same as the one with the username
     def check_username_unique(self, value):
         users = get_all_objects(models.Objects.USER)
         if any(list(filter(lambda u: u.username == value, users))):
