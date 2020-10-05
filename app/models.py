@@ -196,7 +196,7 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    author = db.relationship("User", foreign_keys=[author_uuid])
+    author = db.relationship("User", foreign_keys=[author_uuid], backref=db.backref('tasks_as_author', lazy='dynamic'))
     time_of_call = db.Column(db.DateTime(timezone=True), index=True)
 
     time_picked_up = db.Column(db.DateTime(timezone=True))

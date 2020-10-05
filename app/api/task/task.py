@@ -98,11 +98,22 @@ class Task(Resource):
 class TasksAssignees(Resource):
     @flask_praetorian.auth_required
     def get(self, task_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument("role", type=str, location="args")
+        args = parser.parse_args()
         try:
             task = get_object(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
-        return assigned_users_schema.dump(task.assigned_riders)
+        if args['role'] == "rider":
+            return assigned_users_schema.dump(task.assigned_riders)
+        elif args['role'] == "coordinator":
+            return assigned_users_schema.dump(task.assigned_coordinators)
+        else:
+            combined = []
+            combined.extend(task.assigned_coordinators)
+            combined.extend(task.assigned_riders)
+            return assigned_users_schema.dump(combined)
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
     #@check_parent_or_collaborator_or_admin_match
@@ -115,6 +126,7 @@ class TasksAssignees(Resource):
             return not_found(TASK, task_id)
 
         parser = reqparse.RequestParser()
+        parser.add_argument("role", type=str, location="args")
         parser.add_argument('user_uuid')
         args = parser.parse_args()
         user_uuid = args['user_uuid']
@@ -125,10 +137,20 @@ class TasksAssignees(Resource):
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
 
-        if "rider" not in user.roles:
-            return forbidden_error("Can not assign a non-rider as an assignee.", user_uuid)
+        if args['role'] == "rider":
+            if "rider" not in user.roles:
+                return forbidden_error("Can not assign a non-rider as a rider.", user_uuid)
 
-        task.assigned_riders.append(user)
+            task.assigned_riders.append(user)
+
+        elif args['role'] == "coordinator":
+            if "coordinator" not in user.roles:
+                return forbidden_error("Can not assign a non-coordinator as a coordinator.", user_uuid)
+            task.assigned_coordinators.append(user)
+
+        else:
+            return forbidden_error("Type of role must be specified.", task_id)
+
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
@@ -147,6 +169,7 @@ class TasksAssignees(Resource):
 
         parser = reqparse.RequestParser()
         parser.add_argument('user_uuid')
+        parser.add_argument("role", type=str, location="args")
         args = parser.parse_args()
         user_uuid = args['user_uuid']
         try:
@@ -156,9 +179,16 @@ class TasksAssignees(Resource):
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
 
-        filtered_assignees = list(filter(lambda u: u.uuid != user.uuid, task.assigned_riders))
+        if args['role'] == "rider":
+            filtered_riders = list(filter(lambda u: u.uuid != user.uuid, task.assigned_riders))
+            task.assigned_riders = filtered_riders
 
-        task.assigned_riders = filtered_assignees
+        elif args['role'] == "coordinator":
+            filtered_coordinators = list(filter(lambda u: u.uuid != user.uuid, task.assigned_coordinators))
+            task.assigned_riders = filtered_coordinators
+        else:
+            return forbidden_error("Type of role must be specified.", task_id)
+
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
@@ -222,8 +252,12 @@ class Tasks(Resource):
                 items = get_page(requested_user.tasks_as_rider, page, order=order, model=models.Task)
             elif role == "coordinator":
                 items = get_page(requested_user.tasks_as_coordinator, page, order=order, model=models.Task)
+            elif role == "author":
+                items = get_page(requested_user.tasks_as_author, page, order=order, model=models.Task)
             else:
                 combined_query = requested_user.tasks_as_rider.union_all(requested_user.tasks_as_coordinator)
+                a = requested_user.tasks_as_coordinator.all()
+                print(requested_user.tasks_as_coordinator.all())
                 items = get_page(combined_query, page, order=order, model=models.Task)
         except ObjectNotFoundError:
             return not_found(TASK)

@@ -40,7 +40,6 @@ def not_found(object_type, object_id="null"):
 def object_type_to_string(type):
     switch = {
         Objects.USER: "user",
-        Objects.SESSION: "session",
         Objects.TASK: "task",
         Objects.VEHICLE: "vehicle",
         Objects.COMMENT: "comment",
