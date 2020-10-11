@@ -244,24 +244,54 @@ class Tasks(Resource):
             parser.add_argument("page", type=int, location="args")
             parser.add_argument("role", type=str, location="args")
             parser.add_argument("order", type=str, location="args")
+            parser.add_argument("status", type=str, location="args")
             args = parser.parse_args()
             page = args['page'] if args['page'] else 1
             role = args['role']
+            status = args['status']
             order = args['order'] if args['order'] else "descending"
             if role == "rider":
-                items = get_page(requested_user.tasks_as_rider, page, order=order, model=models.Task)
+                query = requested_user.tasks_as_rider
             elif role == "coordinator":
-                items = get_page(requested_user.tasks_as_coordinator, page, order=order, model=models.Task)
+                query = requested_user.tasks_as_coordinator
             elif role == "author":
-                items = get_page(requested_user.tasks_as_author, page, order=order, model=models.Task)
+                query = requested_user.tasks_as_author
             else:
-                combined_query = requested_user.tasks_as_rider.union_all(requested_user.tasks_as_coordinator)
-                a = requested_user.tasks_as_coordinator.all()
-                print(requested_user.tasks_as_coordinator.all())
-                items = get_page(combined_query, page, order=order, model=models.Task)
+                query = requested_user.tasks_as_rider.union_all(requested_user.tasks_as_coordinator)
+
+            if status == "new":
+                # TODO: make this a query instead
+                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) == 0]), 200
+            elif status == "active":
+                # TODO: make this a query instead
+                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) > 0 and not t.time_picked_up]), 200
+                filtered = query.filter(models.Task.assigned_riders.any(), models.Task.time_picked_up.is_(None))
+            elif status == "picked_up":
+                filtered = query.filter(
+                    models.Task.time_picked_up.isnot(None),
+                    models.Task.time_dropped_off.is_(None),
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None)
+                )
+            elif status == "delivered":
+                filtered = query.filter(
+                    models.Task.time_dropped_off.isnot(None),
+                    models.Task.time_dropped_off.isnot(None),
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None)
+                )
+            elif status == "cancelled":
+                filtered = query.filter(models.Task.time_cancelled.isnot(None))
+            elif status == "rejected":
+                filtered = query.filter(models.Task.time_rejected.isnot(None))
+            else:
+                filtered = query
+
+            items = get_page(filtered, page, order=order, model=models.Task)
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
+            raise
             return internal_error(e)
 
         return tasks_schema.dump(items)

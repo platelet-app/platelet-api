@@ -159,8 +159,7 @@ def get_page(sqlalchemy_query, page_number, model=None, order="newest"):
         if hasattr(e, "code"):
             if e.code == 404:
                 raise ObjectNotFoundError
-        else:
-            raise
+        raise
 
 
 def get_range(items, _range="0-100", order="descending"):
