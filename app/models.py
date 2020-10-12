@@ -240,6 +240,10 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     assigned_coordinators = db.relationship('User', secondary=task_coordinator_assignees, lazy='dynamic',
                                     backref=db.backref('tasks_as_coordinator', lazy='dynamic'))
 
+    relay_next_id = db.Column(db.Integer, db.ForeignKey('task.id'))
+    relay_next = db.relationship("Task", foreign_keys=[relay_next_id], back_populates="relay_previous")
+    relay_previous = db.relationship("Task")
+
     comments = db.relationship(
         'Comment',
         primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK)
