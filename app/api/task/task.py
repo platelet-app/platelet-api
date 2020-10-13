@@ -7,7 +7,8 @@ from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
 from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast
-from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page
+from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page, \
+    get_query
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
     already_flagged_for_deletion_error
@@ -66,7 +67,7 @@ class Task(Resource):
                 if not deliverable.flagged_for_deletion:
                     add_item_to_delete_queue(deliverable)
         except AlreadyFlaggedForDeletionError:
-            return already_flagged_for_deletion_error(TASK, str(task.uuid))
+            return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
         return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
@@ -80,7 +81,6 @@ class Task(Resource):
                 return not_found(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
-
         try:
             load_request_into_object(TASK, instance=task)
         except ValidationError as e:
@@ -208,7 +208,12 @@ class Tasks(Resource):
         args = parser.parse_args()
         page = args['page'] if args['page'] else 1
         order = args['order'] if args['order'] else "newest"
-        items = get_page(models.Task.query, page, order=order, model=models.Task)
+        query = get_query(TASK)
+        # filter deleted tasks and relays
+        query_filtered = query.filter(
+            models.Task.flagged_for_deletion.is_(False),
+            models.Task.relay_previous_uuid.is_(None))
+        items = get_page(query_filtered, page, order=order, model=models.Task)
         return tasks_schema.dump(items)
 
     @flask_praetorian.auth_required
@@ -259,33 +264,38 @@ class Tasks(Resource):
             else:
                 query = requested_user.tasks_as_rider.union_all(requested_user.tasks_as_coordinator)
 
+            # filter deleted tasks and relays
+            query_deleted = query.filter(
+                models.Task.flagged_for_deletion.is_(False),
+                models.Task.relay_previous_uuid.is_(None))
+
             if status == "new":
                 # TODO: make this a query instead
-                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) == 0]), 200
+                return tasks_schema.dump([t for t in query_deleted.all() if len(t.assigned_riders.all()) == 0]), 200
             elif status == "active":
                 # TODO: make this a query instead
-                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) > 0 and not t.time_picked_up]), 200
-                filtered = query.filter(models.Task.assigned_riders.any(), models.Task.time_picked_up.is_(None))
+                return tasks_schema.dump([t for t in query_deleted.all() if len(t.assigned_riders.all()) > 0 and not t.time_picked_up]), 200
+                filtered = query_deleted.filter(models.Task.assigned_riders.any(), models.Task.time_picked_up.is_(None))
             elif status == "picked_up":
-                filtered = query.filter(
+                filtered = query_deleted.filter(
                     models.Task.time_picked_up.isnot(None),
                     models.Task.time_dropped_off.is_(None),
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None)
                 )
             elif status == "delivered":
-                filtered = query.filter(
+                filtered = query_deleted.filter(
                     models.Task.time_dropped_off.isnot(None),
                     models.Task.time_dropped_off.isnot(None),
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None)
                 )
             elif status == "cancelled":
-                filtered = query.filter(models.Task.time_cancelled.isnot(None))
+                filtered = query_deleted.filter(models.Task.time_cancelled.isnot(None))
             elif status == "rejected":
-                filtered = query.filter(models.Task.time_rejected.isnot(None))
+                filtered = query_deleted.filter(models.Task.time_rejected.isnot(None))
             else:
-                filtered = query
+                filtered = query_deleted
 
             items = get_page(filtered, page, order=order, model=models.Task)
         except ObjectNotFoundError:

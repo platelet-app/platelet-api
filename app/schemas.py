@@ -299,9 +299,11 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
 
     @pre_dump
     def concatenate_assigned_coordinators_display_string(self, data, many):
-        data.assigned_coordinators_display_string = reduce(display_names_reducer, enumerate(data.assigned_coordinators),
-                                                           "")
+        data.assigned_coordinators_display_string = reduce(
+            display_names_reducer,
+            enumerate(data.assigned_coordinators), "")
         return data
+
 
 def validate_tel_number(value):
     if not value:
