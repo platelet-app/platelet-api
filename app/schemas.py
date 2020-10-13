@@ -224,28 +224,54 @@ def display_names_reducer(result, user):
         return result + ", {}".format(user[1].display_name)
 
 
-class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
+class ContactSchema(ma.SQLAlchemySchema, PostLoadMixin):
+    class Meta:
+        unknown = EXCLUDE
+        model = models.Contact
+        fields = ('name', 'address', 'telephone_number', 'mobile_number', 'email_address')
+
+    @validates("telephone_number")
+    def telephone_number(self, value):
+        validate_tel_number(value)
+        return
+        # TODO: see if this is a better way to do things
+        if not value:
+            return
+        try:
+            phonenumbers.parse(value)
+        except NumberParseException:
+            raise
+            raise ValidationError("Not a valid telephone number.")
+
+    @validates("mobile_number")
+    def mobile_number(self, value):
+        validate_tel_number(value)
+
+
+class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
         model = models.Task
-        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'contact_name',
-                  'contact_number', 'priority', 'time_of_call', 'deliverables',
+        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'requester_contact',
+                  'priority', 'time_of_call', 'deliverables',
                   'comments', 'links', 'time_picked_up', 'time_dropped_off', 'rider',
-                  'priority_id', 'time_cancelled', 'time_rejected', 'patient_name', 'patient_contact_number',
-                  'destination_contact_number', 'destination_contact_name',
+                  'priority_id', 'time_cancelled', 'time_rejected',
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
-                  'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author')
+                  'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
+                  'relay_next', 'relay_previous')
+
+    requester_contact = ma.Nested(ContactSchema)
 
     pickup_address = ma.Nested(AddressSchema)
     dropoff_address = ma.Nested(AddressSchema)
     rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'),
                       dump_only=True)
     assigned_riders = ma.Nested(UserSchema,
-                               exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
-                               many=True, dump_only=True)
-    assigned_coordinators = ma.Nested(UserSchema,
                                 exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
                                 many=True, dump_only=True)
+    assigned_coordinators = ma.Nested(UserSchema,
+                                      exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
+                                      many=True, dump_only=True)
     author = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'))
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
@@ -258,6 +284,8 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     patch_id = ma.Int(allow_none=True)
     time_of_call = ma.DateTime()
     assigned_users_display_string = ma.String(dump_only=True)
+    relay_previous = ma.Nested('self', exclude=('relay_next',))
+    relay_next = ma.Nested('self', exclude=('relay_previous',))
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
@@ -271,30 +299,9 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
 
     @pre_dump
     def concatenate_assigned_coordinators_display_string(self, data, many):
-        data.assigned_coordinators_display_string = reduce(display_names_reducer, enumerate(data.assigned_coordinators), "")
+        data.assigned_coordinators_display_string = reduce(display_names_reducer, enumerate(data.assigned_coordinators),
+                                                           "")
         return data
-
-    @validates("contact_number")
-    def contact_number(self, value):
-        validate_tel_number(value)
-        return
-        # TODO: see if this is a better way to do things
-        if not value:
-            return
-        try:
-            phonenumbers.parse(value)
-        except NumberParseException:
-            raise
-            raise ValidationError("Not a valid telephone number.")
-
-    @validates("patient_contact_number")
-    def patient_contact_number(self, value):
-        validate_tel_number(value)
-
-    @validates("destination_contact_number")
-    def destination_contact_number(self, value):
-        validate_tel_number(value)
-
 
 def validate_tel_number(value):
     if not value:
@@ -333,7 +340,6 @@ class UserAddressSchema(ma.SQLAlchemySchema):
 
     postcode = ma.Function(lambda obj: obj.postcode.upper())
     address = ma.Nested(AddressSchema, exclude=("ward",))
-
 
 
 #    @pre_dump

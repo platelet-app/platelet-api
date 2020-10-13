@@ -199,6 +199,9 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     author = db.relationship("User", foreign_keys=[author_uuid], backref=db.backref('tasks_as_author', lazy='dynamic'))
     time_of_call = db.Column(db.DateTime(timezone=True), index=True)
 
+    requester_contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'))
+    requester_contact = db.relationship("Contact", foreign_keys=[requester_contact_id])
+
     time_picked_up = db.Column(db.DateTime(timezone=True))
     time_dropped_off = db.Column(db.DateTime(timezone=True))
 
@@ -223,12 +226,6 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
-    contact_name = db.Column(db.String(64))
-    contact_number = db.Column(db.String(64))
-    patient_name = db.Column(db.String(64))
-    patient_contact_number = db.Column(db.String(64))
-    destination_contact_name = db.Column(db.String(64))
-    destination_contact_number = db.Column(db.String(64))
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
     priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
@@ -239,6 +236,13 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
 
     assigned_coordinators = db.relationship('User', secondary=task_coordinator_assignees, lazy='dynamic',
                                     backref=db.backref('tasks_as_coordinator', lazy='dynamic'))
+
+    relay_previous_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey(uuid))
+    relay_previous = db.relationship("Task",
+                                     uselist=False,
+                                     foreign_keys=[relay_previous_uuid],
+                                     remote_side=[uuid],
+                                     backref=db.backref('relay_next', uselist=False))
 
     comments = db.relationship(
         'Comment',
@@ -357,6 +361,16 @@ class DeleteFlags(SearchableMixin, db.Model):
     active = db.Column(db.Boolean, default=True)
 
     __searchable__ = ['object_uuid', 'object_type', 'active']
+
+
+class Contact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), nullable=True)
+    address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
+    address = db.relationship("Address", foreign_keys=[address_id])
+    telephone_number = db.Column(db.String(64), nullable=True)
+    mobile_number = db.Column(db.String(64), nullable=True)
+    email_address = db.Column(db.String(128), nullable=True)
 
 
 class Location(SearchableMixin, db.Model, CommonMixin):
