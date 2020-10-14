@@ -271,10 +271,12 @@ class Tasks(Resource):
 
             if status == "new":
                 # TODO: make this a query instead
-                return tasks_schema.dump([t for t in query_deleted.all() if len(t.assigned_riders.all()) == 0]), 200
+                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) == 0 and not (
+                        t.time_cancelled or t.time_rejected)]), 200
             elif status == "active":
                 # TODO: make this a query instead
-                return tasks_schema.dump([t for t in query_deleted.all() if len(t.assigned_riders.all()) > 0 and not t.time_picked_up]), 200
+                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) > 0 and not (
+                            t.time_cancelled or t.time_rejected or t.time_picked_up)]), 200
                 filtered = query_deleted.filter(models.Task.assigned_riders.any(), models.Task.time_picked_up.is_(None))
             elif status == "picked_up":
                 filtered = query_deleted.filter(
