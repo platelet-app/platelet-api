@@ -230,6 +230,12 @@ class ContactSchema(ma.SQLAlchemySchema, PostLoadMixin):
         model = models.Contact
         fields = ('name', 'address', 'telephone_number', 'mobile_number', 'email_address')
 
+    name = ma.String(allow_none=True)
+    address = ma.String(allow_none=True)
+    telephone_number = ma.String(allow_none=True)
+    mobile_number = ma.String(allow_none=True)
+    email_address = ma.String(allow_none=True)
+
     @validates("telephone_number")
     def telephone_number(self, value):
         validate_tel_number(value)
@@ -243,9 +249,9 @@ class ContactSchema(ma.SQLAlchemySchema, PostLoadMixin):
             raise
             raise ValidationError("Not a valid telephone number.")
 
-    @validates("mobile_number")
-    def mobile_number(self, value):
-        validate_tel_number(value)
+  #  @validates("mobile_number")
+  #  def mobile_number(self, value):
+  #      validate_tel_number(value)
 
 
 class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
@@ -258,12 +264,12 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'priority_id', 'time_cancelled', 'time_rejected',
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
-                  'relay_next', 'relay_previous')
+                  'relay_next', 'relay_previous', 'relay_previous_uuid')
 
     requester_contact = ma.Nested(ContactSchema)
 
-    pickup_address = ma.Nested(AddressSchema)
-    dropoff_address = ma.Nested(AddressSchema)
+    pickup_address = ma.Nested(AddressSchema, allow_none=True)
+    dropoff_address = ma.Nested(AddressSchema, allow_none=True)
     rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'),
                       dump_only=True)
     assigned_riders = ma.Nested(UserSchema,
@@ -272,7 +278,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     assigned_coordinators = ma.Nested(UserSchema,
                                       exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
                                       many=True, dump_only=True)
-    author = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'))
+    author = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'), dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     time_picked_up = ma.DateTime(allow_none=True)
