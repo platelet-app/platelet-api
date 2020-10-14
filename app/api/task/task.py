@@ -283,6 +283,7 @@ class Tasks(Resource):
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None)
                 )
+            #TODO: this needs to account for relays
             elif status == "delivered":
                 filtered = query_deleted.filter(
                     models.Task.time_dropped_off.isnot(None),

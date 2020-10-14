@@ -284,8 +284,8 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     patch_id = ma.Int(allow_none=True)
     time_of_call = ma.DateTime()
     assigned_users_display_string = ma.String(dump_only=True)
-    relay_previous = ma.Nested('self', exclude=('relay_next',))
-    relay_next = ma.Nested('self', exclude=('relay_previous',))
+    relay_previous = ma.Nested('self', exclude=('relay_next',), dump_only=True)
+    relay_next = ma.Nested('self', exclude=('relay_previous',), dump_only=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),
