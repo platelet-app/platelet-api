@@ -266,7 +266,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
                   'relay_next', 'relay_previous', 'relay_previous_uuid')
 
-    requester_contact = ma.Nested(ContactSchema)
+    requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
     dropoff_address = ma.Nested(AddressSchema, allow_none=True)
