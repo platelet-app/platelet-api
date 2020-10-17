@@ -228,7 +228,7 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     patch = db.relationship("Patch", foreign_keys=[patch_id])
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
-    priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'))
+    priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'), nullable=True)
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
     assigned_riders = db.relationship('User', secondary=task_rider_assignees, lazy='dynamic',

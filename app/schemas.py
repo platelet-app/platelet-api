@@ -286,6 +286,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     time_cancelled = ma.DateTime(allow_none=True)
     time_rejected = ma.DateTime(allow_none=True)
     priority = fields.Pluck(PrioritySchema, "label", dump_only=True)
+    priority_id = ma.Int(allow_none=True)
     patch = fields.Pluck(PatchSchema, "label", dump_only=True)
     patch_id = ma.Int(allow_none=True)
     time_of_call = ma.DateTime()

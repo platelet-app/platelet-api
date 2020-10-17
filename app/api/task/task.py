@@ -1,6 +1,7 @@
 from flask import jsonify, request
 from flask_socketio import emit
 from marshmallow import ValidationError
+from sqlalchemy import exists
 
 from app import schemas, models, socketio
 from flask_restx import Resource, reqparse
@@ -26,6 +27,7 @@ assigned_users_schema = schemas.UserSchema(many=True)
 TASK = models.Objects.TASK
 DELETE_FLAG = models.Objects.DELETE_FLAG
 
+
 @ns.route('/<task_id>/restore', endpoint="task_undelete")
 class TaskRestore(Resource):
     @flask_praetorian.roles_accepted("admin", "coordinator")
@@ -46,6 +48,7 @@ class TaskRestore(Resource):
             return {'uuid': str(task.uuid), 'message': 'Task {} not flagged for deletion.'.format(task.uuid)}, 200
         return {'uuid': str(task.uuid), 'message': 'Task {} deletion flag removed.'.format(task.uuid)}, 200
 
+
 @ns.route('/<task_id>', endpoint="task_detail")
 class Task(Resource):
     @flask_praetorian.auth_required
@@ -63,6 +66,9 @@ class Task(Resource):
             return not_found(TASK, task_id)
         try:
             add_item_to_delete_queue(task)
+            if task.relay_previous_uuid:
+                task.relay_previous_uuid = None
+                db.session.commit()
             for deliverable in task.deliverables:
                 if not deliverable.flagged_for_deletion:
                     add_item_to_delete_queue(deliverable)
@@ -73,7 +79,7 @@ class Task(Resource):
 
     @flask_praetorian.auth_required
     @check_rider_match
-    #@check_parent_or_collaborator_or_admin_match
+    # @check_parent_or_collaborator_or_admin_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -116,7 +122,7 @@ class TasksAssignees(Resource):
             return assigned_users_schema.dump(combined)
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
-    #@check_parent_or_collaborator_or_admin_match
+    # @check_parent_or_collaborator_or_admin_match
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -158,7 +164,7 @@ class TasksAssignees(Resource):
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
-    #@check_parent_or_collaborator_or_admin_match
+    # @check_parent_or_collaborator_or_admin_match
     def delete(self, task_id):
         try:
             task = get_object(TASK, task_id)
@@ -225,7 +231,8 @@ class Tasks(Resource):
         task.author_uuid = utilities.current_user().uuid
         db.session.add(task)
         db.session.commit()
-        return {'uuid': str(task.uuid), 'time_created': str(task.time_created), 'message': 'Task {} created'.format(task.uuid)}, 201
+        return {'uuid': str(task.uuid), 'time_created': str(task.time_created),
+                'message': 'Task {} created'.format(task.uuid)}, 201
 
 
 @ns.route('s/<user_uuid>',
@@ -262,7 +269,7 @@ class Tasks(Resource):
             elif role == "author":
                 query = requested_user.tasks_as_author
             else:
-                query = requested_user.tasks_as_rider.union_all(requested_user.tasks_as_coordinator)
+                query = requested_user.tasks_as_coordinator
 
             # filter deleted tasks and relays
             query_deleted = query.filter(
@@ -270,29 +277,33 @@ class Tasks(Resource):
                 models.Task.relay_previous_uuid.is_(None))
 
             if status == "new":
-                # TODO: make this a query instead
-                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) == 0 and not (
-                        t.time_cancelled or t.time_rejected)]), 200
+                filtered = query_deleted.filter(
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None),
+                ).filter(~models.Task.assigned_riders.any())
             elif status == "active":
                 # TODO: make this a query instead
-                return tasks_schema.dump([t for t in query.all() if len(t.assigned_riders.all()) > 0 and not (
-                            t.time_cancelled or t.time_rejected or t.time_picked_up)]), 200
-                filtered = query_deleted.filter(models.Task.assigned_riders.any(), models.Task.time_picked_up.is_(None))
+                filtered = query_deleted.filter(
+                    models.Task.time_picked_up.is_(None),
+                    models.Task.time_dropped_off.is_(None),
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None),
+                ).filter(models.Task.assigned_riders.any())
             elif status == "picked_up":
                 filtered = query_deleted.filter(
                     models.Task.time_picked_up.isnot(None),
                     models.Task.time_dropped_off.is_(None),
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None)
-                )
-            #TODO: this needs to account for relays
+                ).filter(models.Task.assigned_riders.any())
+            # TODO: this needs to account for relays
             elif status == "delivered":
                 filtered = query_deleted.filter(
                     models.Task.time_dropped_off.isnot(None),
                     models.Task.time_dropped_off.isnot(None),
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None)
-                )
+                ).filter(models.Task.assigned_riders.any())
             elif status == "cancelled":
                 filtered = query_deleted.filter(models.Task.time_cancelled.isnot(None))
             elif status == "rejected":
