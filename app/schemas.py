@@ -270,15 +270,13 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
 
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
     dropoff_address = ma.Nested(AddressSchema, allow_none=True)
-    rider = ma.Nested(UserSchema, exclude=('uuid', 'address', 'password', 'email', 'dob', 'roles', 'comments'),
-                      dump_only=True)
     assigned_riders = ma.Nested(UserSchema,
-                                exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
+                                include=('uuid', 'display_name', 'patch'),
                                 many=True, dump_only=True)
     assigned_coordinators = ma.Nested(UserSchema,
-                                      exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'),
+                                      include=('uuid', 'display_name'),
                                       many=True, dump_only=True)
-    author = ma.Nested(UserSchema, exclude=('address', 'password', 'email', 'dob', 'roles', 'comments'), dump_only=True)
+    author = ma.Nested(UserSchema, include=('uuid', 'display_name'), dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     time_picked_up = ma.DateTime(allow_none=True)

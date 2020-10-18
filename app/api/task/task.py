@@ -282,7 +282,6 @@ class Tasks(Resource):
                     models.Task.time_rejected.is_(None),
                 ).filter(~models.Task.assigned_riders.any())
             elif status == "active":
-                # TODO: make this a query instead
                 filtered = query_deleted.filter(
                     models.Task.time_picked_up.is_(None),
                     models.Task.time_dropped_off.is_(None),
@@ -315,7 +314,6 @@ class Tasks(Resource):
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
-            raise
             return internal_error(e)
 
         return tasks_schema.dump(items)
