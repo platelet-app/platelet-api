@@ -86,9 +86,7 @@ def random_string(length=10):
 
 
 def get_object(type, _id):
-    if type == models.Objects.SESSION:
-        return models.Session.query.filter_by(uuid=_id).first()
-    elif type == models.Objects.USER:
+    if type == models.Objects.USER:
         return models.User.query.filter_by(uuid=_id).first()
     elif type == models.Objects.TASK:
         return models.Task.query.filter_by(uuid=_id).first()
