@@ -264,19 +264,19 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'priority_id', 'time_cancelled', 'time_rejected',
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
-                  'relay_next', 'relay_previous', 'relay_previous_uuid')
+                  'relay_next', 'relay_previous', 'relay_previous_uuid', 'parent_id', 'order_in_relay')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
     dropoff_address = ma.Nested(AddressSchema, allow_none=True)
     assigned_riders = ma.Nested(UserSchema,
-                                include=('uuid', 'display_name', 'patch'),
+                                only=('uuid', 'display_name', 'patch'),
                                 many=True, dump_only=True)
     assigned_coordinators = ma.Nested(UserSchema,
-                                      include=('uuid', 'display_name'),
+                                      only=('uuid', 'display_name'),
                                       many=True, dump_only=True)
-    author = ma.Nested(UserSchema, include=('uuid', 'display_name'), dump_only=True)
+    author = ma.Nested(UserSchema, only=('uuid', 'display_name'), dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     time_picked_up = ma.DateTime(allow_none=True)
@@ -330,6 +330,14 @@ def int_check(value):
     except ValueError:
         return True
     return False
+
+
+class TasksParentSchema(ma.SQLAlchemySchema):
+    class Meta:
+        unknown = EXCLUDE
+        model = models.TasksParent
+
+    relays = ma.Nested(TaskSchema, many=True, dump_only=True)
 
 
 class UserUsernameSchema(ma.SQLAlchemySchema):

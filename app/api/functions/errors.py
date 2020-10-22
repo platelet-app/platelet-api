@@ -41,6 +41,7 @@ def object_type_to_string(type):
     switch = {
         Objects.USER: "user",
         Objects.TASK: "task",
+        Objects.TASK_PARENT: "task parent",
         Objects.VEHICLE: "vehicle",
         Objects.COMMENT: "comment",
         Objects.DELIVERABLE: "deliverable",

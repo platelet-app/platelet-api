@@ -22,9 +22,11 @@ from app import db
 
 task_schema = schemas.TaskSchema()
 tasks_schema = schemas.TaskSchema(many=True)
+tasks_parent_schema = schemas.TasksParentSchema(many=True)
 assigned_users_schema = schemas.UserSchema(many=True)
 
 TASK = models.Objects.TASK
+TASK_PARENT = models.Objects.TASK_PARENT
 DELETE_FLAG = models.Objects.DELETE_FLAG
 
 
@@ -214,13 +216,13 @@ class Tasks(Resource):
         args = parser.parse_args()
         page = args['page'] if args['page'] else 1
         order = args['order'] if args['order'] else "newest"
-        query = get_query(TASK)
+        query = get_query(TASK_PARENT)
         # filter deleted tasks and relays
-        query_filtered = query.filter(
-            models.Task.flagged_for_deletion.is_(False),
-            models.Task.relay_previous_uuid.is_(None))
-        items = get_page(query_filtered, page, order=order, model=models.Task)
-        return tasks_schema.dump(items)
+        #  query_filtered = query.filter(
+        #      models.Task.flagged_for_deletion.is_(False),
+        #      models.Task.relay_previous_uuid.is_(None))
+        items = get_page(query, page, order=order, model=models.TasksParent)
+        return tasks_parent_schema.dump(items)
 
     @flask_praetorian.auth_required
     def post(self):
@@ -228,6 +230,18 @@ class Tasks(Resource):
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
+        if task.parent_id:
+            parent = get_object(TASK_PARENT, task.parent_id)
+            if not parent:
+                return not_found(TASK_PARENT, task.parent_id)
+            next_order_in_relay_int = parent.relays.all()[-1].order_in_relay + 1
+        else:
+            new_parent = models.TasksParent()
+            db.session.add(new_parent)
+            db.session.flush()
+            next_order_in_relay_int = 1
+            task.parent_id = new_parent.id
+        task.order_in_relay = next_order_in_relay_int
         task.author_uuid = utilities.current_user().uuid
         db.session.add(task)
         db.session.commit()
@@ -274,27 +288,31 @@ class Tasks(Resource):
             # filter deleted tasks and relays
             query_deleted = query.filter(
                 models.Task.flagged_for_deletion.is_(False),
-                models.Task.relay_previous_uuid.is_(None))
+                models.Task.relay_previous_uuid.is_(None)
+            )
 
             if status == "new":
                 filtered = query_deleted.filter(
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None),
-                ).filter(~models.Task.assigned_riders.any())
+                ).filter(~models.Task.assigned_riders.any()) \
+                    .order_by(models.Task.time_of_call.desc())
             elif status == "active":
                 filtered = query_deleted.filter(
                     models.Task.time_picked_up.is_(None),
                     models.Task.time_dropped_off.is_(None),
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None),
-                ).filter(models.Task.assigned_riders.any())
+                ).filter(models.Task.assigned_riders.any()) \
+                    .order_by(models.Task.time_of_call)
             elif status == "picked_up":
                 filtered = query_deleted.filter(
                     models.Task.time_picked_up.isnot(None),
                     models.Task.time_dropped_off.is_(None),
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None)
-                ).filter(models.Task.assigned_riders.any())
+                ).filter(models.Task.assigned_riders.any()) \
+                    .order_by(models.Task.time_of_call)
             # TODO: this needs to account for relays
             elif status == "delivered":
                 filtered = query_deleted.filter(
@@ -302,7 +320,8 @@ class Tasks(Resource):
                     models.Task.time_dropped_off.isnot(None),
                     models.Task.time_cancelled.is_(None),
                     models.Task.time_rejected.is_(None)
-                ).filter(models.Task.assigned_riders.any())
+                ).filter(models.Task.assigned_riders.any()) \
+                    .order_by(models.Task.time_of_call)
             elif status == "cancelled":
                 filtered = query_deleted.filter(models.Task.time_cancelled.isnot(None))
             elif status == "rejected":
@@ -310,7 +329,8 @@ class Tasks(Resource):
             else:
                 filtered = query_deleted
 
-            items = get_page(filtered, page, order=order, model=models.Task)
+            filtered_ordered = filtered.order_by(models.Task.parent_id)
+            items = get_page(filtered_ordered, page, order=order, model=models.Task)
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:

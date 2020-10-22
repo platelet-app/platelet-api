@@ -6,7 +6,7 @@ from sqlalchemy import desc, asc
 
 from app import app, db, models
 from app.api.user.user_utilities.userfunctions import get_user_object, get_all_users
-from app.api.task.task_utilities.taskfunctions import get_task_object, get_all_tasks
+from app.api.task.task_utilities.taskfunctions import get_task_object, get_all_tasks, get_task_parent_object
 from app.api.vehicle.vehicle_utilities.vehiclefunctions import get_vehicle_object, get_all_vehicles
 from app.api.location.location_utilities.locationfunctions import get_location_object, get_all_locations
 from app.api.priority.priority_utilities.priorityfunctions import get_all_priorities
@@ -78,6 +78,8 @@ def get_object(type, _id):
             return get_user_object(_id)
         elif type == models.Objects.TASK:
             return get_task_object(_id)
+        elif type == models.Objects.TASK_PARENT:
+            return get_task_parent_object(_id)
         elif type == models.Objects.VEHICLE:
             return get_vehicle_object(_id)
         elif type == models.Objects.COMMENT:
@@ -97,6 +99,7 @@ def get_query(model_type, filter_deleted=True):
     switch = {
         models.Objects.USER: models.User.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.User.query,
         models.Objects.TASK: models.Task.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Task.query,
+        models.Objects.TASK_PARENT: models.TasksParent.query,
         models.Objects.VEHICLE: models.Vehicle.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Vehicle.query,
         models.Objects.LOCATION: models.Location.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Location.query,
         models.Objects.PRIORITY: models.Priority.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Priority.query,

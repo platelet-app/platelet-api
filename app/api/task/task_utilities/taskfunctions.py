@@ -3,12 +3,18 @@ from flask import json, request
 import hashlib
 from app.exceptions import ObjectNotFoundError
 
-
 def get_task_object(_id):
     task = models.Task.query.filter_by(uuid=_id).first()
     if not task:
         raise ObjectNotFoundError()
     return task
+
+
+def get_task_parent_object(_id):
+    task_parent = models.TasksParent.query.filter_by(id=_id).first()
+    if not task_parent:
+        raise ObjectNotFoundError()
+    return task_parent
 
 
 def get_all_tasks(filter_deleted=False):
