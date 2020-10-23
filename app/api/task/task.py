@@ -245,8 +245,12 @@ class Tasks(Resource):
         task.author_uuid = utilities.current_user().uuid
         db.session.add(task)
         db.session.commit()
-        return {'uuid': str(task.uuid), 'time_created': str(task.time_created),
-                'message': 'Task {} created'.format(task.uuid)}, 201
+        return {
+                   'uuid': str(task.uuid),
+                   'time_created': str(task.time_created),
+                   'message': 'Task {} created'.format(task.uuid),
+                   'author_uuid': str(task.author_uuid)
+               }, 201
 
 
 @ns.route('s/<user_uuid>',
@@ -272,7 +276,7 @@ class Tasks(Resource):
             parser.add_argument("order", type=str, location="args")
             parser.add_argument("status", type=str, location="args")
             args = parser.parse_args()
-            page = args['page'] if args['page'] else 1
+            page = args['page'] if args['page'] is not None else 1
             role = args['role']
             status = args['status']
             order = args['order'] if args['order'] else "descending"
@@ -287,8 +291,7 @@ class Tasks(Resource):
 
             # filter deleted tasks and relays
             query_deleted = query.filter(
-                models.Task.flagged_for_deletion.is_(False),
-                models.Task.relay_previous_uuid.is_(None)
+                models.Task.flagged_for_deletion.is_(False)
             )
 
             if status == "new":
@@ -330,7 +333,10 @@ class Tasks(Resource):
                 filtered = query_deleted
 
             filtered_ordered = filtered.order_by(models.Task.parent_id)
-            items = get_page(filtered_ordered, page, order=order, model=models.Task)
+            if page > 0:
+                items = get_page(filtered_ordered, page, order=order, model=models.Task)
+            else:
+                items = filtered_ordered.all()
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
