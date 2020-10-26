@@ -7,6 +7,8 @@ from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 import flask_praetorian
 import logging
+from flask import request
+from flask_praetorian import utilities as prae_utils
 
 from app.cloud.utilities import CloudStores
 from config import Config
@@ -109,6 +111,23 @@ site_blueprint = Blueprint('site', __name__, url_prefix='/')
 guard.init_app(app, models.User)
 app.register_blueprint(site_blueprint)
 #app.register_blueprint(testing_views.mod)
+
+
+@flask_praetorian.auth_required
+@app.before_request
+def log_input():
+    # do logging here
+    if request.method in ["POST", "PUT", "DELETE"]:
+        if not request.endpoint.endswith("login_login"):
+            guard = prae_utils.current_guard()
+            token = guard.read_token_from_header()
+            if token:
+                jwt_data = guard.extract_jwt_token(token)
+                user = models.User.query.filter_by(id=jwt_data['id']).one()
+                print("we got someone changing shit, it's {}".format(user.display_name))
+                print(request)
+            else:
+                print("this person isn't logged in? what the fuck")
 
 
 @app.after_request
