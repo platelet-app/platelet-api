@@ -68,9 +68,6 @@ class Task(Resource):
             return not_found(TASK, task_id)
         try:
             add_item_to_delete_queue(task)
-            if task.relay_previous_uuid:
-                task.relay_previous_uuid = None
-                db.session.commit()
             for deliverable in task.deliverables:
                 if not deliverable.flagged_for_deletion:
                     add_item_to_delete_queue(deliverable)
@@ -336,7 +333,11 @@ class Tasks(Resource):
             else:
                 filtered = query_deleted
 
-            filtered_ordered = filtered.order_by(models.Task.parent_id, models.Task.order_in_relay)
+            if status in ["new", "delivered", "cancelled", "rejected"]:
+                filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
+            else:
+                filtered_ordered = filtered.order_by(models.Task.parent_id.asc(), models.Task.order_in_relay)
+
             if page > 0:
                 items = get_page(filtered_ordered, page, order=order, model=models.Task)
             else:
