@@ -61,10 +61,18 @@ def get_unspecified_object(_id):
         raise ObjectNotFoundError
 
     for i in models.Objects:
+        if i == models.Objects.TASK_PARENT:
+            continue
         try:
             return get_object(i, _id)
         except ObjectNotFoundError:
             continue
+        except Exception as e:
+            logging.exception("An exception occurred while looking up {} with ID {}. Reason: {}".format(
+                object_type_to_string(i),
+                _id,
+                str(e)
+            ))
 
     raise ObjectNotFoundError
 
