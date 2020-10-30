@@ -19,6 +19,20 @@ def subscribe_to_object(obj_uuid):
     emit('response', {'data': "Subscribed to object with uuid {}.".format(obj_uuid)})
 
 
+@socketio.on('subscribe_many', namespace=namespace)
+def subscribe_to_objects(uuids_list):
+    for i in uuids_list:
+        join_room(i)
+    emit('response', {'data': "Subscribed to {} objects".format(len(uuids_list))})
+
+
+@socketio.on('unsubscribe_many', namespace=namespace)
+def unsubscribe_from_objects(uuids_list):
+    for i in uuids_list:
+        leave_room(i)
+    emit('response', {'data': "Unsubscribed from {} objects".format(len(uuids_list))})
+
+
 @socketio.on('unsubscribe', namespace=namespace)
 def unsubscribe_from_object(obj_uuid):
     leave_room(obj_uuid)
