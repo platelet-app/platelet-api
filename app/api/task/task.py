@@ -1,12 +1,13 @@
 from flask import jsonify, request
-from flask_socketio import emit
 from marshmallow import ValidationError
-from sqlalchemy import exists
 
 from app import schemas, models, socketio
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
+from app.api.sockets import UPDATE_TASK, ADD_NEW_TASK, \
+    ASSIGN_COORDINATOR_TO_TASK, ASSIGN_RIDER_TO_TASK, REMOVE_ASSIGNED_COORDINATOR_FROM_TASK, \
+    REMOVE_ASSIGNED_RIDER_FROM_TASK
 from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page, \
     get_query
@@ -92,7 +93,7 @@ class Task(Resource):
             return schema_validation_error(e)
 
         request_json = request.get_json()
-        emit_socket_broadcast(request_json, task_id, "update")
+        emit_socket_broadcast(request_json, UPDATE_TASK, uuid=task_id)
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': "Task {} updated.".format(task.uuid)}
 
@@ -147,19 +148,20 @@ class TasksAssignees(Resource):
                 return forbidden_error("Can not assign a non-rider as a rider.", user_uuid)
 
             task.assigned_riders.append(user)
+            socket_update_type = ASSIGN_RIDER_TO_TASK
 
         elif args['role'] == "coordinator":
             if "coordinator" not in user.roles:
                 return forbidden_error("Can not assign a non-coordinator as a coordinator.", user_uuid)
             task.assigned_coordinators.append(user)
-
+            socket_update_type = ASSIGN_COORDINATOR_TO_TASK
         else:
             return forbidden_error("Type of role must be specified.", task_id)
 
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
-        emit_socket_broadcast(request_json, task_id, "assign_user")
+        emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
@@ -187,17 +189,19 @@ class TasksAssignees(Resource):
         if args['role'] == "rider":
             filtered_riders = list(filter(lambda u: u.uuid != user.uuid, task.assigned_riders))
             task.assigned_riders = filtered_riders
+            socket_update_type = REMOVE_ASSIGNED_RIDER_FROM_TASK
 
         elif args['role'] == "coordinator":
             filtered_coordinators = list(filter(lambda u: u.uuid != user.uuid, task.assigned_coordinators))
             task.assigned_riders = filtered_coordinators
+            socket_update_type = REMOVE_ASSIGNED_COORDINATOR_FROM_TASK
         else:
             return forbidden_error("Type of role must be specified.", task_id)
 
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
-        emit_socket_broadcast(request_json, task_id, "remove_assigned_user")
+        emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
 
@@ -242,6 +246,7 @@ class Tasks(Resource):
         task.author_uuid = utilities.current_user().uuid
         db.session.add(task)
         db.session.commit()
+        request_json = request.get_json()
         return {
                    'uuid': str(task.uuid),
                    'time_created': str(task.time_created),
