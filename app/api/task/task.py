@@ -7,7 +7,7 @@ import flask_praetorian
 from app import task_ns as ns
 from app.api.sockets import UPDATE_TASK, ADD_NEW_TASK, \
     ASSIGN_COORDINATOR_TO_TASK, ASSIGN_RIDER_TO_TASK, REMOVE_ASSIGNED_COORDINATOR_FROM_TASK, \
-    REMOVE_ASSIGNED_RIDER_FROM_TASK
+    REMOVE_ASSIGNED_RIDER_FROM_TASK, DELETE_TASK
 from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page, \
     get_query
@@ -73,8 +73,10 @@ class Task(Resource):
                 if not deliverable.flagged_for_deletion:
                     add_item_to_delete_queue(deliverable)
         except AlreadyFlaggedForDeletionError:
+            emit_socket_broadcast({}, DELETE_TASK, uuid=task_id)
             return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
+        emit_socket_broadcast({}, DELETE_TASK, uuid=task_id)
         return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
     @flask_praetorian.auth_required
