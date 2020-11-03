@@ -11,6 +11,7 @@ thread_lock = Lock()
 
 namespace = "/api/{}/subscribe".format(api_version)
 namespace_comments = "/api/{}/subscribe_comments".format(api_version)
+namespace_assignments = "/api/{}/subscribe_assignments".format(api_version)
 
 UPDATE_TASK = "UPDATE_TASK"
 ASSIGN_RIDER_TO_TASK = "ASSIGN_RIDER_TO_TASK"
@@ -19,6 +20,7 @@ ASSIGN_COORDINATOR_TO_TASK = "ASSIGN_COORDINATOR_TO_TASK"
 REMOVE_ASSIGNED_COORDINATOR_FROM_TASK = "REMOVE_ASSIGNED_COORDINATOR_FROM_TASK"
 ADD_NEW_TASK = "ADD_NEW_TASK"
 DELETE_TASK = "DELETE_TASK"
+RESTORE_TASK = "RESTORE_TASK"
 
 
 @socketio.on('subscribe', namespace=namespace)
@@ -57,6 +59,18 @@ def subscribe_to_comments(obj_uuid):
 def unsubscribe_from_comments(obj_uuid):
     leave_room(obj_uuid)
     emit('response', {'data': "Unsubscribed from comments for object with uuid {}.".format(obj_uuid)})
+
+
+@socketio.on('subscribe', namespace=namespace_assignments)
+def subscribe_to_comments(user_uuid):
+    join_room(user_uuid)
+    emit('response', {'data': "Subscribed to assignments for user with uuid {}.".format(user_uuid)})
+
+
+@socketio.on('unsubscribe', namespace=namespace_assignments)
+def unsubscribe_from_comments(user_uuid):
+    leave_room(user_uuid)
+    emit('response', {'data': "Unsubscribed from assignments for user with uuid {}.".format(user_uuid)})
 
 
 @socketio.on('connect', namespace=namespace)

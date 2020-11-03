@@ -42,3 +42,17 @@ def emit_socket_broadcast(data, type, uuid=None):
                   room=str(uuid) if uuid else "root",
                   namespace="/api/v0.1/subscribe",
                   )
+
+
+def emit_socket_assignment_broadcast(data, type, user_uuid):
+    # TODO: when implementing organisations, maybe make a separate namespace for each one?
+    socketio.emit('subscribed_response',
+                  {
+                      'user_uuid': str(user_uuid),
+                      'type': type,
+                      'data': data,
+                      'tab_id': request.headers['Tab-Identification']
+                  },
+                  room=str(user_uuid),
+                  namespace="/api/v0.1/subscribe_assignments",
+                  )

@@ -7,8 +7,8 @@ import flask_praetorian
 from app import task_ns as ns
 from app.api.sockets import UPDATE_TASK, ADD_NEW_TASK, \
     ASSIGN_COORDINATOR_TO_TASK, ASSIGN_RIDER_TO_TASK, REMOVE_ASSIGNED_COORDINATOR_FROM_TASK, \
-    REMOVE_ASSIGNED_RIDER_FROM_TASK, DELETE_TASK
-from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast
+    REMOVE_ASSIGNED_RIDER_FROM_TASK, DELETE_TASK, RESTORE_TASK
+from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast, emit_socket_assignment_broadcast
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
@@ -49,6 +49,7 @@ class TaskRestore(Resource):
             remove_item_from_delete_queue(task)
         else:
             return {'uuid': str(task.uuid), 'message': 'Task {} not flagged for deletion.'.format(task.uuid)}, 200
+        emit_socket_broadcast(task_schema.dump(task), RESTORE_TASK, uuid=task.uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} deletion flag removed.'.format(task.uuid)}, 200
 
 
@@ -164,6 +165,7 @@ class TasksAssignees(Resource):
         db.session.commit()
         request_json = request.get_json()
         emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
+        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, utilities.current_user().uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
@@ -204,6 +206,7 @@ class TasksAssignees(Resource):
         db.session.commit()
         request_json = request.get_json()
         emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
+        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, utilities.current_user().uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
 
