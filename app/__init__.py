@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 import flask
 from flask import Flask, Blueprint
 from flask_restx import Api
@@ -68,7 +71,7 @@ search_ns = api.namespace('api/{}/search'.format(api_version), description='Elas
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
 Payload.max_decode_packets = 50
-socketio = SocketIO(app, cors_allowed_origins='*')
+socketio = SocketIO(app, cors_allowed_origins='*', message_queue=app.config['REDIS_URL'])
 
 
 FlaskBuzz.register_error_handler_with_flask_restplus(api)

@@ -25,5 +25,6 @@ class Config:
     DEFAULT_DELETE_TIME = 10
 
     ELASTICSEARCH_URL = None
+    REDIS_URL = os.environ.get("REDIS_URL") or "redis://"
     #ELASTICSEARCH_URL = os.environ.get("ELASTICSEARCH_URL") or \
     #    "http://localhost:9200"
