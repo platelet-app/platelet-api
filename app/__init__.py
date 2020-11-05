@@ -3,13 +3,16 @@ import os
 import eventlet
 
 # hack so that ipython doesn't break when importing from app
+
+ipython = False
 try:
     __IPYTHON__
+    ipython = True
 except NameError:
     eventlet.monkey_patch()
 
 import flask
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, json
 from flask_restx import Api
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
@@ -96,12 +99,13 @@ cloud_stores = CloudStores(
     endpoint=app.config['AWS_ENDPOINT']
 )
 
-profile_pic_dir = app.config['PROFILE_PROCESSING_DIRECTORY']
-if profile_pic_dir:
-    if not os.path.isdir(profile_pic_dir):
-        os.mkdir(profile_pic_dir)
-else:
-    raise EnvironmentError("A profile picture processing directory must be specified.")
+if not ipython:
+    profile_pic_dir = app.config['PROFILE_PROCESSING_DIRECTORY']
+    if profile_pic_dir:
+        if not os.path.isdir(profile_pic_dir):
+            os.mkdir(profile_pic_dir)
+    else:
+        raise EnvironmentError("A profile picture processing directory must be specified.")
 
 
 from app import models
@@ -128,21 +132,47 @@ app.register_blueprint(site_blueprint)
 #app.register_blueprint(testing_views.mod)
 
 
-@flask_praetorian.auth_required
-@app.before_request
-def log_input():
-    # do logging here
+def get_http_code_int(label):
+    return models.HTTPRequestType.query.filter_by(label=label).first().id
+
+
+def endpoint_to_object_type(endpoint):
+    switch = {
+        "task_detail": models.Objects.TASK,
+        "task_undelete": models.Objects.TASK,
+        "task_delete": models.Objects.TASK,
+        "tasks_list_all": models.Objects.TASK,
+        "tasks_assign_user": models.Objects.TASK,
+        "tasks_list": models.Objects.TASK,
+    }
+    return switch.get(endpoint, lambda: None)
+
+
+@app.after_request
+def log_input(response):
     if request.method in ["POST", "PUT", "DELETE"]:
         if not request.endpoint.endswith("login_login"):
-            guard = prae_utils.current_guard()
+            try:
+                object_uuid = json.loads(response.get_data())['uuid']
+            except KeyError:
+                object_uuid = None
             token = guard.read_token_from_header()
             if token:
                 jwt_data = guard.extract_jwt_token(token)
                 user = models.User.query.filter_by(id=jwt_data['id']).one()
+                entry = models.LogEntry(
+                    parent_type=endpoint_to_object_type(request.endpoint),
+                    calling_user_uuid=user.uuid,
+                    http_request_type_id=get_http_code_int(request.method),
+                    parent_uuid=object_uuid
+                )
+                db.session.add(entry)
+                db.session.commit()
                 print("we got someone changing shit, it's {}".format(user.display_name))
                 print(request)
             else:
                 print("this person isn't logged in? what the fuck")
+    return response
 
 
 @app.after_request

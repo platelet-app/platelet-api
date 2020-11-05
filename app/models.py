@@ -24,6 +24,7 @@ class Objects(IntEnum):
     PATCH = auto()
     DELETE_FLAG = auto()
     SETTINGS = auto()
+    LOG_ENTRY = auto()
     UNKNOWN = auto()
     
 
@@ -127,6 +128,13 @@ class Comment(db.Model, CommonMixin):
     parent_uuid = db.Column(UUID(as_uuid=True))
     publicly_visible = db.Column(db.Boolean, default=True)
 
+    logged_actions = db.relationship(
+        'LogEntry',
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Comment.uuid)".format(Objects.COMMENT),
+        backref="parent_log_comment"
+    )
+
+
     @property
     def object_type(self):
         return Objects.COMMENT
@@ -147,6 +155,13 @@ class Deliverable(db.Model, CommonMixin):
     task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     type_id = db.Column(db.Integer, db.ForeignKey('deliverable_type.id'))
     type = db.relationship("DeliverableType", foreign_keys=[type_id])
+
+    logged_actions = db.relationship(
+        'LogEntry',
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Deliverable.uuid)".format(Objects.DELIVERABLE),
+        backref="parent_log_deliverable"
+    )
+
 
     @property
     def object_type(self):
@@ -254,7 +269,14 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK)
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK),
+        backref="parent_task"
+    )
+
+    logged_actions = db.relationship(
+        'LogEntry',
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Task.uuid)".format(Objects.TASK),
+        backref="parent_log_task"
     )
 
     __searchable__ = ['contact_name', 'contact_number', 'session_uuid']
@@ -281,7 +303,14 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE)
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE),
+        backref="parent_vehicle"
+    )
+
+    logged_actions = db.relationship(
+        'LogEntry',
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE),
+        backref="parent_log_vehicle"
     )
 
     __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
@@ -321,13 +350,20 @@ class User(SearchableMixin, db.Model, CommonMixin):
     profile_picture_key = db.Column(db.String(128))
     profile_picture_thumbnail_key = db.Column(db.String(128))
 
+    password_reset_on_login = db.Column(db.Boolean, default=False)
 
-    #tasks = db.relationship('Task', backref='rider', lazy='dynamic')
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == User.uuid)".format(Objects.USER)
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == User.uuid)".format(Objects.USER),
+        backref="parent_user"
     )
-    password_reset_on_login = db.Column(db.Boolean, default=False)
+
+    logged_actions = db.relationship(
+        'LogEntry',
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == User.uuid)".format(Objects.USER),
+        backref="parent_log_user"
+    )
+
 
     __searchable__ = ['username', 'roles', 'name', 'email']
 
@@ -392,8 +428,16 @@ class Location(SearchableMixin, db.Model, CommonMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(Objects.LOCATION)
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(Objects.LOCATION),
+        backref="parent_location"
     )
+
+    logged_actions = db.relationship(
+        'LogEntry',
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Location.uuid)".format(Objects.LOCATION),
+        backref="parent_log_location"
+    )
+
 
     __searchable__ = ['name', 'contact_name', 'contact_number', 'address']
 
@@ -409,3 +453,35 @@ class Patch(db.Model, CommonMixin):
     @property
     def object_type(self):
         return Objects.PATCH
+
+
+class HTTPRequestType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String(32), unique=True)
+    code = db.Column(db.Integer)
+
+    @property
+    def object_type(self):
+        return Objects.HTTP_REQUEST_TYPE
+
+
+class LogEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
+    parent_type = db.Column(db.Integer)
+    parent_uuid = db.Column(UUID(as_uuid=True))
+    calling_user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    calling_user = db.relationship(
+        "User",
+        foreign_keys=[calling_user_uuid],
+        backref='user_actions')
+    http_request_type_id = db.Column(db.Integer, db.ForeignKey(HTTPRequestType.id))
+    http_request_type = db.relationship(
+        HTTPRequestType,
+        foreign_keys=[http_request_type_id],
+        backref=db.backref('logs', lazy='dynamic'))
+
+    @property
+    def object_type(self):
+        return Objects.LOG_ENTRY
