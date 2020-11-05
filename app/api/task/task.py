@@ -1,13 +1,14 @@
 from flask import jsonify, request
-from flask_socketio import emit
 from marshmallow import ValidationError
-from sqlalchemy import exists
 
 from app import schemas, models, socketio
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
-from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast
+from app.api.sockets import UPDATE_TASK, ADD_NEW_TASK, \
+    ASSIGN_COORDINATOR_TO_TASK, ASSIGN_RIDER_TO_TASK, REMOVE_ASSIGNED_COORDINATOR_FROM_TASK, \
+    REMOVE_ASSIGNED_RIDER_FROM_TASK, DELETE_TASK, RESTORE_TASK
+from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast, emit_socket_assignment_broadcast
 from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
@@ -48,6 +49,7 @@ class TaskRestore(Resource):
             remove_item_from_delete_queue(task)
         else:
             return {'uuid': str(task.uuid), 'message': 'Task {} not flagged for deletion.'.format(task.uuid)}, 200
+        emit_socket_broadcast(task_schema.dump(task), RESTORE_TASK, uuid=task.uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} deletion flag removed.'.format(task.uuid)}, 200
 
 
@@ -68,15 +70,14 @@ class Task(Resource):
             return not_found(TASK, task_id)
         try:
             add_item_to_delete_queue(task)
-            if task.relay_previous_uuid:
-                task.relay_previous_uuid = None
-                db.session.commit()
             for deliverable in task.deliverables:
                 if not deliverable.flagged_for_deletion:
                     add_item_to_delete_queue(deliverable)
         except AlreadyFlaggedForDeletionError:
+            emit_socket_broadcast({}, DELETE_TASK, uuid=task_id)
             return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
+        emit_socket_broadcast({}, DELETE_TASK, uuid=task_id)
         return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
 
     @flask_praetorian.auth_required
@@ -95,7 +96,7 @@ class Task(Resource):
             return schema_validation_error(e)
 
         request_json = request.get_json()
-        emit_socket_broadcast(request_json, task_id, "update")
+        emit_socket_broadcast(request_json, UPDATE_TASK, uuid=task_id)
         db.session.commit()
         return {'uuid': str(task.uuid), 'message': "Task {} updated.".format(task.uuid)}
 
@@ -150,19 +151,21 @@ class TasksAssignees(Resource):
                 return forbidden_error("Can not assign a non-rider as a rider.", user_uuid)
 
             task.assigned_riders.append(user)
+            socket_update_type = ASSIGN_RIDER_TO_TASK
 
         elif args['role'] == "coordinator":
             if "coordinator" not in user.roles:
                 return forbidden_error("Can not assign a non-coordinator as a coordinator.", user_uuid)
             task.assigned_coordinators.append(user)
-
+            socket_update_type = ASSIGN_COORDINATOR_TO_TASK
         else:
             return forbidden_error("Type of role must be specified.", task_id)
 
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
-        emit_socket_broadcast(request_json, task_id, "assign_user")
+        emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
+        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, utilities.current_user().uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
@@ -190,17 +193,20 @@ class TasksAssignees(Resource):
         if args['role'] == "rider":
             filtered_riders = list(filter(lambda u: u.uuid != user.uuid, task.assigned_riders))
             task.assigned_riders = filtered_riders
+            socket_update_type = REMOVE_ASSIGNED_RIDER_FROM_TASK
 
         elif args['role'] == "coordinator":
             filtered_coordinators = list(filter(lambda u: u.uuid != user.uuid, task.assigned_coordinators))
             task.assigned_riders = filtered_coordinators
+            socket_update_type = REMOVE_ASSIGNED_COORDINATOR_FROM_TASK
         else:
             return forbidden_error("Type of role must be specified.", task_id)
 
         db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
-        emit_socket_broadcast(request_json, task_id, "remove_assigned_user")
+        emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
+        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, utilities.current_user().uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
 
@@ -245,11 +251,13 @@ class Tasks(Resource):
         task.author_uuid = utilities.current_user().uuid
         db.session.add(task)
         db.session.commit()
+        request_json = request.get_json()
         return {
                    'uuid': str(task.uuid),
                    'time_created': str(task.time_created),
                    'message': 'Task {} created'.format(task.uuid),
-                   'author_uuid': str(task.author_uuid)
+                   'author_uuid': str(task.author_uuid),
+                   'parent_id': str(task.parent_id)
                }, 201
 
 
@@ -289,50 +297,57 @@ class Tasks(Resource):
             else:
                 query = requested_user.tasks_as_coordinator
 
-            # filter deleted tasks and relays
+            # filter deleted tasks
             query_deleted = query.filter(
                 models.Task.flagged_for_deletion.is_(False)
             )
 
             if status == "new":
-                filtered = query_deleted.filter(
-                    models.Task.time_cancelled.is_(None),
-                    models.Task.time_rejected.is_(None),
-                ).filter(~models.Task.assigned_riders.any()) \
-                    .order_by(models.Task.time_of_call.desc())
+                filtered = query_deleted.join(models.TasksParent).filter(
+                    ~models.TasksParent.relays.any(models.Task.assigned_riders.any()),
+                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
+                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                )
+
             elif status == "active":
-                filtered = query_deleted.filter(
-                    models.Task.time_picked_up.is_(None),
-                    models.Task.time_dropped_off.is_(None),
-                    models.Task.time_cancelled.is_(None),
-                    models.Task.time_rejected.is_(None),
-                ).filter(models.Task.assigned_riders.any()) \
-                    .order_by(models.Task.time_of_call)
+                filtered = query_deleted.join(models.TasksParent).filter(
+                    models.TasksParent.relays.any(models.Task.assigned_riders.any()),
+                    ~models.TasksParent.relays.any(models.Task.time_picked_up.isnot(None)),
+                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
+                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                )
+
             elif status == "picked_up":
-                filtered = query_deleted.filter(
-                    models.Task.time_picked_up.isnot(None),
-                    models.Task.time_dropped_off.is_(None),
-                    models.Task.time_cancelled.is_(None),
-                    models.Task.time_rejected.is_(None)
-                ).filter(models.Task.assigned_riders.any()) \
-                    .order_by(models.Task.time_of_call)
-            # TODO: this needs to account for relays
+                filtered = query_deleted.join(models.TasksParent).filter(
+                    models.TasksParent.relays.any(models.Task.assigned_riders.any()),
+                    models.TasksParent.relays.any(models.Task.time_picked_up.isnot(None)),
+                    models.TasksParent.relays.any(models.Task.time_dropped_off.is_(None)),
+                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
+                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                )
             elif status == "delivered":
-                filtered = query_deleted.filter(
-                    models.Task.time_dropped_off.isnot(None),
-                    models.Task.time_dropped_off.isnot(None),
-                    models.Task.time_cancelled.is_(None),
-                    models.Task.time_rejected.is_(None)
-                ).filter(models.Task.assigned_riders.any()) \
-                    .order_by(models.Task.time_of_call)
+                filtered = query_deleted.join(models.TasksParent).filter(
+                    models.TasksParent.relays.any(models.Task.assigned_riders.any()),
+                    ~models.TasksParent.relays.any(models.Task.time_dropped_off.is_(None)),
+                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
+                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                )
             elif status == "cancelled":
-                filtered = query_deleted.filter(models.Task.time_cancelled.isnot(None))
+                filtered = query_deleted.join(models.TasksParent).filter(
+                    ~models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
+                )
             elif status == "rejected":
-                filtered = query_deleted.filter(models.Task.time_rejected.isnot(None))
+                filtered = query_deleted.join(models.TasksParent).filter(
+                    ~models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                )
             else:
                 filtered = query_deleted
 
-            filtered_ordered = filtered.order_by(models.Task.parent_id)
+            if status in ["new", "delivered", "cancelled", "rejected"]:
+                filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
+            else:
+                filtered_ordered = filtered.order_by(models.Task.parent_id.asc(), models.Task.order_in_relay)
+
             if page > 0:
                 items = get_page(filtered_ordered, page, order=order, model=models.Task)
             else:

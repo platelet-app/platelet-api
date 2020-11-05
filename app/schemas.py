@@ -264,7 +264,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'priority_id', 'time_cancelled', 'time_rejected',
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
-                  'relay_next', 'relay_previous', 'relay_previous_uuid', 'parent_id', 'order_in_relay')
+                  'relay_previous_uuid', 'parent_id', 'order_in_relay')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
