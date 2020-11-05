@@ -1,5 +1,12 @@
+import os
+
 import eventlet
-eventlet.monkey_patch()
+
+# hack so that ipython doesn't break when importing from app
+try:
+    __IPYTHON__
+except NameError:
+    eventlet.monkey_patch()
 
 import flask
 from flask import Flask, Blueprint
@@ -18,10 +25,7 @@ from flask_buzz import FlaskBuzz
 from elasticsearch import Elasticsearch
 from engineio.payload import Payload
 from rq import Queue
-from rq.job import Job
 from redis_worker import conn
-
-
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
 logger = logging.getLogger()
@@ -89,6 +93,14 @@ cloud_stores = CloudStores(
     secret_access_key_id=app.config['AWS_SECRET_ACCESS_KEY'],
     endpoint=app.config['AWS_ENDPOINT']
 )
+
+profile_pic_dir = app.config['PROFILE_PROCESSING_DIRECTORY']
+if profile_pic_dir:
+    if not os.path.isdir(profile_pic_dir):
+        os.mkdir(profile_pic_dir)
+else:
+    raise EnvironmentError("A profile picture processing directory must be specified.")
+
 
 from app import models
 from app.api.task import task
