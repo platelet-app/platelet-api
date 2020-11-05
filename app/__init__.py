@@ -164,14 +164,13 @@ def log_input(response):
                     parent_type=endpoint_to_object_type(request.endpoint),
                     calling_user_uuid=user.uuid,
                     http_request_type_id=get_http_code_int(request.method),
-                    parent_uuid=object_uuid
+                    parent_uuid=object_uuid,
+                    http_response_code=response.status_code
                 )
                 db.session.add(entry)
                 db.session.commit()
-                print("we got someone changing shit, it's {}".format(user.display_name))
-                print(request)
             else:
-                print("this person isn't logged in? what the fuck")
+                logger.error("Missing token when attempting to log request.")
     return response
 
 

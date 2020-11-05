@@ -130,8 +130,7 @@ class Comment(db.Model, CommonMixin):
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Comment.uuid)".format(Objects.COMMENT),
-        backref="parent_log_comment"
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Comment.uuid)".format(Objects.COMMENT)
     )
 
 
@@ -158,8 +157,7 @@ class Deliverable(db.Model, CommonMixin):
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Deliverable.uuid)".format(Objects.DELIVERABLE),
-        backref="parent_log_deliverable"
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Deliverable.uuid)".format(Objects.DELIVERABLE)
     )
 
 
@@ -269,14 +267,12 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK),
-        backref="parent_task"
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Task.uuid)".format(Objects.TASK)
     )
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Task.uuid)".format(Objects.TASK),
-        backref="parent_log_task"
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Task.uuid)".format(Objects.TASK)
     )
 
     __searchable__ = ['contact_name', 'contact_number', 'session_uuid']
@@ -303,14 +299,12 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE),
-        backref="parent_vehicle"
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE)
     )
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE),
-        backref="parent_log_vehicle"
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE)
     )
 
     __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
@@ -354,14 +348,12 @@ class User(SearchableMixin, db.Model, CommonMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == User.uuid)".format(Objects.USER),
-        backref="parent_user"
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == User.uuid)".format(Objects.USER)
     )
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == User.uuid)".format(Objects.USER),
-        backref="parent_log_user"
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == User.uuid)".format(Objects.USER)
     )
 
 
@@ -428,14 +420,12 @@ class Location(SearchableMixin, db.Model, CommonMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(Objects.LOCATION),
-        backref="parent_location"
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(Objects.LOCATION)
     )
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Location.uuid)".format(Objects.LOCATION),
-        backref="parent_log_location"
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Location.uuid)".format(Objects.LOCATION)
     )
 
 
@@ -458,7 +448,6 @@ class Patch(db.Model, CommonMixin):
 class HTTPRequestType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(32), unique=True)
-    code = db.Column(db.Integer)
 
     @property
     def object_type(self):
@@ -481,6 +470,7 @@ class LogEntry(db.Model):
         HTTPRequestType,
         foreign_keys=[http_request_type_id],
         backref=db.backref('logs', lazy='dynamic'))
+    http_response_code = db.Column(db.Integer)
 
     @property
     def object_type(self):
