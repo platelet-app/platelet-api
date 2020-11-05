@@ -454,6 +454,13 @@ class HTTPRequestType(db.Model):
         return Objects.HTTP_REQUEST_TYPE
 
 
+class HTTPResponseStatus(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    status = db.Column(db.Integer)
+    status_description = db.Column(db.String(64))
+    status_type = db.Column(db.String(64))
+
+
 class LogEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
@@ -470,7 +477,11 @@ class LogEntry(db.Model):
         HTTPRequestType,
         foreign_keys=[http_request_type_id],
         backref=db.backref('logs', lazy='dynamic'))
-    http_response_code = db.Column(db.Integer)
+    http_response_status_id = db.Column(db.Integer, db.ForeignKey(HTTPResponseStatus.id))
+    http_response_status = db.relationship(
+        HTTPResponseStatus,
+        foreign_keys=[http_response_status_id],
+        backref=db.backref('logs', lazy='dynamic'))
 
     @property
     def object_type(self):

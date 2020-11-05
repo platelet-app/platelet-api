@@ -133,19 +133,30 @@ app.register_blueprint(site_blueprint)
 
 
 def get_http_code_int(label):
-    return models.HTTPRequestType.query.filter_by(label=label).first().id
+    result = models.HTTPRequestType.query.filter_by(label=label).first()
+    return result.id if result else None
 
 
 def endpoint_to_object_type(endpoint):
-    switch = {
-        "task_detail": models.Objects.TASK,
-        "task_undelete": models.Objects.TASK,
-        "task_delete": models.Objects.TASK,
-        "tasks_list_all": models.Objects.TASK,
-        "tasks_assign_user": models.Objects.TASK,
-        "tasks_list": models.Objects.TASK,
-    }
-    return switch.get(endpoint, lambda: None)
+    if not endpoint:
+        return models.Objects.UNKNOWN
+    if "task" in endpoint:
+        return models.Objects.TASK
+    elif "comment" in endpoint:
+        return models.Objects.COMMENT
+    elif "deliverable" in endpoint:
+        return models.Objects.DELIVERABLE
+    elif "location" in endpoint:
+        return models.Objects.LOCATION
+    elif "user" in endpoint:
+        return models.Objects.USER
+    elif "vehicle" in endpoint:
+        return models.Objects.VEHICLE
+    elif "server_settings" in endpoint:
+        return models.Objects.SETTINGS
+    elif "patch" in endpoint:
+        return models.Objects.PATCH
+    return models.Objects.UNKNOWN
 
 
 @app.after_request
@@ -160,12 +171,13 @@ def log_input(response):
             if token:
                 jwt_data = guard.extract_jwt_token(token)
                 user = models.User.query.filter_by(id=jwt_data['id']).one()
+                response_status = models.HTTPResponseStatus.query.filter_by(status=int(response.status_code)).first()
                 entry = models.LogEntry(
                     parent_type=endpoint_to_object_type(request.endpoint),
                     calling_user_uuid=user.uuid,
                     http_request_type_id=get_http_code_int(request.method),
                     parent_uuid=object_uuid,
-                    http_response_code=response.status_code
+                    http_response_status_id=response_status.id if response_status else None
                 )
                 db.session.add(entry)
                 db.session.commit()

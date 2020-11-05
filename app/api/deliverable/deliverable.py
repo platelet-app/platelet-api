@@ -27,7 +27,7 @@ class DeliverableType(Resource):
 
 
 
-@ns.route('/<deliverable_id>')
+@ns.route('/<deliverable_id>', endpoint="deliverable_detail")
 class Deliverable(Resource):
     @flask_praetorian.auth_required
     def get(self, deliverable_id):
@@ -67,7 +67,7 @@ class Deliverable(Resource):
 
 
 @ns.route('s',
-          's/<task_id>')
+          's/<task_id>', endpoint="deliverables_list")
 class Deliverables(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def post(self):

@@ -35,7 +35,7 @@ class SessionRestore(Resource):
             return {'uuid': str(comment.uuid), 'message': 'Comment {} not flagged for deletion.'.format(comment.uuid)}, 200
         return {'uuid': str(comment.uuid), 'message': 'Comment {} deletion flag removed.'.format(comment.uuid)}, 200
 
-@ns.route('/<_id>')
+@ns.route('/<_id>', endpoint="comment_detail")
 class Comment(Resource):
     @flask_praetorian.auth_required
     def get(self, _id):
@@ -78,7 +78,7 @@ class Comment(Resource):
 
 
 @ns.route('s',
-          's/<parent_id>')
+          's/<parent_id>', endpoint="comments_list")
 class Comments(Resource):
     @flask_praetorian.auth_required
     def post(self):
