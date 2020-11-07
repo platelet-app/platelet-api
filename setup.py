@@ -9,6 +9,22 @@ if len(sys.argv) > 1:
     with open(sys.argv[2]) as f:
         insert_data = json.loads(f.read())
 
+for http_status in insert_data['http_status_codes']:
+    existing = None
+    try:
+        existing = models.HTTPResponseStatus.query.filter_by(label=int(http_status['status'])).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        db.session.flush()
+    status_model = models.HTTPResponseStatus(**http_status)
+
+    db.session.add(status_model)
+    db.session.commit()
+
+
 for patch in insert_data['patches']:
     existing = None
     try:
