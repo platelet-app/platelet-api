@@ -76,6 +76,7 @@ comment_ns = api.namespace('api/{}/comment'.format(api_version), description='Co
 deliverable_ns = api.namespace('api/{}/deliverable'.format(api_version), description='Deliverable operations')
 location_ns = api.namespace('api/{}/location'.format(api_version), description='Saved location operations')
 any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Lookup for any object')
+log_ns = api.namespace('api/{}/log'.format(api_version), description='Logging lookups')
 search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch functions')
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
@@ -99,6 +100,7 @@ cloud_stores = CloudStores(
     endpoint=app.config['AWS_ENDPOINT']
 )
 
+# check if the profile picture processing directory exists (unless loading in ipython)
 if not ipython:
     profile_pic_dir = app.config['PROFILE_PROCESSING_DIRECTORY']
     if profile_pic_dir:
@@ -117,6 +119,7 @@ from app.api.comment import comment
 from app.api.deliverable import deliverable
 from app.api.location import location
 from app.api.search import search
+from app.api.log import log
 from app.api.priority import priority
 from app.api.patch import patch
 from app.api.server_settings import server_settings

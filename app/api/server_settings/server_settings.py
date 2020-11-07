@@ -5,7 +5,7 @@ import flask_praetorian
 from app import root_ns
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error
-from app.utilities import get_object
+from app.api.functions.utilities import get_object
 from app.exceptions import ObjectNotFoundError
 
 from app import db

@@ -5,7 +5,7 @@ import flask_praetorian
 from app import deliverable_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
-from app.utilities import get_object, add_item_to_delete_queue, get_all_objects, get_range
+from app.api.functions.utilities import get_object, add_item_to_delete_queue, get_all_objects, get_range
 from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
 from app import db
 

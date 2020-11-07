@@ -12,15 +12,14 @@ from app import root_ns
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id, user_id_match_or_admin, \
+from app.api.user.user_utilities.userfunctions import user_id_match_or_admin, \
     upload_profile_picture, get_presigned_profile_picture_url, get_random_string
 from app.api.functions.errors import not_found, schema_validation_error, forbidden_error, \
     internal_error, already_flagged_for_deletion_error
-from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError, \
-    InvalidFileUploadError
-from app.utilities import add_item_to_delete_queue, get_object, \
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
+from app.api.functions.utilities import add_item_to_delete_queue, get_object, \
     remove_item_from_delete_queue, get_page, get_query
-from app import guard, api
+from app import guard
 from flask_praetorian import utilities as prae_util
 
 USER = models.Objects.USER
@@ -246,7 +245,6 @@ class UserProfilePicture(Resource):
 
         # Validate it is an actual image
         image_types = ["jpeg", "gif", "png"]
-        print(imghdr.what(save_path))
         if not imghdr.what(save_path) in image_types:
             return forbidden_error("Profile picture uploads must be either a jpg, gif or png")
 

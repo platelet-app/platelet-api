@@ -3,7 +3,7 @@ import flask_praetorian
 from app import schemas, any_object_ns as ns, models
 from flask_restx import Resource
 from app.exceptions import ObjectNotFoundError
-from app.utilities import get_object
+from app.api.functions.utilities import get_object
 from app.api.functions.errors import not_found
 
 user_dump_schema = schemas.UserSchema(exclude=("password",))

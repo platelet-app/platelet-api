@@ -1,5 +1,5 @@
-from app import models, app, db
-from app.utilities import get_object
+from app import models, db
+from app.api.functions.utilities import get_object
 from datetime import datetime
 
 flagged = models.DeleteFlags.query.filter_by(active=True).all()

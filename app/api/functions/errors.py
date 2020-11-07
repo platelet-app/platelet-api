@@ -1,6 +1,6 @@
 import sys
 import traceback
-from app.models import Objects
+import app.api.functions.utilities as utilities
 
 
 def internal_error(message, object_id="null"):
@@ -31,27 +31,9 @@ def forbidden_error(message, object_id=None):
 
 
 def already_flagged_for_deletion_error(object_type, object_id):
-    return forbidden_error("{} already flagged for deletion".format(object_type_to_string(object_type)), object_id)
+    return forbidden_error("{} already flagged for deletion".format(utilities.object_type_to_string(object_type)), object_id)
 
 
 def not_found(object_type, object_id="null"):
-    return {'id': object_id, 'message': "{} not found".format(object_type_to_string(object_type))}, 404
+    return {'id': object_id, 'message': "{} not found".format(utilities.object_type_to_string(object_type))}, 404
 
-def object_type_to_string(type):
-    switch = {
-        Objects.USER: "user",
-        Objects.TASK: "task",
-        Objects.TASK_PARENT: "task parent",
-        Objects.VEHICLE: "vehicle",
-        Objects.COMMENT: "comment",
-        Objects.DELIVERABLE: "deliverable",
-        Objects.DELIVERABLE_TYPE: "deliverable type",
-        Objects.LOCATION: "location",
-        Objects.PRIORITY: "priority",
-        Objects.PATCH: "patch",
-        Objects.SETTINGS: "server settings",
-        Objects.UNKNOWN: "unknown",
-        None: "no type"
-    }
-
-    return switch.get(type, lambda: None)

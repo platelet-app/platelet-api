@@ -1,9 +1,6 @@
-from flask import jsonify
 from flask_socketio import emit, join_room, leave_room
 from app import socketio
-from app import app, api_version
-import redis
-from rq import Queue, Connection
+from app import api_version
 from threading import Lock
 
 thread = None

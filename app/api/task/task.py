@@ -1,22 +1,20 @@
 from flask import jsonify, request
 from marshmallow import ValidationError
 
-from app import schemas, models, socketio
+from app import schemas, models
 from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
-from app.api.sockets import UPDATE_TASK, ADD_NEW_TASK, \
-    ASSIGN_COORDINATOR_TO_TASK, ASSIGN_RIDER_TO_TASK, REMOVE_ASSIGNED_COORDINATOR_FROM_TASK, \
+from app.api.sockets import UPDATE_TASK, ASSIGN_COORDINATOR_TO_TASK, ASSIGN_RIDER_TO_TASK, REMOVE_ASSIGNED_COORDINATOR_FROM_TASK, \
     REMOVE_ASSIGNED_RIDER_FROM_TASK, DELETE_TASK, RESTORE_TASK
 from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast, emit_socket_assignment_broadcast
-from app.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_unspecified_object, get_page, \
+from app.api.functions.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
-    already_flagged_for_deletion_error
-from app.exceptions import ObjectNotFoundError, InvalidRangeError, SchemaValidationError, AlreadyFlaggedForDeletionError
-from app.api.task.task_utilities.decorators import check_rider_match, check_parent_or_collaborator_or_admin_match
-from app.utilities import get_object, get_range
+from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error
+from app.exceptions import ObjectNotFoundError, SchemaValidationError, AlreadyFlaggedForDeletionError
+from app.api.task.task_utilities.decorators import check_rider_match
+from app.api.functions.utilities import get_object
 from flask_praetorian import utilities
 
 from app import db
@@ -223,11 +221,10 @@ class Tasks(Resource):
         page = args['page'] if args['page'] else 1
         order = args['order'] if args['order'] else "newest"
         query = get_query(TASK_PARENT)
-        # filter deleted tasks and relays
-        #  query_filtered = query.filter(
-        #      models.Task.flagged_for_deletion.is_(False),
-        #      models.Task.relay_previous_uuid.is_(None))
-        items = get_page(query, page, order=order, model=models.TasksParent)
+        try:
+            items = get_page(query, page, order=order, model=models.TasksParent)
+        except ObjectNotFoundError:
+            return not_found(TASK)
         return tasks_parent_schema.dump(items)
 
     @flask_praetorian.auth_required
@@ -251,7 +248,6 @@ class Tasks(Resource):
         task.author_uuid = utilities.current_user().uuid
         db.session.add(task)
         db.session.commit()
-        request_json = request.get_json()
         return {
                    'uuid': str(task.uuid),
                    'time_created': str(task.time_created),

@@ -1,6 +1,4 @@
 import logging
-import random
-import string
 
 from sqlalchemy import desc, asc
 
@@ -44,13 +42,20 @@ def add_item_to_delete_queue(item):
 
 def object_type_to_string(type):
     switch = {
-        models.Objects.SESSION: "session",
         models.Objects.USER: "user",
         models.Objects.TASK: "task",
+        models.Objects.TASK_PARENT: "task parent",
         models.Objects.VEHICLE: "vehicle",
         models.Objects.COMMENT: "comment",
         models.Objects.DELIVERABLE: "deliverable",
-        models.Objects.LOCATION: "location"
+        models.Objects.DELIVERABLE_TYPE: "deliverable type",
+        models.Objects.LOCATION: "location",
+        models.Objects.PRIORITY: "priority",
+        models.Objects.PATCH: "patch",
+        models.Objects.SETTINGS: "server settings",
+        models.Objects.LOG_ENTRY: "log entry",
+        models.Objects.UNKNOWN: "unknown",
+        None: "no type"
     }
 
     return switch.get(type, lambda: None)
@@ -113,6 +118,7 @@ def get_query(model_type, filter_deleted=True):
         models.Objects.PRIORITY: models.Priority.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Priority.query,
         models.Objects.PATCH: models.Patch.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Patch.query,
         models.Objects.DELIVERABLE_TYPE: models.Deliverable.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Deliverable.query,
+        models.Objects.LOG_ENTRY: models.LogEntry.query
     }
 
     items = switch.get(model_type, lambda: None)
@@ -149,7 +155,6 @@ def get_page(sqlalchemy_query, page_number, model=None, order="newest"):
         page = int(page_number)
     except TypeError:
         pass
-
     try:
         if model:
             try:

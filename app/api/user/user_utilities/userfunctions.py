@@ -26,7 +26,6 @@ def user_id_match_or_admin(func):
         if utilities.current_user_id() == user_int_id:
             return func(self, user_id)
         else:
-            print(user_id)
             return forbidden_error("Object not owned by user: user id: {}".format(user_id))
 
     return wrapper

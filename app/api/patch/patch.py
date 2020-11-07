@@ -1,7 +1,7 @@
 import flask_praetorian
-from flask import jsonify, request
+from flask import jsonify
 from app.api.functions.errors import internal_error
-from app.utilities import get_range, get_all_objects
+from app.api.functions.utilities import get_all_objects
 from flask_restx import Resource
 from app import root_ns
 from app import models

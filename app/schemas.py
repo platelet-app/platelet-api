@@ -1,14 +1,14 @@
 from functools import reduce
 
 import phonenumbers
-from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates, validate, pre_load
+from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE, fields, validates
 from phonenumbers import NumberParseException
 
 from app import cloud_stores
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, app
-from app.utilities import get_all_objects
+from app.api.functions.utilities import get_all_objects
 from app.api.task.task_utilities.taskfunctions import calculate_tasks_etag
 
 

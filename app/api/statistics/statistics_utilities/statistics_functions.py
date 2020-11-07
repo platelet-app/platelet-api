@@ -1,5 +1,5 @@
 from app import models
-from app.utilities import get_all_objects
+from app.api.functions.utilities import get_all_objects
 
 
 def generate_statistics_from_tasks(tasks):
