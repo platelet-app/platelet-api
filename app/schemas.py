@@ -8,7 +8,7 @@ from app import cloud_stores
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, app
-from app.api.functions.utilities import get_all_objects
+from app.api.functions.utilities import get_all_objects, object_type_to_string
 from app.api.task.task_utilities.taskfunctions import calculate_tasks_etag
 
 
@@ -394,12 +394,14 @@ class LogEntrySchema(ma.SQLAlchemySchema):
     class Meta:
         model = models.LogEntry
         fields = ('uuid', 'time_created', 'parent_uuid', 'calling_user',
-                  'http_request_type', 'http_response_status')
+                  'http_request_type', 'http_response_status', 'parent_type',
+                  'data_fields')
 
-    time_created = ma.Date(dump_only=True)
+    time_created = ma.DateTime(dump_only=True)
     parent_uuid = ma.String(dump_only=True)
     http_request_type = ma.Pluck(HTTPRequestTypeSchema, "label", dump_only=True)
     http_response_status = ma.Nested(HTTPResponseStatusSchema, dump_only=True)
+    parent_type = ma.Function(lambda obj: object_type_to_string(obj.parent_type))
 
     calling_user = ma.Nested(UserSchema, dump_only=True, only=("uuid", "display_name"))
 

@@ -468,6 +468,7 @@ class LogEntry(db.Model):
     parent_type = db.Column(db.Integer)
     parent_uuid = db.Column(UUID(as_uuid=True))
     calling_user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
+    data_fields = db.Column(db.String())
     calling_user = db.relationship(
         "User",
         foreign_keys=[calling_user_uuid],

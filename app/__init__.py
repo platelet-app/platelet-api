@@ -166,8 +166,10 @@ def endpoint_to_object_type(endpoint):
 def log_input(response):
     if request.method in ["POST", "PUT", "DELETE"]:
         if not request.endpoint.endswith("login_login"):
+            response_data = json.loads(response.get_data())
+            request_data = json.loads(request.get_data())
             try:
-                object_uuid = json.loads(response.get_data())['uuid']
+                object_uuid = response_data['uuid']
             except KeyError:
                 object_uuid = None
             token = guard.read_token_from_header()
@@ -175,12 +177,14 @@ def log_input(response):
                 jwt_data = guard.extract_jwt_token(token)
                 user = models.User.query.filter_by(id=jwt_data['id']).one()
                 response_status = models.HTTPResponseStatus.query.filter_by(status=int(response.status_code)).first()
+                fields = ",".join(list(request_data.keys()))
                 entry = models.LogEntry(
                     parent_type=endpoint_to_object_type(request.endpoint),
                     calling_user_uuid=user.uuid,
                     http_request_type_id=get_http_code_int(request.method),
                     parent_uuid=object_uuid,
-                    http_response_status_id=response_status.id if response_status else None
+                    http_response_status_id=response_status.id if response_status else None,
+                    data_fields=fields
                 )
                 db.session.add(entry)
                 db.session.commit()

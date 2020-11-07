@@ -12,7 +12,7 @@ if len(sys.argv) > 1:
 for http_status in insert_data['http_status_codes']:
     existing = None
     try:
-        existing = models.HTTPResponseStatus.query.filter_by(label=int(http_status['status'])).first()
+        existing = models.HTTPResponseStatus.query.filter_by(status=int(http_status['status'])).first()
     except:
         pass
     if existing:
@@ -24,6 +24,21 @@ for http_status in insert_data['http_status_codes']:
     db.session.add(status_model)
     db.session.commit()
 
+
+for http_request_type in insert_data['http_request_types']:
+    existing = None
+    try:
+        existing = models.HTTPRequestType.query.filter_by(label=http_request_type['label']).first()
+    except:
+        pass
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        db.session.flush()
+    http_type_model = models.HTTPRequestType(**http_request_type)
+
+    db.session.add(http_type_model)
+    db.session.commit()
 
 for patch in insert_data['patches']:
     existing = None
