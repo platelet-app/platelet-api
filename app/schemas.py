@@ -357,20 +357,6 @@ class UserAddressSchema(ma.SQLAlchemySchema):
     address = ma.Nested(AddressSchema, exclude=("ward",))
 
 
-#    @pre_dump
-#    def get_last_active(self, data, many):
-#        session = get_object(models.Objects.SESSION, data.uuid)
-#        tasks_plus_deleted = session.tasks.all()
-#        last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)
-#        data.last_active = last_changed_task[-1].time_modified if last_changed_task else session.time_modified
-#        return data
-#
-#    @pre_dump
-#    def get_tasks_etag(self, data, many):
-#        data.tasks_etag = calculate_tasks_etag(data.tasks.all())
-#        return data
-
-
 class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
     class Meta:
         model = models.Location
@@ -384,6 +370,38 @@ class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoa
         'self': ma.URLFor('location_detail', location_id='<uuid>'),
         'collection': ma.URLFor('location_list')
     })
+
+
+class HTTPRequestTypeSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = models.HTTPRequestType
+        fields = ('label',)
+
+    label = ma.String(dump_only=True)
+
+
+class HTTPResponseStatusSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = models.HTTPResponseStatus
+        fields = ('status', 'status_description', 'status_type')
+
+    status = ma.Integer(dump_only=True)
+    status_description = ma.String(dump_only=True)
+    status_type = ma.String(dump_only=True)
+
+
+class LogEntrySchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = models.LogEntry
+        fields = ('uuid', 'time_created', 'parent_uuid', 'calling_user',
+                  'http_request_type', 'http_response_status')
+
+    time_created = ma.Date(dump_only=True)
+    parent_uuid = ma.String(dump_only=True)
+    http_request_type = ma.Pluck(HTTPRequestTypeSchema, "label", dump_only=True)
+    http_response_status = ma.Nested(HTTPResponseStatusSchema, dump_only=True)
+
+    calling_user = ma.Nested(UserSchema, dump_only=True, only=("uuid", "display_name"))
 
 
 class SearchSchema:
