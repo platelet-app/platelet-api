@@ -48,5 +48,7 @@ class Logs(Resource):
                 return not_found(LOG_ENTRY)
         else:
             items = filtered.all()
+            if order != "newest":
+                items.reverse()
 
         return logs_schema.dump(items)
