@@ -4,8 +4,10 @@ from flask_restx import Resource
 from flask_praetorian import utilities as prae_utils
 from app import comment_ns as ns
 import flask_praetorian
+from app.api.comment.comment_utilities.comment_socket_actions import *
 
-from app.api.comment.comment_utilities.commentfunctions import comment_author_match_or_admin, emit_socket_broadcast
+from app.api.comment.comment_utilities.commentfunctions import comment_author_match_or_admin,\
+    emit_socket_comment_broadcast
 from app.api.user.user_utilities.userfunctions import get_user_object_by_int_id
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import not_found, internal_error, forbidden_error, already_flagged_for_deletion_error
@@ -33,6 +35,11 @@ class SessionRestore(Resource):
             remove_item_from_delete_queue(comment)
         else:
             return {'uuid': str(comment.uuid), 'message': 'Comment {} not flagged for deletion.'.format(comment.uuid)}, 200
+        emit_socket_comment_broadcast(
+            comment_schema.dump(comment),
+            RESTORE_COMMENT,
+            comment.parent_uuid,
+            uuid=comment.uuid)
         return {'uuid': str(comment.uuid), 'message': 'Comment {} deletion flag removed.'.format(comment.uuid)}, 200
 
 @ns.route('/<_id>', endpoint="comment_detail")
@@ -60,8 +67,10 @@ class Comment(Resource):
         try:
             add_item_to_delete_queue(comment)
         except AlreadyFlaggedForDeletionError:
-            return already_flagged_for_deletion_error(COMMENT, str(comment.uuid))
+            emit_socket_comment_broadcast({}, DELETE_COMMENT, comment.uuid)
+            return already_flagged_for_deletion_error(COMMENT, str(comment.parent_uuid), uuid=comment.uuid)
 
+        emit_socket_comment_broadcast({}, DELETE_COMMENT, comment.parent_uuid, uuid=comment.uuid)
         return {'uuid': str(comment.uuid), 'message': "Comment queued for deletion"}, 202
 
     @flask_praetorian.auth_required
@@ -96,7 +105,7 @@ class Comments(Resource):
 
         db.session.add(comment)
         db.session.commit()
-        emit_socket_broadcast(comment_schema.dump(comment), comment.parent_uuid, "post")
+        emit_socket_comment_broadcast(comment_schema.dump(comment), ADD_COMMENT, comment.parent_uuid)
 
         return {'uuid': str(comment.uuid), 'message': 'Comment {} created'.format(comment.uuid)}, 201
 

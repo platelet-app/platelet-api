@@ -3,6 +3,7 @@ from flask import json, request
 import hashlib
 from app.exceptions import ObjectNotFoundError
 
+
 def get_task_object(_id):
     task = models.Task.query.filter_by(uuid=_id).first()
     if not task:
@@ -32,27 +33,29 @@ def calculate_tasks_etag(data):
 
 def emit_socket_broadcast(data, type, uuid=None):
     # TODO: when implementing organisations, maybe make a separate namespace for each one?
-    socketio.emit('subscribed_response',
-                  {
-                      'object_uuid': str(uuid) if uuid else None,
-                      'type': type,
-                      'data': data,
-                      'tab_id': request.headers['Tab-Identification']
-                  },
-                  room=str(uuid) if uuid else "root",
-                  namespace="/api/v0.1/subscribe",
-                  )
+    socketio.emit(
+        'subscribed_response',
+        {
+            'object_uuid': str(uuid) if uuid else None,
+            'type': type,
+            'data': data,
+            'tab_id': request.headers['Tab-Identification']
+        },
+        room=str(uuid) if uuid else "root",
+        namespace="/api/v0.1/subscribe",
+    )
 
 
 def emit_socket_assignment_broadcast(data, type, user_uuid):
     # TODO: when implementing organisations, maybe make a separate namespace for each one?
-    socketio.emit('subscribed_response',
-                  {
-                      'user_uuid': str(user_uuid),
-                      'type': type,
-                      'data': data,
-                      'tab_id': request.headers['Tab-Identification']
-                  },
-                  room=str(user_uuid),
-                  namespace="/api/v0.1/subscribe_assignments",
-                  )
+    socketio.emit(
+        'subscribed_response',
+        {
+            'user_uuid': str(user_uuid),
+            'type': type,
+            'data': data,
+            'tab_id': request.headers['Tab-Identification']
+        },
+        room=str(user_uuid),
+        namespace="/api/v0.1/subscribe_assignments",
+    )
