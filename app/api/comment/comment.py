@@ -21,6 +21,7 @@ DELETE_FLAG = models.Objects.DELETE_FLAG
 comment_schema = schemas.CommentSchema()
 comments_schema = schemas.CommentSchema(many=True)
 
+
 @ns.route('/<_id>/restore', endpoint="comment_undelete")
 class SessionRestore(Resource):
     @flask_praetorian.auth_required
@@ -41,6 +42,7 @@ class SessionRestore(Resource):
             comment.parent_uuid,
             uuid=comment.uuid)
         return {'uuid': str(comment.uuid), 'message': 'Comment {} deletion flag removed.'.format(comment.uuid)}, 200
+
 
 @ns.route('/<_id>', endpoint="comment_detail")
 class Comment(Resource):

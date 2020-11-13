@@ -61,13 +61,16 @@ class CommentSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         unknown = EXCLUDE
         model = models.Comment
         fields = ('uuid', 'body', 'author', 'parent_uuid', 'author_uuid',
-                  "time_created", "time_modified", "publicly_visible")
+                  "time_created", "time_modified", "publicly_visible", "num_edits"
+                  )
 
     author = ma.Nested(
         'UserSchema', dump_only=True,
-        exclude=('username', 'address', 'password', 'name', 'email',
-                 'dob', 'patch', 'roles', 'comments', 'assigned_vehicles', 'patch_id',
-                 "time_created", "time_modified"))
+        only=("display_name", "uuid", "profile_picture_thumbnail_url")
+    )
+    num_edits = ma.Function(
+        lambda obj: len(list(filter(lambda action: action.http_request_type.label == "PUT" and "body" in action.data_fields, obj.logged_actions)))
+    )
 
 
 class DeliverableTypeSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):

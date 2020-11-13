@@ -133,7 +133,6 @@ class Comment(db.Model, CommonMixin):
         primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Comment.uuid)".format(Objects.COMMENT)
     )
 
-
     @property
     def object_type(self):
         return Objects.COMMENT

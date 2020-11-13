@@ -1,36 +1,6 @@
 import os
-
 import eventlet
-
-# hack so that ipython doesn't break when importing from app
-
-ipython = False
-try:
-    __IPYTHON__
-    ipython = True
-except NameError:
-    eventlet.monkey_patch()
-
-import flask
-from flask import Flask, Blueprint, json
-from flask_restx import Api
-from flask_socketio import SocketIO
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
-from flask_migrate import Migrate
-import flask_praetorian
 import logging
-from flask import request
-from flask_praetorian import utilities as prae_utils
-
-from app.cloud.utilities import CloudStores
-from config import Config
-import flask_cors
-from flask_buzz import FlaskBuzz
-from elasticsearch import Elasticsearch
-from engineio.payload import Payload
-from rq import Queue
-from redis_worker import conn
 
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
 logger = logging.getLogger()
@@ -46,6 +16,42 @@ logging.getLogger('boto3').setLevel(logging.CRITICAL)
 logging.getLogger('botocore').setLevel(logging.CRITICAL)
 logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
+
+# don't monkey patch eventlet if running with Flask or in IPython
+try:
+    __IPYTHON__
+    eventlet_run = False
+    ipython = True
+except NameError:
+    eventlet_run = True
+    ipython = False
+
+if os.getenv("FLASK_APP"):
+    logging.warning("Running with Flask, sockets will not work!")
+    eventlet_run = False
+
+if eventlet_run:
+    eventlet.monkey_patch()
+
+import flask
+from flask import Flask, Blueprint, json
+from flask_restx import Api
+from flask_socketio import SocketIO
+from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+from flask_migrate import Migrate
+import flask_praetorian
+from flask import request
+
+from app.cloud.utilities import CloudStores
+from config import Config
+import flask_cors
+from flask_buzz import FlaskBuzz
+from elasticsearch import Elasticsearch
+from engineio.payload import Payload
+from rq import Queue
+from redis_worker import conn
+
 
 app = Flask(__name__, static_folder="site/static", template_folder="site")
 flask_version = flask.__version__
