@@ -25,13 +25,14 @@ from flask_praetorian import utilities as prae_util
 USER = models.Objects.USER
 DELETE_FLAG = models.Objects.DELETE_FLAG
 
-user_dump_schema = schemas.UserSchema(exclude=("password",))
+user_dump_schema = schemas.UserSchema(exclude=("password", "comments"))
 user_schema = schemas.UserSchema()
 users_schema = schemas.UserSchema(
     exclude=("address",
              "dob",
              "email",
-             "password",))
+             "password",
+             "comments"))
 address_schema = schemas.AddressSchema()
 user_username_schema = schemas.UserSchema(exclude=("address",
                                                    "dob",
