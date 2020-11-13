@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, request
 from app import schemas, models
 from flask_restx import Resource
 from flask_praetorian import utilities as prae_utils
@@ -70,7 +70,8 @@ class Comment(Resource):
             add_item_to_delete_queue(comment)
         except AlreadyFlaggedForDeletionError:
             emit_socket_comment_broadcast({}, DELETE_COMMENT, comment.uuid)
-            return already_flagged_for_deletion_error(COMMENT, str(comment.parent_uuid), uuid=comment.uuid)
+            return {'uuid': str(comment.uuid), 'message': "Comment queued for deletion"}, 202
+            #return already_flagged_for_deletion_error(COMMENT, comment.uuid)
 
         emit_socket_comment_broadcast({}, DELETE_COMMENT, comment.parent_uuid, uuid=comment.uuid)
         return {'uuid': str(comment.uuid), 'message': "Comment queued for deletion"}, 202
@@ -85,6 +86,8 @@ class Comment(Resource):
 
         load_request_into_object(COMMENT, instance=comment)
         db.session.commit()
+        request_json = request.get_json()
+        emit_socket_comment_broadcast(request_json, EDIT_COMMENT, comment.parent_uuid, uuid=comment.uuid)
         return {'uuid': str(comment.uuid), 'message': 'Comment {} updated.'.format(comment.uuid)}, 200
 
 
