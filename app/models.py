@@ -213,7 +213,16 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     parent_id = db.Column(db.Integer, db.ForeignKey(TasksParent.id), nullable=False)
-    parent = db.relationship(TasksParent, foreign_keys=[parent_id], backref=db.backref('relays', lazy='dynamic'))
+    parent = db.relationship(
+        TasksParent,
+        foreign_keys=[parent_id],
+        backref=db.backref(
+            'relays',
+            primaryjoin='and_('
+                          'foreign(Task.parent_id)==TasksParent.id,'
+                          'Task.flagged_for_deletion.isnot(True))',
+            lazy='dynamic')
+    )
     order_in_relay = db.Column(db.Integer, nullable=False)
     author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     author = db.relationship("User", foreign_keys=[author_uuid], backref=db.backref('tasks_as_author', lazy='dynamic'))
