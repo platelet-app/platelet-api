@@ -33,13 +33,16 @@ def user_id_match_or_admin(func):
 
 def get_all_users(filter_deleted=True):
     if filter_deleted:
-        return models.User.query.filter_by(deleted=False)
-    else:
         return models.User.query.all()
+    else:
+        return models.User.query.with_deleted().all()
 
 
-def get_user_object(user_id):
-    user = models.User.query.filter_by(uuid=user_id).first()
+def get_user_object(user_id, with_deleted=False):
+    if with_deleted:
+        user = models.User.query.with_deleted().filter_by(uuid=user_id).first()
+    else:
+        user = models.User.query.filter_by(uuid=user_id).first()
     if not user:
         raise ObjectNotFoundError()
 

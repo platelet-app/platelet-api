@@ -22,7 +22,7 @@ class VehicleRestore(Resource):
     @flask_praetorian.roles_accepted("admin")
     def put(self, vehicle_id):
         try:
-            vehicle = get_object(VEHICLE, vehicle_id)
+            vehicle = get_object(VEHICLE, vehicle_id, with_deleted=True)
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)
 

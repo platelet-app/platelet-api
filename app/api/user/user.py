@@ -79,7 +79,7 @@ class UserRestore(Resource):
     @flask_praetorian.roles_accepted("admin", "coordinator")
     def put(self, user_id):
         try:
-            user = get_object(USER, user_id)
+            user = get_object(USER, user_id, with_deleted=True)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 
@@ -108,16 +108,23 @@ class User(Resource):
     @flask_praetorian.auth_required
     @user_id_match_or_admin
     def delete(self, user_id):
+        if str(prae_util.current_user().uuid) == user_id:
+            return forbidden_error("You can't delete yourself.", user_id)
         try:
             user = get_object(USER, user_id)
         except ObjectNotFoundError:
             return not_found(USER, user_id)
+        if "admin" in user.roles:
+            return forbidden_error(
+                "You cannot delete an admin user. If you'd like to delete this user the admin role must be removed first.",
+                user_id
+            )
         try:
             add_item_to_delete_queue(user)
         except AlreadyFlaggedForDeletionError:
             return already_flagged_for_deletion_error(USER, str(user.uuid))
 
-        return {'uuid': str(user.uuid), 'message': "User queued for deletion"}, 202
+        return {'uuid': str(user.uuid), 'message': "User deleted"}, 202
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin

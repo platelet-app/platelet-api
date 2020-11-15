@@ -33,7 +33,7 @@ class TaskRestore(Resource):
     @flask_praetorian.roles_accepted("admin", "coordinator")
     def put(self, task_id):
         try:
-            task = get_object(TASK, task_id)
+            task = get_object(TASK, task_id, with_deleted=True)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 

@@ -149,6 +149,8 @@ class Locale(db.Model, CommonMixin):
     label = db.Column(db.String, unique=True)
     code = db.Column(db.String, unique=True)
 
+    query_class = QueryWithSoftDelete
+
 
 class Comment(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -166,6 +168,8 @@ class Comment(db.Model, CommonMixin):
             Objects.COMMENT)
     )
 
+    query_class = QueryWithSoftDelete
+
     @property
     def object_type(self):
         return Objects.COMMENT
@@ -174,6 +178,8 @@ class Comment(db.Model, CommonMixin):
 class DeliverableType(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String, unique=True)
+
+    query_class = QueryWithSoftDelete
 
     @property
     def object_type(self):
@@ -192,6 +198,8 @@ class Deliverable(db.Model, CommonMixin):
         primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Deliverable.uuid)".format(
             Objects.DELIVERABLE)
     )
+
+    query_class = QueryWithSoftDelete
 
     @property
     def object_type(self):
@@ -215,6 +223,8 @@ class Priority(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(64), unique=True)
 
+    query_class = QueryWithSoftDelete
+
     @property
     def object_type(self):
         return Objects.PRIORITY
@@ -235,6 +245,8 @@ task_coordinator_assignees = db.Table(
 
 class TasksParent(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
+
+    query_class = QueryWithSoftDelete
 
 
 class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
@@ -359,6 +371,7 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
     )
 
     __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
+    query_class = QueryWithSoftDelete
 
     @property
     def object_type(self):
@@ -408,6 +421,7 @@ class User(SearchableMixin, db.Model, CommonMixin):
     )
 
     __searchable__ = ['username', 'roles', 'name', 'email']
+    query_class = QueryWithSoftDelete
 
     @classmethod
     def lookup(cls, username):
@@ -481,6 +495,7 @@ class Location(SearchableMixin, db.Model, CommonMixin):
     )
 
     __searchable__ = ['name', 'contact_name', 'contact_number', 'address']
+    query_class = QueryWithSoftDelete
 
     @property
     def object_type(self):
@@ -490,6 +505,8 @@ class Location(SearchableMixin, db.Model, CommonMixin):
 class Patch(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String, unique=True)
+
+    query_class = QueryWithSoftDelete
 
     @property
     def object_type(self):

@@ -12,7 +12,7 @@ from app.api.patch.patch_utilities.patchfunctions import get_all_patches
 from app.api.comment.comment_utilities.commentfunctions import get_comment_object
 from app.api.functions.delete_flag_functions import get_delete_flag_object
 from app.api.deliverable.deliverable_utilities.deliverablefunctions import get_deliverable_object, get_all_deliverable_types
-from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError
+from app.exceptions import ObjectNotFoundError, InvalidRangeError, AlreadyFlaggedForDeletionError, ModelNotFoundError
 
 
 def remove_item_from_delete_queue(item):
@@ -82,25 +82,24 @@ def get_unspecified_object(_id):
     raise ObjectNotFoundError
 
 
-def get_object(type, _id):
+def get_object(type, _id, with_deleted=False):
     if not _id:
         raise ObjectNotFoundError
-
     try:
         if type == models.Objects.USER:
-            return get_user_object(_id)
+            return get_user_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.TASK:
-            return get_task_object(_id, with_deleted=True)
+            return get_task_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.TASK_PARENT:
-            return get_task_parent_object(_id)
+            return get_task_parent_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.VEHICLE:
-            return get_vehicle_object(_id)
+            return get_vehicle_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.COMMENT:
-            return get_comment_object(_id)
+            return get_comment_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.DELIVERABLE:
-            return get_deliverable_object(_id)
+            return get_deliverable_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.LOCATION:
-            return get_location_object(_id)
+            return get_location_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.DELETE_FLAG:
             return get_delete_flag_object(_id)
 
@@ -110,23 +109,23 @@ def get_object(type, _id):
 
 def get_query(model_type, filter_deleted=True):
     switch = {
-        models.Objects.USER: models.User.query.filter_by(deleted=False) if filter_deleted else models.User.query,
-        models.Objects.TASK: models.Task.query.filter_by(deleted=False) if filter_deleted else models.Task.query,
-        models.Objects.TASK_PARENT: models.TasksParent.query,
-        models.Objects.VEHICLE: models.Vehicle.query.filter_by(deleted=False) if filter_deleted else models.Vehicle.query,
-        models.Objects.LOCATION: models.Location.query.filter_by(deleted=False) if filter_deleted else models.Location.query,
-        models.Objects.PRIORITY: models.Priority.query.filter_by(deleted=False) if filter_deleted else models.Priority.query,
-        models.Objects.PATCH: models.Patch.query.filter_by(deleted=False) if filter_deleted else models.Patch.query,
-        models.Objects.DELIVERABLE_TYPE: models.Deliverable.query.filter_by(deleted=False) if filter_deleted else models.Deliverable.query,
+        models.Objects.USER: models.User.query if filter_deleted else models.User.query.with_deleted(),
+        models.Objects.TASK: models.Task.query if filter_deleted else models.Task.query.with_deleted(),
+        models.Objects.TASK_PARENT: models.TasksParent.query if filter_deleted else models.TasksParent.query.with_deleted(),
+        models.Objects.VEHICLE: models.Vehicle.query if filter_deleted else models.Vehicle.query.with_deleted(),
+        models.Objects.LOCATION: models.Location.query if filter_deleted else models.Location.query.with_deleted(),
+        models.Objects.PRIORITY: models.Priority.query if filter_deleted else models.Priority.query.with_deleted(),
+        models.Objects.PATCH: models.Patch.query if filter_deleted else models.Patch.query.with_deleted(),
+        models.Objects.DELIVERABLE_TYPE: models.Deliverable.query if filter_deleted else models.Deliverable.query.with_deleted(),
         models.Objects.LOG_ENTRY: models.LogEntry.query
     }
 
-    items = switch.get(model_type, lambda: None)
+    query = switch.get(model_type, lambda: None)
 
-    if items is None:
-        raise ObjectNotFoundError("There is no object of this type")
+    if query is None:
+        raise ModelNotFoundError("There is no object of this type")
     else:
-        return items
+        return query
 
 
 def get_all_objects(model_type, filter_deleted=False):

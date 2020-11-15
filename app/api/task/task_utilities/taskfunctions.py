@@ -14,8 +14,11 @@ def get_task_object(_id, with_deleted=False):
     return task
 
 
-def get_task_parent_object(_id):
-    task_parent = models.TasksParent.query.filter_by(id=_id).first()
+def get_task_parent_object(_id, with_deleted):
+    if with_deleted:
+        task_parent = models.TasksParent.query.with_deleted().filter_by(id=_id).first()
+    else:
+        task_parent = models.TasksParent.query.filter_by(id=_id).first()
     if not task_parent:
         raise ObjectNotFoundError()
     return task_parent
@@ -23,9 +26,9 @@ def get_task_parent_object(_id):
 
 def get_all_tasks(filter_deleted=False):
     if filter_deleted:
-        return models.Task.query.filter_by(deleted=False)
-    else:
         return models.Task.query.all()
+    else:
+        return models.Task.query.with_deleted().all()
 
 
 def calculate_tasks_etag(data):

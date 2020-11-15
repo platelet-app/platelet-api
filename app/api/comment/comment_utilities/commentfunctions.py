@@ -24,8 +24,11 @@ def comment_author_match_or_admin(func):
     return wrapper
 
 
-def get_comment_object(_id):
-    result = models.Comment.query.filter_by(uuid=_id).first()
+def get_comment_object(_id, with_deleted=False):
+    if with_deleted:
+        result = models.Comment.query.with_deleted().filter_by(uuid=_id).first()
+    else:
+        result = models.Comment.query.filter_by(uuid=_id).first()
     if not result:
         raise ObjectNotFoundError("comment id: {} not found".format(_id))
     return result

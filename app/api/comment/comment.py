@@ -28,7 +28,7 @@ class SessionRestore(Resource):
     @comment_author_match_or_admin
     def put(self, _id):
         try:
-            comment = get_object(COMMENT, _id)
+            comment = get_object(COMMENT, _id, with_deleted=True)
         except ObjectNotFoundError:
             return not_found(COMMENT, _id)
 
