@@ -83,7 +83,7 @@ class UserRestore(Resource):
         except ObjectNotFoundError:
             return not_found(USER, user_id)
 
-        if user.flagged_for_deletion:
+        if user.deleted:
             remove_item_from_delete_queue(user)
         else:
             return {'uuid': str(user.uuid), 'message': 'User {} not flagged for deletion.'.format(user.uuid)}, 200
@@ -124,7 +124,7 @@ class User(Resource):
     def put(self, user_id):
         try:
             user = get_object(USER, user_id)
-            if user.flagged_for_deletion:
+            if user.deleted:
                 return not_found(USER, user_id)
         except ObjectNotFoundError:
             return not_found(USER, user_id)

@@ -82,21 +82,25 @@ class MyLogs(Resource):
         else:
             query = user.tasks_as_coordinator
 
+        # filter deleted tasks
+        query_deleted = query.filter(
+            models.Task.deleted.is_(False)
+        )
 
 
         #TODO: figure out how to do this with sqlalchemy so pages work and it isn't so inefficent
         logs = []
         if returns == "everything":
-            for i in query.all():
+            for i in query_deleted.all():
                 for l in i.logged_actions:
                     logs.append(l)
         elif returns == "mine_only":
-            for i in query.all():
+            for i in query_deleted.all():
                 for l in i.logged_actions:
                     if str(l.calling_user_uuid) == user_uuid:
                         logs.append(l)
         elif returns == "others_only":
-            for i in query.all():
+            for i in query_deleted.all():
                 for l in i.logged_actions:
                     if str(l.calling_user_uuid) != user_uuid:
                         logs.append(l)

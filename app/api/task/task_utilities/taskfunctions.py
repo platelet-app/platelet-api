@@ -4,8 +4,11 @@ import hashlib
 from app.exceptions import ObjectNotFoundError
 
 
-def get_task_object(_id):
-    task = models.Task.query.filter_by(uuid=_id).first()
+def get_task_object(_id, with_deleted=False):
+    if with_deleted:
+        task = models.Task.query.with_deleted().filter_by(uuid=_id).first()
+    else:
+        task = models.Task.query.filter_by(uuid=_id).first()
     if not task:
         raise ObjectNotFoundError()
     return task
@@ -20,7 +23,7 @@ def get_task_parent_object(_id):
 
 def get_all_tasks(filter_deleted=False):
     if filter_deleted:
-        return models.Task.query.filter_by(flagged_for_deletion=False)
+        return models.Task.query.filter_by(deleted=False)
     else:
         return models.Task.query.all()
 
@@ -32,6 +35,10 @@ def calculate_tasks_etag(data):
 
 
 def emit_socket_broadcast(data, type, uuid=None):
+    try:
+        tab_indentifier = request.headers['Tab-Identification']
+    except KeyError:
+        tab_indentifier = ""
     # TODO: when implementing organisations, maybe make a separate namespace for each one?
     socketio.emit(
         'subscribed_response',
@@ -39,7 +46,7 @@ def emit_socket_broadcast(data, type, uuid=None):
             'object_uuid': str(uuid) if uuid else None,
             'type': type,
             'data': data,
-            'tab_id': request.headers['Tab-Identification']
+            'tab_id': tab_indentifier
         },
         room=str(uuid) if uuid else "root",
         namespace="/api/v0.1/subscribe",
@@ -48,13 +55,17 @@ def emit_socket_broadcast(data, type, uuid=None):
 
 def emit_socket_assignment_broadcast(data, type, user_uuid):
     # TODO: when implementing organisations, maybe make a separate namespace for each one?
+    try:
+        tab_indentifier = request.headers['Tab-Identification']
+    except KeyError:
+        tab_indentifier = ""
     socketio.emit(
         'subscribed_response',
         {
             'user_uuid': str(user_uuid),
             'type': type,
             'data': data,
-            'tab_id': request.headers['Tab-Identification']
+            'tab_id': tab_indentifier
         },
         room=str(user_uuid),
         namespace="/api/v0.1/subscribe_assignments",

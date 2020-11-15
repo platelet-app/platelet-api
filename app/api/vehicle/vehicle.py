@@ -26,7 +26,7 @@ class VehicleRestore(Resource):
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)
 
-        if vehicle.flagged_for_deletion:
+        if vehicle.deleted:
             remove_item_from_delete_queue(vehicle)
         else:
             return {'uuid': str(vehicle.uuid), 'message': 'Vehicle {} not flagged for deletion.'.format(vehicle.uuid)}, 200
@@ -60,7 +60,7 @@ class Vehicle(Resource):
     def put(self, vehicle_id):
         try:
             vehicle = get_object(VEHICLE, vehicle_id)
-            if vehicle.flagged_for_deletion:
+            if vehicle.deleted:
                 return not_found(VEHICLE, vehicle_id)
         except ObjectNotFoundError:
             return not_found(VEHICLE, vehicle_id)

@@ -21,9 +21,9 @@ class DeleteFilterMixin:
     @pre_dump(pass_many=True)
     def filter_deleted(self, data, many):
         if many:
-            return list(filter(lambda t: not t.flagged_for_deletion, data))
+            return list(filter(lambda t: not t.deleted, data))
         else:
-            if data.flagged_for_deletion:
+            if data.deleted:
                 raise ObjectNotFoundError
             else:
                 return data

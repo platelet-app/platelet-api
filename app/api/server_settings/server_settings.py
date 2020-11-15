@@ -30,7 +30,7 @@ class ServerSettings(Resource):
     def put(self, vehicle_id):
         try:
             vehicle = get_object(SETTINGS, vehicle_id)
-            if vehicle.flagged_for_deletion:
+            if vehicle.deleted:
                 return not_found(SETTINGS, vehicle_id)
         except ObjectNotFoundError:
             return not_found(SETTINGS, vehicle_id)

@@ -32,7 +32,7 @@ class SessionRestore(Resource):
         except ObjectNotFoundError:
             return not_found(COMMENT, _id)
 
-        if comment.flagged_for_deletion:
+        if comment.deleted:
             remove_item_from_delete_queue(comment)
         else:
             return {'uuid': str(comment.uuid), 'message': 'Comment {} not flagged for deletion.'.format(comment.uuid)}, 200

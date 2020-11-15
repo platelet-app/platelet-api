@@ -37,7 +37,7 @@ class TaskRestore(Resource):
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
 
-        if task.flagged_for_deletion:
+        if task.deleted:
             delete_queue_task = get_object(DELETE_FLAG, task.uuid)
             for deliverable in task.deliverables:
                 check = get_object(DELETE_FLAG, deliverable.uuid)
@@ -68,7 +68,7 @@ class Task(Resource):
         try:
             add_item_to_delete_queue(task)
             for deliverable in task.deliverables:
-                if not deliverable.flagged_for_deletion:
+                if not deliverable.deleted:
                     add_item_to_delete_queue(deliverable)
         except AlreadyFlaggedForDeletionError:
             emit_socket_broadcast({}, DELETE_TASK, uuid=task_id)
@@ -83,7 +83,7 @@ class Task(Resource):
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
-            if task.flagged_for_deletion:
+            if task.deleted:
                 return not_found(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
@@ -95,7 +95,9 @@ class Task(Resource):
         request_json = request.get_json()
         emit_socket_broadcast(request_json, UPDATE_TASK, uuid=task_id)
         db.session.commit()
-        return {'uuid': str(task.uuid), 'message': "Task {} updated.".format(task.uuid)}
+        ee = task_schema.dump(task)
+        aa = jsonify(ee)
+        return {"task": task_schema.dump(task), 'message': 'Task {} updated.'.format(task.uuid)}
 
 
 @ns.route(
@@ -126,7 +128,7 @@ class TasksAssignees(Resource):
     def put(self, task_id):
         try:
             task = get_object(TASK, task_id)
-            if task.flagged_for_deletion:
+            if task.deleted:
                 return not_found(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
@@ -138,7 +140,7 @@ class TasksAssignees(Resource):
         user_uuid = args['user_uuid']
         try:
             user = get_object(models.Objects.USER, user_uuid)
-            if user.flagged_for_deletion:
+            if user.deleted:
                 return not_found(models.Objects.USER, user_uuid)
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
@@ -170,7 +172,7 @@ class TasksAssignees(Resource):
     def delete(self, task_id):
         try:
             task = get_object(TASK, task_id)
-            if task.flagged_for_deletion:
+            if task.deleted:
                 return not_found(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
@@ -182,7 +184,7 @@ class TasksAssignees(Resource):
         user_uuid = args['user_uuid']
         try:
             user = get_object(models.Objects.USER, user_uuid)
-            if user.flagged_for_deletion:
+            if user.deleted:
                 return not_found(models.Objects.USER, user_uuid)
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
@@ -267,7 +269,7 @@ class Tasks(Resource):
             requested_user = get_object(models.Objects.USER, user_uuid)
             if not requested_user:
                 return not_found(models.Objects.USER, user_uuid)
-            if requested_user.flagged_for_deletion:
+            if requested_user.deleted:
                 return not_found(requested_user.object_type, user_uuid)
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
@@ -294,7 +296,7 @@ class Tasks(Resource):
 
             # filter deleted tasks
             query_deleted = query.filter(
-                models.Task.flagged_for_deletion.is_(False)
+                models.Task.deleted.is_(False)
             )
 
             if status == "new":

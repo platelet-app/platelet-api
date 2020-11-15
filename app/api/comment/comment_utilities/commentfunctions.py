@@ -1,4 +1,6 @@
 import functools
+import logging
+
 from flask_praetorian import utilities
 from app import models, schemas, socketio
 from app.api.functions.errors import forbidden_error
@@ -36,6 +38,10 @@ def calculate_comments_etag(data):
 
 
 def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
+    try:
+        tab_indentifier = request.headers['Tab-Identification']
+    except KeyError:
+        tab_indentifier = ""
     if type == ADD_COMMENT:
         socketio.emit(
             'subscribed_response',
@@ -43,7 +49,7 @@ def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
                 'parent_uuid': str(uuid),
                 'type': type,
                 'data': data,
-                'tab_id': request.headers['Tab-Identification']
+                'tab_id': tab_indentifier
             },
             room=str(parent_uuid),
             namespace="/api/v0.1/subscribe_comments"
@@ -55,7 +61,7 @@ def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
                 'uuid': str(uuid),
                 'type': type,
                 'data': data,
-                'tab_id': request.headers['Tab-Identification']
+                'tab_id': tab_indentifier
             },
             room=str(parent_uuid) ,
             namespace="/api/v0.1/subscribe_comments"

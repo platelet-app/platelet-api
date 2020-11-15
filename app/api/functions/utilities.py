@@ -21,7 +21,7 @@ def remove_item_from_delete_queue(item):
     flag = get_object(models.Objects.DELETE_FLAG, item.uuid)
     if flag:
         db.session.delete(flag)
-        item.flagged_for_deletion = False
+        item.deleted = False
         db.session.commit()
 
 
@@ -29,10 +29,10 @@ def add_item_to_delete_queue(item):
     if not item:
         return
 
-    if item.flagged_for_deletion:
+    if item.deleted:
         raise AlreadyFlaggedForDeletionError("This item is already flagged for deletion")
 
-    item.flagged_for_deletion = True
+    item.deleted = True
 
     delete = models.DeleteFlags(uuid=item.uuid, object_type=item.object_type, time_to_delete=app.config['DEFAULT_DELETE_TIME'])
 
@@ -90,7 +90,7 @@ def get_object(type, _id):
         if type == models.Objects.USER:
             return get_user_object(_id)
         elif type == models.Objects.TASK:
-            return get_task_object(_id)
+            return get_task_object(_id, with_deleted=True)
         elif type == models.Objects.TASK_PARENT:
             return get_task_parent_object(_id)
         elif type == models.Objects.VEHICLE:
@@ -110,14 +110,14 @@ def get_object(type, _id):
 
 def get_query(model_type, filter_deleted=True):
     switch = {
-        models.Objects.USER: models.User.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.User.query,
-        models.Objects.TASK: models.Task.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Task.query,
+        models.Objects.USER: models.User.query.filter_by(deleted=False) if filter_deleted else models.User.query,
+        models.Objects.TASK: models.Task.query.filter_by(deleted=False) if filter_deleted else models.Task.query,
         models.Objects.TASK_PARENT: models.TasksParent.query,
-        models.Objects.VEHICLE: models.Vehicle.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Vehicle.query,
-        models.Objects.LOCATION: models.Location.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Location.query,
-        models.Objects.PRIORITY: models.Priority.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Priority.query,
-        models.Objects.PATCH: models.Patch.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Patch.query,
-        models.Objects.DELIVERABLE_TYPE: models.Deliverable.query.filter_by(flagged_for_deletion=False) if filter_deleted else models.Deliverable.query,
+        models.Objects.VEHICLE: models.Vehicle.query.filter_by(deleted=False) if filter_deleted else models.Vehicle.query,
+        models.Objects.LOCATION: models.Location.query.filter_by(deleted=False) if filter_deleted else models.Location.query,
+        models.Objects.PRIORITY: models.Priority.query.filter_by(deleted=False) if filter_deleted else models.Priority.query,
+        models.Objects.PATCH: models.Patch.query.filter_by(deleted=False) if filter_deleted else models.Patch.query,
+        models.Objects.DELIVERABLE_TYPE: models.Deliverable.query.filter_by(deleted=False) if filter_deleted else models.Deliverable.query,
         models.Objects.LOG_ENTRY: models.LogEntry.query
     }
 

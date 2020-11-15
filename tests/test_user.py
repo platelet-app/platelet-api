@@ -100,7 +100,7 @@ def test_get_users(client, all_user_uuids, login_header_admin):
                     for role in i['roles']:
                         assert role in users_roles
 
-    assert (len(data) == len(list(filter(lambda u: not u.flagged_for_deletion, users))))
+    assert (len(data) == len(list(filter(lambda u: not u.deleted, users))))
 
 
 def test_get_users_role(client, all_user_uuids, login_header_admin):
@@ -169,7 +169,7 @@ def test_delete_user(client, login_header_admin, user_rider_uuid):
     assert (r.status_code == 202)
 
     user = get_object(USER, user_rider_uuid)
-    assert user.flagged_for_deletion
+    assert user.deleted
 
     queue = models.DeleteFlags.query.filter_by(uuid=user_rider_uuid, object_type=USER).first()
     assert int(queue.object_type) == int(USER)

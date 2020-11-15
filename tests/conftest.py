@@ -256,8 +256,13 @@ def location_obj():
 def task_objs_assigned():
     result = []
     for i in range(30):
+        parent = models.TasksParent()
+        db.session.add(parent)
+        db.session.flush()
+
         schema = schemas.TaskSchema()
-        ts = schema.load(dict(**json_data['task_data']))
+        task_data = dict(**json_data['task_data'], order_in_relay=1, parent_id=parent.id)
+        ts = schema.load(task_data)
         try:
             ts.assigned_riders.append(users_models['rider'])
         except KeyError:

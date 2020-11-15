@@ -5,8 +5,8 @@ from app.api.functions.utilities import get_all_objects
 def generate_statistics_from_tasks(tasks):
     available_priorities = get_all_objects(models.Objects.PRIORITY)
     tasks_plus_deleted = tasks
-    tasks = list(filter(lambda t: not t.flagged_for_deletion, tasks_plus_deleted))
-    num_deleted = len(list(filter(lambda t: t.flagged_for_deletion, tasks_plus_deleted)))
+    tasks = list(filter(lambda t: not t.deleted, tasks_plus_deleted))
+    num_deleted = len(list(filter(lambda t: t.deleted, tasks_plus_deleted)))
     num_tasks = len(tasks)
     # tasks with time_dropped_off set
     num_completed = len(list(filter(lambda t: t.time_dropped_off, tasks)))

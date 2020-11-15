@@ -33,7 +33,7 @@ def user_id_match_or_admin(func):
 
 def get_all_users(filter_deleted=True):
     if filter_deleted:
-        return models.User.query.filter_by(flagged_for_deletion=False)
+        return models.User.query.filter_by(deleted=False)
     else:
         return models.User.query.all()
 

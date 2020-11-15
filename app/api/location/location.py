@@ -43,7 +43,7 @@ class Location(Resource):
     def put(self, location_id):
         try:
             location = get_object(LOCATION, location_id)
-            if location.flagged_for_deletion:
+            if location.deleted:
                 return not_found(LOCATION, location_id)
         except ObjectNotFoundError:
             return not_found(LOCATION, location_id)

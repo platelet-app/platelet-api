@@ -59,7 +59,7 @@ def test_delete_vehicle_admin(client, login_header_admin, vehicle_obj):
                       headers=login_header_admin)
     assert r.status_code == 202
     db.session.flush()
-    assert vehicle_obj.flagged_for_deletion
+    assert vehicle_obj.deleted
     r2 = client.get("{}/{}".format(vehicle_url, str(vehicle_obj.uuid)),
                     headers=login_header_admin)
     assert r2.status_code == 404
@@ -70,9 +70,9 @@ def test_delete_vehicle_others(client, login_header_coordinator, login_header_ri
                       headers=login_header_coordinator)
     assert r.status_code == 403
     db.session.flush()
-    assert not vehicle_obj.flagged_for_deletion
+    assert not vehicle_obj.deleted
     r2 = client.delete("{}/{}".format(vehicle_url, str(vehicle_obj.uuid)),
                        headers=login_header_rider)
     assert r2.status_code == 403
     db.session.flush()
-    assert not vehicle_obj.flagged_for_deletion
+    assert not vehicle_obj.deleted

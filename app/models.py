@@ -1,4 +1,5 @@
 import redis
+from flask_sqlalchemy import BaseQuery
 from redis import Connection
 from rq import Queue
 
@@ -26,7 +27,36 @@ class Objects(IntEnum):
     SETTINGS = auto()
     LOG_ENTRY = auto()
     UNKNOWN = auto()
-    
+
+
+class QueryWithSoftDelete(BaseQuery):
+    _with_deleted = False
+
+    def __new__(cls, *args, **kwargs):
+        obj = super(QueryWithSoftDelete, cls).__new__(cls)
+        obj._with_deleted = kwargs.pop('_with_deleted', False)
+        if len(args) > 0:
+            super(QueryWithSoftDelete, obj).__init__(*args, **kwargs)
+            return obj.filter_by(deleted=False) if not obj._with_deleted else obj
+        return obj
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def with_deleted(self):
+        return self.__class__(db.class_mapper(self._mapper_zero().class_),
+                              session=db.session(), _with_deleted=True)
+
+    def _get(self, *args, **kwargs):
+        # this calls the original query.get function from the base class
+        return super(QueryWithSoftDelete, self).get(*args, **kwargs)
+
+    def get(self, *args, **kwargs):
+        # the query.get method does not like it if there is a filter clause
+        # pre-loaded, so we need to implement it using a workaround
+        obj = self.with_deleted()._get(*args, **kwargs)
+        return obj if obj is None or self._with_deleted or not obj.deleted else None
+
 
 class SearchableMixin:
     @classmethod
@@ -60,7 +90,6 @@ class SearchableMixin:
             if isinstance(obj, SearchableMixin):
                 remove_from_index(obj.__tablename__, obj)
 
-
     @classmethod
     def reindex(cls):
         for obj in cls.query:
@@ -72,13 +101,16 @@ class SocketsMixin:
     def after_commit(cls, session):
         for obj in session._changes['add']:
             if isinstance(obj, SocketsMixin):
-                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid), namespace="/socket")
+                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid),
+                              namespace="/socket")
         for obj in session._changes['update']:
             if isinstance(obj, SocketsMixin):
-                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid), namespace="/socket")
+                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid),
+                              namespace="/socket")
         for obj in session._changes['delete']:
             if isinstance(obj, SocketsMixin):
-                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid), namespace="/socket")
+                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid),
+                              namespace="/socket")
 
         session._changes = None
 
@@ -90,7 +122,7 @@ db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 class CommonMixin:
     time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
     time_modified = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
-    flagged_for_deletion = db.Column(db.Boolean, default=False)
+    deleted = db.Column(db.Boolean, default=False)
 
 
 class ServerSettings(db.Model):
@@ -105,7 +137,7 @@ class ServerSettings(db.Model):
     favicon = db.Column(db.String)
 
     locale_id = db.Column(db.Integer, db.ForeignKey('locale.id'))
-    locale = db.relationship("Locale",  foreign_keys=[locale_id])
+    locale = db.relationship("Locale", foreign_keys=[locale_id])
 
     @property
     def object_type(self):
@@ -130,7 +162,8 @@ class Comment(db.Model, CommonMixin):
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Comment.uuid)".format(Objects.COMMENT)
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Comment.uuid)".format(
+            Objects.COMMENT)
     )
 
     @property
@@ -156,9 +189,9 @@ class Deliverable(db.Model, CommonMixin):
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Deliverable.uuid)".format(Objects.DELIVERABLE)
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Deliverable.uuid)".format(
+            Objects.DELIVERABLE)
     )
-
 
     @property
     def object_type(self):
@@ -185,11 +218,6 @@ class Priority(db.Model, CommonMixin):
     @property
     def object_type(self):
         return Objects.PRIORITY
-
-
-#class TaskParent(db.Model, CommonMixin, SocketsMixin):
-#    id = db.Column(db.Integer, primary_key=True)
-#    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
 
 
 task_rider_assignees = db.Table(
@@ -220,7 +248,7 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
             'relays',
             primaryjoin='and_('
                           'foreign(Task.parent_id)==TasksParent.id,'
-                          'Task.flagged_for_deletion.isnot(True))',
+                          'Task.deleted.isnot(True))',
             lazy='dynamic')
     )
     order_in_relay = db.Column(db.Integer, nullable=False)
@@ -244,14 +272,14 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
 
     ## TODO: figure out how to add more than one signature for relays
-   # destination_contact_name = db.Column(db.String(64))
-   # destination_contact_number = db.Column(db.String(64))
+    # destination_contact_name = db.Column(db.String(64))
+    # destination_contact_number = db.Column(db.String(64))
 
-   # recipient_name = db.Column(db.String(64))
-   # recipient_signature = db.Column(db.String(4096))
+    # recipient_name = db.Column(db.String(64))
+    # recipient_signature = db.Column(db.String(4096))
 
-   # sender_name = db.Column(db.String(64))
-   # sender_signature = db.Column(db.String(4096))
+    # sender_name = db.Column(db.String(64))
+    # sender_signature = db.Column(db.String(4096))
 
     patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
@@ -260,18 +288,29 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'), nullable=True)
     priority = db.relationship("Priority", foreign_keys=[priority_id])
     deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
-    assigned_riders = db.relationship('User', secondary=task_rider_assignees, lazy='dynamic',
-        backref=db.backref('tasks_as_rider', lazy='dynamic'))
+    assigned_riders = db.relationship(
+        'User',
+        secondary=task_rider_assignees,
+        lazy='dynamic',
+        backref=db.backref(
+            'tasks_as_rider',
+            lazy='dynamic'))
 
-    assigned_coordinators = db.relationship('User', secondary=task_coordinator_assignees, lazy='dynamic',
-                                    backref=db.backref('tasks_as_coordinator', lazy='dynamic'))
+    assigned_coordinators = db.relationship(
+        'User',
+        secondary=task_coordinator_assignees,
+        lazy='dynamic',
+        backref=db.backref(
+            'tasks_as_coordinator',
+            lazy='dynamic'))
 
     relay_previous_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey(uuid))
-    relay_previous = db.relationship("Task",
-                                     uselist=False,
-                                     foreign_keys=[relay_previous_uuid],
-                                     remote_side=[uuid],
-                                     backref=db.backref('relay_next', uselist=False))
+    relay_previous = db.relationship(
+        "Task",
+        uselist=False,
+        foreign_keys=[relay_previous_uuid],
+        remote_side=[uuid],
+        backref=db.backref('relay_next', uselist=False))
 
     comments = db.relationship(
         'Comment',
@@ -284,6 +323,8 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
     )
 
     __searchable__ = ['contact_name', 'contact_number', 'session_uuid']
+
+    query_class = QueryWithSoftDelete
 
     @property
     def object_type(self):
@@ -307,12 +348,14 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE)
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Vehicle.uuid)".format(
+            Objects.VEHICLE)
     )
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Vehicle.uuid)".format(Objects.VEHICLE)
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Vehicle.uuid)".format(
+            Objects.VEHICLE)
     )
 
     __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
@@ -363,7 +406,6 @@ class User(SearchableMixin, db.Model, CommonMixin):
         'LogEntry',
         primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == User.uuid)".format(Objects.USER)
     )
-
 
     __searchable__ = ['username', 'roles', 'name', 'email']
 
@@ -428,14 +470,15 @@ class Location(SearchableMixin, db.Model, CommonMixin):
 
     comments = db.relationship(
         'Comment',
-        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(Objects.LOCATION)
+        primaryjoin="and_(Comment.parent_type == {}, foreign(Comment.parent_uuid) == Location.uuid)".format(
+            Objects.LOCATION)
     )
 
     logged_actions = db.relationship(
         'LogEntry',
-        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Location.uuid)".format(Objects.LOCATION)
+        primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Location.uuid)".format(
+            Objects.LOCATION)
     )
-
 
     __searchable__ = ['name', 'contact_name', 'contact_number', 'address']
 

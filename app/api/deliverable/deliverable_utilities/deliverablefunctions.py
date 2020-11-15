@@ -11,6 +11,6 @@ def get_deliverable_type(_id):
 
 def get_all_deliverable_types(filter_deleted=False):
     if filter_deleted:
-        return models.DeliverableType.query.filter_by(flagged_for_deletion=False)
+        return models.DeliverableType.query.filter_by(deleted=False)
     else:
         return models.DeliverableType.query.all()

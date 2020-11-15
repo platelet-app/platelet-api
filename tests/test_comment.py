@@ -69,7 +69,7 @@ def test_delete_comment(client, login_header_rider, comment_data, user_coordinat
                       headers=login_header_rider)
     assert r2.status_code == 202
     db.session.flush()
-    assert comment_obj.flagged_for_deletion
+    assert comment_obj.deleted
     r3 = client.get("{}/{}".format(comment_url, str(comment_obj.uuid)),
                     headers=login_header_rider)
     assert r3.status_code == 404
@@ -80,7 +80,7 @@ def test_delete_comment_admin(client, login_header_admin, comment_obj):
                    headers=login_header_admin)
     assert r.status_code == 202
     db.session.flush()
-    assert comment_obj.flagged_for_deletion
+    assert comment_obj.deleted
     r2 = client.get("{}/{}".format(comment_url, str(comment_obj.uuid)),
                    headers=login_header_admin)
     assert r2.status_code == 404
