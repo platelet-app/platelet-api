@@ -95,9 +95,7 @@ class Task(Resource):
         request_json = request.get_json()
         emit_socket_broadcast(request_json, UPDATE_TASK, uuid=task_id)
         db.session.commit()
-        ee = task_schema.dump(task)
-        aa = jsonify(ee)
-        return {"task": task_schema.dump(task), 'message': 'Task {} updated.'.format(task.uuid)}
+        return {"task": task_schema.dump(task), "uuid": str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}
 
 
 @ns.route(

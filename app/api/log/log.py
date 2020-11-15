@@ -1,6 +1,3 @@
-from sqlalchemy import union_all
-from sqlalchemy.orm import joinedload
-
 from app import schemas, models
 from flask_restx import Resource, reqparse
 import flask_praetorian
@@ -105,4 +102,26 @@ class MyLogs(Resource):
                     if str(l.calling_user_uuid) != user_uuid:
                         logs.append(l)
 
-        return logs_schema.dump(logs)
+        if order == "newest":
+            logs.sort(key=lambda log: log.time_created)
+            logs.reverse()
+
+        deduped_logs = list(dedup_log(logs))  # Use `loc` with index values
+
+        return logs_schema.dump(deduped_logs)
+
+
+def dedup_log(logs):
+    it = iter(logs)
+    prev_log = next(it)
+    log = None
+    for log in it:
+        time_diff = (prev_log.time_created - log.time_created).total_seconds()
+        if time_diff > 30:
+            yield prev_log
+        if not (log.data_fields == prev_log.data_fields and log.parent_uuid == prev_log.parent_uuid):
+            yield prev_log
+        prev_log = log
+
+    if log and not (log.data_fields == prev_log.data_fields and log.parent_uuid == prev_log.parent_uuid):
+        yield log
