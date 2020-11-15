@@ -113,7 +113,10 @@ class MyLogs(Resource):
 
 def dedup_log(logs):
     it = iter(logs)
-    prev_log = next(it)
+    try:
+        prev_log = next(it)
+    except StopIteration:
+        return
     log = None
     for log in it:
         time_diff = (prev_log.time_created - log.time_created).total_seconds()
