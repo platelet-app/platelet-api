@@ -267,7 +267,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'priority_id', 'time_cancelled', 'time_rejected',
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
-                  'relay_previous_uuid', 'parent_id', 'order_in_relay')
+                  'relay_previous_uuid', 'relay_next', 'relay_previous', 'parent_id', 'order_in_relay')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
@@ -292,8 +292,8 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     patch_id = ma.Int(allow_none=True)
     time_of_call = ma.DateTime()
     assigned_users_display_string = ma.String(dump_only=True)
-    relay_previous = ma.Nested('self', exclude=('relay_next',), dump_only=True)
-    relay_next = ma.Nested('self', exclude=('relay_previous',), dump_only=True)
+    relay_previous = ma.Nested('self', only=('uuid',), dump_only=True)
+    relay_next = ma.Nested('self', only=('uuid',), dump_only=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('task_detail', task_id='<uuid>'),

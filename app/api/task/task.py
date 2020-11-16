@@ -6,7 +6,8 @@ from flask_restx import Resource, reqparse
 import flask_praetorian
 from app import task_ns as ns
 from app.api.task.task_utilities.task_socket_actions import *
-from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast, emit_socket_assignment_broadcast
+from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast, emit_socket_assignment_broadcast, \
+    set_previous_relay_uuids
 from app.api.functions.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
@@ -36,7 +37,6 @@ class TaskRestore(Resource):
             task = get_object(TASK, task_id, with_deleted=True)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
-
         if task.deleted:
             delete_queue_task = get_object(DELETE_FLAG, task.uuid)
             for deliverable in task.deliverables:
@@ -46,6 +46,12 @@ class TaskRestore(Resource):
             remove_item_from_delete_queue(task)
         else:
             return {'uuid': str(task.uuid), 'message': 'Task {} not flagged for deletion.'.format(task.uuid)}, 200
+
+        db.session.flush()
+        task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
+        set_previous_relay_uuids(task_parent)
+        db.session.commit()
+
         emit_socket_broadcast(task_schema.dump(task), RESTORE_TASK, uuid=task.uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} deletion flag removed.'.format(task.uuid)}, 200
 
@@ -73,6 +79,10 @@ class Task(Resource):
         except AlreadyFlaggedForDeletionError:
             emit_socket_broadcast({}, DELETE_TASK, uuid=task_id)
             return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
+
+        task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
+        set_previous_relay_uuids(task_parent)
+        db.session.commit()
 
         emit_socket_broadcast({}, DELETE_TASK, uuid=task_id)
         return {'uuid': str(task.uuid), 'message': "Task queued for deletion"}, 202
@@ -236,7 +246,7 @@ class Tasks(Resource):
             parent = get_object(TASK_PARENT, task.parent_id)
             if not parent:
                 return not_found(TASK_PARENT, task.parent_id)
-            next_order_in_relay_int = parent.relays.all()[-1].order_in_relay + 1
+            next_order_in_relay_int = parent.relays_with_deleted.count() + 1
         else:
             new_parent = models.TasksParent()
             db.session.add(new_parent)
@@ -246,6 +256,9 @@ class Tasks(Resource):
         task.order_in_relay = next_order_in_relay_int
         task.author_uuid = utilities.current_user().uuid
         db.session.add(task)
+        db.session.flush()
+        task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
+        set_previous_relay_uuids(task_parent)
         db.session.commit()
         return {
                    'uuid': str(task.uuid),

@@ -245,6 +245,11 @@ task_coordinator_assignees = db.Table(
 
 class TasksParent(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
+    relays_with_deleted = db.relationship(
+        'Task',
+        primaryjoin="foreign(Task.parent_id) == TasksParent.id",
+        lazy="dynamic"
+    )
 
     query_class = QueryWithSoftDelete
 
