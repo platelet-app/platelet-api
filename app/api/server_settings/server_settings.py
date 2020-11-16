@@ -27,14 +27,12 @@ class ServerSettings(Resource):
             return internal_error("An exception occurred while retrieving server settings: {}".format(e))
 
     @flask_praetorian.roles_required('admin')
-    def put(self, vehicle_id):
+    def patch(self, settings_id):
         try:
-            vehicle = get_object(SETTINGS, vehicle_id)
-            if vehicle.deleted:
-                return not_found(SETTINGS, vehicle_id)
+            settings = get_object(SETTINGS, settings_id)
         except ObjectNotFoundError:
-            return not_found(SETTINGS, vehicle_id)
+            return not_found(SETTINGS, settings_id)
 
-        load_request_into_object(SETTINGS, instance=vehicle)
+        load_request_into_object(SETTINGS, instance=settings)
         db.session.commit()
         return {'message': 'Server settings updated'}

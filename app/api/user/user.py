@@ -128,7 +128,7 @@ class User(Resource):
 
     @flask_praetorian.auth_required
     @user_id_match_or_admin
-    def put(self, user_id):
+    def patch(self, user_id):
         try:
             user = get_object(USER, user_id)
             if user.deleted:

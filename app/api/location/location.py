@@ -40,7 +40,7 @@ class Location(Resource):
         return add_item_to_delete_queue(location)
 
     @flask_praetorian.roles_required('admin', 'coordinator')
-    def put(self, location_id):
+    def patch(self, location_id):
         try:
             location = get_object(LOCATION, location_id)
             if location.deleted:

@@ -80,7 +80,7 @@ class Task(Resource):
     @flask_praetorian.auth_required
     @check_rider_match
     # @check_parent_or_collaborator_or_admin_match
-    def put(self, task_id):
+    def patch(self, task_id):
         try:
             task = get_object(TASK, task_id)
             if task.deleted:

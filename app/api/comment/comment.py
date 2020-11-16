@@ -78,7 +78,7 @@ class Comment(Resource):
 
     @flask_praetorian.auth_required
     @comment_author_match_or_admin
-    def put(self, _id):
+    def patch(self, _id):
         try:
             comment = get_object(COMMENT, _id)
         except ObjectNotFoundError:

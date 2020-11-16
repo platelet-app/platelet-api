@@ -55,7 +55,7 @@ class Deliverable(Resource):
         return {'uuid': str(deliverable.uuid), 'message': "Deliverable queued for deletion"}, 202
 
     @flask_praetorian.roles_accepted('admin', 'coordinator')
-    def put(self, deliverable_id):
+    def patch(self, deliverable_id):
         try:
             deliverable = get_object(DELIVERABLE, deliverable_id)
         except ObjectNotFoundError:

@@ -57,7 +57,7 @@ class Vehicle(Resource):
         return {'uuid': str(vehicle.uuid), 'message': "Vehicle queued for deletion"}, 202
 
     @flask_praetorian.roles_required('admin')
-    def put(self, vehicle_id):
+    def patch(self, vehicle_id):
         try:
             vehicle = get_object(VEHICLE, vehicle_id)
             if vehicle.deleted:
