@@ -265,7 +265,8 @@ class Tasks(Resource):
                    'time_created': str(task.time_created),
                    'message': 'Task {} created'.format(task.uuid),
                    'author_uuid': str(task.author_uuid),
-                   'parent_id': str(task.parent_id)
+                   'parent_id': str(task.parent_id),
+                   'order_in_relay': str(task.order_in_relay)
                }, 201
 
 
