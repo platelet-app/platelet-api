@@ -540,6 +540,7 @@ class LogEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
+    ip_address = db.Column(db.String)
     parent_type = db.Column(db.Integer)
     parent_uuid = db.Column(UUID(as_uuid=True))
     calling_user_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))

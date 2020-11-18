@@ -170,7 +170,7 @@ def endpoint_to_object_type(endpoint):
 
 @app.after_request
 def log_input(response):
-    if request.method in ["POST", "PUT", "DELETE"]:
+    if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
         if not request.endpoint.endswith("login_login"):
             response_data = json.loads(response.get_data())
             request_data = json.loads(request.get_data())
@@ -190,7 +190,8 @@ def log_input(response):
                     http_request_type_id=get_http_code_int(request.method),
                     parent_uuid=object_uuid,
                     http_response_status_id=response_status.id if response_status else None,
-                    data_fields=fields
+                    data_fields=fields,
+                    ip_address=request.environ['REMOTE_ADDR']
                 )
                 db.session.add(entry)
                 db.session.commit()
