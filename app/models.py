@@ -245,7 +245,7 @@ task_coordinator_assignees = db.Table(
 
 class TasksParent(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
-    relays_with_deleted = db.relationship(
+    relays_with_deleted_cancelled_rejected = db.relationship(
         'Task',
         primaryjoin="foreign(Task.parent_id) == TasksParent.id",
         lazy="dynamic"
@@ -264,8 +264,10 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
         backref=db.backref(
             'relays',
             primaryjoin='and_('
-                          'foreign(Task.parent_id)==TasksParent.id,'
-                          'Task.deleted.isnot(True))',
+                        'foreign(Task.parent_id)==TasksParent.id,'
+                        'Task.deleted.isnot(True),'
+                        'Task.time_cancelled.is_(None),'
+                        'Task.time_rejected.is_(None))',
             lazy='dynamic')
     )
     order_in_relay = db.Column(db.Integer, nullable=False)

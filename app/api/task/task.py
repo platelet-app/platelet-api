@@ -250,7 +250,7 @@ class Tasks(Resource):
             parent = get_object(TASK_PARENT, task.parent_id)
             if not parent:
                 return not_found(TASK_PARENT, task.parent_id)
-            next_order_in_relay_int = parent.relays_with_deleted.count() + 1
+            next_order_in_relay_int = parent.relays_with_deleted_cancelled_rejected.count() + 1
         else:
             new_parent = models.TasksParent()
             db.session.add(new_parent)
