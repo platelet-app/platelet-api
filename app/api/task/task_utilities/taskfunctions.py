@@ -18,7 +18,7 @@ def get_task_object(_id, with_deleted=False):
 def set_previous_relay_uuids(task_parent):
     prev_task = None
     for i in sorted(task_parent.relays_with_deleted, key=lambda t: t.order_in_relay):
-        if i.deleted:
+        if i.deleted or i.time_cancelled or i.time_rejected:
             i.relay_previous_uuid = None
             continue
         if prev_task:

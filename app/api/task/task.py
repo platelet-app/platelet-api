@@ -102,6 +102,10 @@ class Task(Resource):
         except ValidationError as e:
             return schema_validation_error(e)
 
+        task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
+        set_previous_relay_uuids(task_parent)
+        db.session.commit()
+
         request_json = request.get_json()
         emit_socket_broadcast(request_json, UPDATE_TASK, uuid=task_id)
         db.session.commit()
@@ -314,16 +318,16 @@ class Tasks(Resource):
             if status == "new":
                 filtered = query_deleted.join(models.TasksParent).filter(
                     ~models.TasksParent.relays.any(models.Task.assigned_riders.any()),
-                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
-                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None),
                 )
 
             elif status == "active":
                 filtered = query_deleted.join(models.TasksParent).filter(
                     models.TasksParent.relays.any(models.Task.assigned_riders.any()),
                     ~models.TasksParent.relays.any(models.Task.time_picked_up.isnot(None)),
-                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
-                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None)
                 )
 
             elif status == "picked_up":
@@ -331,23 +335,25 @@ class Tasks(Resource):
                     models.TasksParent.relays.any(models.Task.assigned_riders.any()),
                     models.TasksParent.relays.any(models.Task.time_picked_up.isnot(None)),
                     models.TasksParent.relays.any(models.Task.time_dropped_off.is_(None)),
-                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
-                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None)
                 )
             elif status == "delivered":
                 filtered = query_deleted.join(models.TasksParent).filter(
                     models.TasksParent.relays.any(models.Task.assigned_riders.any()),
                     ~models.TasksParent.relays.any(models.Task.time_dropped_off.is_(None)),
-                    models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
-                    models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                    models.Task.time_cancelled.is_(None),
+                    models.Task.time_rejected.is_(None)
                 )
             elif status == "cancelled":
                 filtered = query_deleted.join(models.TasksParent).filter(
-                    ~models.TasksParent.relays.any(models.Task.time_cancelled.is_(None)),
+                    models.Task.time_cancelled.isnot(None),
+                    models.Task.time_rejected.is_(None)
                 )
             elif status == "rejected":
                 filtered = query_deleted.join(models.TasksParent).filter(
-                    ~models.TasksParent.relays.any(models.Task.time_rejected.is_(None)),
+                    models.Task.time_rejected.isnot(None),
+                    models.Task.time_cancelled.is_(None)
                 )
             else:
                 filtered = query_deleted
