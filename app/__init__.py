@@ -83,7 +83,8 @@ deliverable_ns = api.namespace('api/{}/deliverable'.format(api_version), descrip
 location_ns = api.namespace('api/{}/location'.format(api_version), description='Saved location operations')
 any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Lookup for any object')
 log_ns = api.namespace('api/{}/log'.format(api_version), description='Logging lookups')
-search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch functions')
+search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch operations')
+statistics_ns = api.namespace('api/{}/statistics'.format(api_version), description='Statistics operations')
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
 Payload.max_decode_packets = 50
@@ -128,6 +129,7 @@ from app.api.search import search
 from app.api.log import log
 from app.api.priority import priority
 from app.api.patch import patch
+from app.api.statistics import statistics
 from app.api.server_settings import server_settings
 from app.api import ping
 from app.api import redis
@@ -204,4 +206,3 @@ def log_input(response):
 def after_request(response):
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
-

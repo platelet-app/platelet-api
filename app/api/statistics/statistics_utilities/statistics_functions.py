@@ -97,16 +97,18 @@ def generate_statistics_from_tasks(tasks):
         # calculate the time between the last modified task and the first created task
         time_active = str(round((last_changed_task.time_modified - first_created_task.time_created).total_seconds()))
 
-    return {"num_tasks": num_tasks,
-            "num_all_riders": num_all_riders,
-            "num_deleted": num_deleted,
-            "num_completed": num_completed,
-            "num_picked_up": num_picked_up,
-            "num_active": num_active,
-            "num_unassigned": num_unassigned,
-            "num_rejected": num_rejected,
-            "num_cancelled": num_cancelled,
-            "patches": patch_counts,
-            "riders": rider_counts,
-            "priorities": priority_stats,
-            "time_active": time_active}, 200
+    return {
+        "num_tasks": num_tasks,
+        "num_all_riders": num_all_riders,
+        "num_deleted": num_deleted,
+        "num_completed": num_completed,
+        "num_picked_up": num_picked_up,
+        "num_active": num_active,
+        "num_unassigned": num_unassigned,
+        "num_rejected": num_rejected,
+        "num_cancelled": num_cancelled,
+        "patches": patch_counts,
+        "riders": rider_counts,
+        "priorities": priority_stats,
+        "time_active": time_active
+    }
