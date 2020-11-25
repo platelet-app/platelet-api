@@ -14,7 +14,7 @@ from app import db
 LOCATION = models.Objects.LOCATION
 
 location_schema = schemas.LocationSchema()
-locations_schema = schemas.LocationSchema(many=True, exclude=("address", "contact_name", "contact_number", "comments", "time_modified"))
+locations_schema = schemas.LocationSchema(many=True, only=("name", "uuid"))
 
 
 @ns.route('/<location_id>', endpoint='location_detail')

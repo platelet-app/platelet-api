@@ -1,5 +1,55 @@
+from sqlalchemy import or_, and_
+
 from app import models
 from app.api.functions.utilities import get_all_objects
+
+Task = models.Task
+
+
+def generated_statistics_from_tasks_query(query):
+    query_no_rejected_cancelled = query.filter(and_(
+        Task.time_cancelled.is_(None),
+        Task.time_rejected.is_(None)
+    ))
+    available_priorities = get_all_objects(models.Objects.PRIORITY)
+    num_deleted = query.with_deleted().filter(Task.deleted.is_(True)).count()
+    num_tasks = query.count()
+    # tasks that are dropped off, rejected, or cancelled
+    num_completed = query.filter(or_(
+        Task.time_dropped_off.isnot(None),
+        Task.time_rejected.isnot(None),
+        Task.time_cancelled.isnot(None)
+    )).count()
+    # tasks with time_picked_up set and not time_dropped_off
+    num_picked_up = query_no_rejected_cancelled.filter(and_(
+        Task.time_picked_up.isnot(None),
+        Task.time_picked_up.is_(None)
+    )).count()
+    # tasks that only have an assigned rider
+    num_active = query_no_rejected_cancelled.filter(
+        models.Task.assigned_riders.any(),
+    ).count()
+    num_rejected = query.filter(Task.time_rejected.isnot(None)).count()
+    # tasks with time_cancelled set
+    num_cancelled = query.filter(Task.time_cancelled.isnot(None)).count()
+    # tasks with no assigned rider
+    num_unassigned = query_no_rejected_cancelled.filter(
+        ~models.Task.assigned_riders.any(),
+    ).count()
+
+    users_query = models.User.query.with_deleted()
+    #users_query.join(Task.)
+
+    return {
+        "num_tasks": num_tasks,
+        "num_deleted": num_deleted,
+        "num_completed": num_completed,
+        "num_picked_up": num_picked_up,
+        "num_active": num_active,
+        "num_unassigned": num_unassigned,
+        "num_rejected": num_rejected,
+        "num_cancelled": num_cancelled,
+    }
 
 
 def generate_statistics_from_tasks(tasks):
@@ -89,13 +139,18 @@ def generate_statistics_from_tasks(tasks):
             available_priorities))
     priority_stats["None"] = len(list(filter(lambda t: not t.priority_id, tasks)))
 
-    # get the task that was last modified on this session
-    last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)[-1]
-    first_created_task = sorted(tasks_plus_deleted, key=lambda t: t.time_created)[0]
+    # get the task that was last modified
+    last_changed_task = None
+    first_created_task = None
+    if tasks_plus_deleted:
+        last_changed_task = sorted(tasks_plus_deleted, key=lambda t: t.time_modified)[-1]
+        first_created_task = sorted(tasks_plus_deleted, key=lambda t: t.time_created)[0]
     time_active = None
     if last_changed_task and first_created_task:
         # calculate the time between the last modified task and the first created task
         time_active = str(round((last_changed_task.time_modified - first_created_task.time_created).total_seconds()))
+    else:
+        time_active = 0
 
     return {
         "num_tasks": num_tasks,

@@ -102,6 +102,8 @@ def get_object(type, _id, with_deleted=False):
             return get_location_object(_id, with_deleted=with_deleted)
         elif type == models.Objects.DELETE_FLAG:
             return get_delete_flag_object(_id)
+        else:
+            raise ObjectNotFoundError
 
     except ObjectNotFoundError:
         raise

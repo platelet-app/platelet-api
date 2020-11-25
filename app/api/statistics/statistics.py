@@ -3,7 +3,7 @@ from flask_restx import Resource, reqparse
 from sqlalchemy import union_all
 
 from app import statistics_ns as ns, models
-from app.api.functions.errors import not_found, internal_error
+from app.api.functions.errors import not_found, internal_error, unprocessable_entity_error
 from app.api.functions.utilities import get_object
 from app.api.statistics.statistics_utilities.statistics_functions import generate_statistics_from_tasks
 from app.exceptions import ObjectNotFoundError
@@ -37,6 +37,10 @@ class TasksStatistics(Resource):
             role = args['role'] if args['role'] else None
             start_date_time = args['start_date_time'] if args['start_date_time'] else None
             end_date_time = args['end_date_time'] if args['end_date_time'] else None
+            start_date_time = dateutil.parser.parse(start_date_time)
+            end_date_time = dateutil.parser.parse(end_date_time)
+            if (start_date_time > end_date_time):
+                return unprocessable_entity_error("Start date time cannot be after end date time.")
 
             if role == "coordinator":
                 query = requested_user.tasks_as_coordinator
@@ -47,13 +51,13 @@ class TasksStatistics(Resource):
 
             if start_date_time and end_date_time:
                 query_date = query.filter(models.Task.time_created.between(
-                    dateutil.parser.parse(start_date_time),
-                    dateutil.parser.parse(end_date_time))
+                    start_date_time,
+                    end_date_time)
                 )
             elif start_date_time and not end_date_time:
-                query_date = query.filter(models.Task.time_created >= dateutil.parser.parse(start_date_time))
+                query_date = query.filter(models.Task.time_created >= start_date_time)
             elif not start_date_time and end_date_time:
-                query_date = query.filter(models.Task.time_created <= dateutil.parser.parse(end_date_time))
+                query_date = query.filter(models.Task.time_created <= end_date_time)
             else:
                 query_date = query
 
@@ -61,4 +65,5 @@ class TasksStatistics(Resource):
             return generate_statistics_from_tasks(query_date.all()), 200
 
         except Exception as e:
+            raise
             return internal_error(e)

@@ -69,7 +69,7 @@ class CommentSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         only=("display_name", "uuid", "profile_picture_thumbnail_url")
     )
     num_edits = ma.Function(
-        lambda obj: len(list(filter(lambda action: action.http_request_type.label == "PUT" and "body" in action.data_fields, obj.logged_actions)))
+        lambda obj: len(list(filter(lambda action: action.http_request_type.label in ["PATCH", "PUT"] and "body" in action.data_fields, obj.logged_actions)))
     )
 
 
