@@ -363,11 +363,12 @@ class UserAddressSchema(ma.SQLAlchemySchema):
 class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
     class Meta:
         model = models.Location
-        fields = ('uuid', 'name', 'contact_name', 'contact_number', 'address', 'comments', 'links',
+        fields = ('uuid', 'name', 'contact', 'address', 'comments', 'links',
                   "time_created", "time_modified")
 
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     address = ma.Nested(AddressSchema)
+    requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('location_detail', location_id='<uuid>'),

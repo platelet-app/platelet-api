@@ -484,8 +484,8 @@ class Location(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     name = db.Column(db.String(64), unique=True)
-    contact_name = db.Column(db.String(64))
-    contact_number = db.Column(db.String(64))
+    contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'))
+    contact = db.relationship("Contact", foreign_keys=[contact_id])
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
 
