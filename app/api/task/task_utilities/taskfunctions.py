@@ -54,6 +54,10 @@ def calculate_tasks_etag(data):
     return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
 
 
+def calculate_task_etag(task_json):
+    return hashlib.sha1(bytes(task_json, 'utf-8')).hexdigest()
+
+
 def emit_socket_broadcast(data, type, uuid=None):
     try:
         tab_indentifier = request.headers['Tab-Identification']

@@ -1,7 +1,13 @@
+import json
+
+from flask import jsonify
 from flask_socketio import emit, join_room, leave_room
-from app import socketio
+from app import socketio, models, schemas
 from app import api_version
 from threading import Lock
+
+from app.api.functions.utilities import get_object
+from app.api.task.task_utilities.task_socket_actions import TASKS_REFRESH
 
 thread = None
 thread_lock = Lock()
@@ -10,6 +16,22 @@ namespace = "/api/{}/subscribe".format(api_version)
 namespace_comments = "/api/{}/subscribe_comments".format(api_version)
 namespace_assignments = "/api/{}/subscribe_assignments".format(api_version)
 
+TASK = models.Objects.TASK
+tasks_schema = schemas.TaskSchema(exclude=("assigned_coordinators", "comments"))
+
+
+@socketio.on('refresh_data', namespace=namespace)
+def check_etags(uuid_etag_dict):
+    result = []
+    for entry, etag in uuid_etag_dict.items():
+        task = get_object(TASK, entry)
+        dump = tasks_schema.dump(task)
+        if dump['etag'] != etag:
+            result.append(dump)
+    emit('request_response', {
+        'data': json.dumps({"tasks": result}),
+        'type': TASKS_REFRESH
+    })
 
 
 @socketio.on('subscribe', namespace=namespace)

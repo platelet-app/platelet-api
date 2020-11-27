@@ -1,3 +1,4 @@
+import json
 from functools import reduce
 
 import phonenumbers
@@ -5,11 +6,11 @@ from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE
 from phonenumbers import NumberParseException
 
 from app import cloud_stores
+from app.api.task.task_utilities.taskfunctions import calculate_task_etag
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, app
 from app.api.functions.utilities import get_all_objects, object_type_to_string
-from app.api.task.task_utilities.taskfunctions import calculate_tasks_etag
 
 
 class TimesMixin:
@@ -157,12 +158,6 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         if any(list(filter(lambda u: u.username == value, users))):
             raise ValidationError("This username is already taken.")
 
-    @pre_dump
-    def get_tasks_etag(self, data, many):
-        return data
-        if not many:
-            data.tasks_etag = calculate_tasks_etag(data.tasks)
-        return data
 
     @pre_dump
     def profile_picture_protected_url(self, data, many):
@@ -267,7 +262,8 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'priority_id', 'time_cancelled', 'time_rejected',
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
-                  'relay_previous_uuid', 'relay_next', 'relay_previous', 'parent_id', 'order_in_relay')
+                  'relay_previous_uuid', 'relay_next', 'relay_previous', 'parent_id', 'order_in_relay',
+                  'e-tag')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
@@ -310,6 +306,11 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
         data.assigned_coordinators_display_string = reduce(
             display_names_reducer,
             enumerate(data.assigned_coordinators), "")
+        return data
+
+    @post_dump
+    def calculate_etag(self, data, many):
+        data['etag'] = calculate_task_etag(json.dumps(data))
         return data
 
 
