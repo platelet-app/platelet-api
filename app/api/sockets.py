@@ -1,13 +1,16 @@
 import json
 
-from flask import jsonify
+import datetime
 from flask_socketio import emit, join_room, leave_room
+from sqlalchemy import union_all
+
 from app import socketio, models, schemas
 from app import api_version
 from threading import Lock
+from dateutil import parser
 
 from app.api.functions.utilities import get_object
-from app.api.task.task_utilities.task_socket_actions import TASKS_REFRESH
+from app.api.task.task_utilities.task_socket_actions import TASKS_REFRESH, TASK_ASSIGNMENTS_REFRESH
 
 thread = None
 thread_lock = Lock()
@@ -17,20 +20,48 @@ namespace_comments = "/api/{}/subscribe_comments".format(api_version)
 namespace_assignments = "/api/{}/subscribe_assignments".format(api_version)
 
 TASK = models.Objects.TASK
+USER = models.Objects.USER
 tasks_schema = schemas.TaskSchema(exclude=("assigned_coordinators", "comments"))
 
 
-@socketio.on('refresh_data', namespace=namespace)
+@socketio.on('refresh_task_data', namespace=namespace)
 def check_etags(uuid_etag_dict):
     result = []
-    for entry, etag in uuid_etag_dict.items():
-        task = get_object(TASK, entry)
-        dump = tasks_schema.dump(task)
-        if dump['etag'] != etag:
-            result.append(dump)
+    if uuid_etag_dict:
+        for entry, etag in uuid_etag_dict.items():
+            task = get_object(TASK, entry)
+            dump = tasks_schema.dump(task)
+            if dump['etag'] != etag:
+                result.append(dump)
+    else:
+        print("IT'S NONE")
     emit('request_response', {
-        'data': json.dumps({"tasks": result}),
+        'data': json.dumps(result),
         'type': TASKS_REFRESH
+    })
+
+
+@socketio.on('refresh_task_assignments', namespace=namespace)
+def check_assignments(user_uuid, from_date_time, role):
+    date_now = datetime.datetime.now(datetime.timezone.utc)
+    date = parser.parse(from_date_time)
+    user = get_object(USER, user_uuid)
+    if role == "coordinator":
+        query = user.tasks_as_coordinator
+    elif role == "rider":
+        query = user.tasks_as_rider
+    else:
+        query = union_all(user.tasks_as_rider, user.tasks_as_coordinator)
+
+    query_date = query.filter(models.Task.time_created.between(
+        date,
+        date_now
+    )
+    )
+
+    emit('request_response', {
+        'data': json.dumps(query_date.all()),
+        'type': TASK_ASSIGNMENTS_REFRESH
     })
 
 

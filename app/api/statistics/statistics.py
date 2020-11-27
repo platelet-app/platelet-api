@@ -65,5 +65,4 @@ class TasksStatistics(Resource):
             return generate_statistics_from_tasks(query_date.all()), 200
 
         except Exception as e:
-            raise
             return internal_error(e)
