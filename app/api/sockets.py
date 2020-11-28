@@ -1,6 +1,8 @@
 import json
 
 import datetime
+from uuid import UUID
+
 from flask_socketio import emit, join_room, leave_room
 from sqlalchemy import union_all
 
@@ -11,6 +13,7 @@ from dateutil import parser
 
 from app.api.functions.utilities import get_object
 from app.api.task.task_utilities.task_socket_actions import TASKS_REFRESH, TASK_ASSIGNMENTS_REFRESH
+from app.api.task.task_utilities.taskfunctions import get_filtered_query_by_status, get_uncompleted_tasks_query
 
 thread = None
 thread_lock = Lock()
@@ -21,7 +24,8 @@ namespace_assignments = "/api/{}/subscribe_assignments".format(api_version)
 
 TASK = models.Objects.TASK
 USER = models.Objects.USER
-tasks_schema = schemas.TaskSchema(exclude=("assigned_coordinators", "comments"))
+task_schema = schemas.TaskSchema(exclude=("assigned_coordinators", "comments"))
+tasks_schema = schemas.TaskSchema(many=True, exclude=("assigned_coordinators", "comments"))
 
 
 @socketio.on('refresh_task_data', namespace=namespace)
@@ -30,7 +34,7 @@ def check_etags(uuid_etag_dict):
     if uuid_etag_dict:
         for entry, etag in uuid_etag_dict.items():
             task = get_object(TASK, entry)
-            dump = tasks_schema.dump(task)
+            dump = task_schema.dump(task)
             if dump['etag'] != etag:
                 result.append(dump)
     else:
@@ -42,9 +46,7 @@ def check_etags(uuid_etag_dict):
 
 
 @socketio.on('refresh_task_assignments', namespace=namespace)
-def check_assignments(user_uuid, from_date_time, role):
-    date_now = datetime.datetime.now(datetime.timezone.utc)
-    date = parser.parse(from_date_time)
+def check_assignments(user_uuid, task_uuids, role):
     user = get_object(USER, user_uuid)
     if role == "coordinator":
         query = user.tasks_as_coordinator
@@ -53,14 +55,18 @@ def check_assignments(user_uuid, from_date_time, role):
     else:
         query = union_all(user.tasks_as_rider, user.tasks_as_coordinator)
 
-    query_date = query.filter(models.Task.time_created.between(
-        date,
-        date_now
-    )
-    )
+    task_uuids_converted = [UUID(t) for t in task_uuids]
+
+    active_query = get_uncompleted_tasks_query(query)
+
+    active_deleted_query = active_query.filter(models.Task.deleted.is_(False))
+
+    q = active_deleted_query.filter(~models.Task.uuid.in_(task_uuids_converted))
+
+
 
     emit('request_response', {
-        'data': json.dumps(query_date.all()),
+        'data': tasks_schema.dump(q.all()),
         'type': TASK_ASSIGNMENTS_REFRESH
     })
 
