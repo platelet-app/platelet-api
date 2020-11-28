@@ -2,6 +2,7 @@ from app import models, schemas, socketio
 from flask import json, request
 import hashlib
 
+from app.api.task.task_utilities.task_socket_actions import ASSIGN_RIDER_TO_TASK, REMOVE_ASSIGNED_RIDER_FROM_TASK
 from app.exceptions import ObjectNotFoundError
 
 
@@ -135,6 +136,8 @@ def emit_socket_assignment_broadcast(data, type, user_uuid):
         tab_indentifier = request.headers['Tab-Identification']
     except KeyError:
         tab_indentifier = ""
+
+    room_identifier = "rider" if type == ASSIGN_RIDER_TO_TASK or type == REMOVE_ASSIGNED_RIDER_FROM_TASK else "coordinator"
     socketio.emit(
         'subscribed_response',
         {
@@ -143,6 +146,6 @@ def emit_socket_assignment_broadcast(data, type, user_uuid):
             'data': data,
             'tab_id': tab_indentifier
         },
-        room=str(user_uuid),
+        room="{}_{}".format(str(user_uuid), room_identifier),
         namespace="/api/v0.1/subscribe_assignments",
     )

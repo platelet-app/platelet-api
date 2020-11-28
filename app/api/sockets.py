@@ -113,16 +113,28 @@ def unsubscribe_from_comments(obj_uuid):
     emit('response', {'data': "Unsubscribed from comments for object with uuid {}.".format(obj_uuid)})
 
 
-@socketio.on('subscribe', namespace=namespace_assignments)
-def subscribe_to_comments(user_uuid):
-    join_room(user_uuid)
-    emit('response', {'data': "Subscribed to assignments for user with uuid {}.".format(user_uuid)})
+@socketio.on('subscribe_coordinator', namespace=namespace_assignments)
+def subscribe_to_coordinator_assignments(user_uuid):
+    join_room("{}_coordinator".format(user_uuid))
+    emit('response', {'data': "Subscribed to coordinator assignments for user with uuid {}.".format(user_uuid)})
 
 
-@socketio.on('unsubscribe', namespace=namespace_assignments)
-def unsubscribe_from_comments(user_uuid):
-    leave_room(user_uuid)
-    emit('response', {'data': "Unsubscribed from assignments for user with uuid {}.".format(user_uuid)})
+@socketio.on('subscribe_rider', namespace=namespace_assignments)
+def subscribe_to_rider_assignments(user_uuid):
+    join_room("{}_rider".format(user_uuid))
+    emit('response', {'data': "Subscribed to rider assignments for user with uuid {}.".format(user_uuid)})
+
+
+@socketio.on('unsubscribe_coordinator', namespace=namespace_assignments)
+def unsubscribe_from_coordinator_assignments(user_uuid):
+    leave_room("{}_coordinator".format(user_uuid))
+    emit('response', {'data': "Unsubscribed from coordinator assignments for user with uuid {}.".format(user_uuid)})
+
+
+@socketio.on('unsubscribe_rider', namespace=namespace_assignments)
+def unsubscribe_from_coordinator_assignments(user_uuid):
+    leave_room("{}_rider".format(user_uuid))
+    emit('response', {'data': "Unsubscribed from rider assignments for user with uuid {}.".format(user_uuid)})
 
 
 @socketio.on('connect', namespace=namespace)

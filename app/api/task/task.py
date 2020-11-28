@@ -176,7 +176,7 @@ class TasksAssignees(Resource):
         db.session.commit()
         request_json = request.get_json()
         emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
-        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, utilities.current_user().uuid)
+        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, user_uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
@@ -217,7 +217,7 @@ class TasksAssignees(Resource):
         db.session.commit()
         request_json = request.get_json()
         emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
-        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, utilities.current_user().uuid)
+        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, user_uuid)
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
 
