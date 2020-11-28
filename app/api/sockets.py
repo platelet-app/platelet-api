@@ -14,6 +14,7 @@ from dateutil import parser
 from app.api.functions.utilities import get_object
 from app.api.task.task_utilities.task_socket_actions import TASKS_REFRESH, TASK_ASSIGNMENTS_REFRESH
 from app.api.task.task_utilities.taskfunctions import get_filtered_query_by_status, get_uncompleted_tasks_query
+from app.exceptions import ObjectNotFoundError
 
 thread = None
 thread_lock = Lock()
@@ -33,10 +34,13 @@ def check_etags(uuid_etag_dict):
     result = []
     if uuid_etag_dict:
         for entry, etag in uuid_etag_dict.items():
-            task = get_object(TASK, entry)
-            dump = task_schema.dump(task)
-            if dump['etag'] != etag:
-                result.append(dump)
+            try:
+                task = get_object(TASK, entry)
+                dump = task_schema.dump(task)
+                if dump['etag'] != etag:
+                    result.append(dump)
+            except ObjectNotFoundError:
+                result.append({"uuid": entry, "deleted": True})
     else:
         print("IT'S NONE")
     emit('request_response', {
