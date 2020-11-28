@@ -7,7 +7,7 @@ import flask_praetorian
 from app import task_ns as ns
 from app.api.task.task_utilities.task_socket_actions import *
 from app.api.task.task_utilities.taskfunctions import emit_socket_broadcast, emit_socket_assignment_broadcast, \
-    set_previous_relay_uuids, get_filtered_query_by_status
+    set_previous_relay_uuids, get_filtered_query_by_status, get_filtered_query_by_status_non_relays
 from app.api.functions.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
@@ -276,7 +276,7 @@ class Tasks(Resource):
 
 @ns.route('s/<user_uuid>',
           endpoint="tasks_list")
-class Tasks(Resource):
+class UsersTasks(Resource):
     @flask_praetorian.auth_required
     def get(self, user_uuid):
         if not user_uuid:
@@ -315,7 +315,10 @@ class Tasks(Resource):
                 models.Task.deleted.is_(False)
             )
 
-            filtered = get_filtered_query_by_status(query_deleted, status)
+            if (role == "coordinator"):
+                filtered = get_filtered_query_by_status(query_deleted, status)
+            else:
+                filtered = get_filtered_query_by_status_non_relays(query_deleted, status)
 
 
             if status in ["new", "delivered", "cancelled", "rejected"]:

@@ -13,6 +13,53 @@ def get_uncompleted_tasks_query(query):
         models.Task.time_rejected.is_(None)
     )
 
+
+def get_filtered_query_by_status_non_relays(query, status):
+    if status == "new":
+        return query.filter(
+            ~models.Task.assigned_riders.any(),
+            models.Task.time_cancelled.is_(None),
+            models.Task.time_rejected.is_(None)
+        )
+
+    elif status == "active":
+        return query.filter(
+            models.Task.assigned_riders.any(),
+            ~models.Task.time_picked_up.isnot(None),
+            models.Task.time_cancelled.is_(None),
+            models.Task.time_rejected.is_(None)
+        )
+
+    elif status == "picked_up":
+        return query.filter(
+            models.Task.assigned_riders.any(),
+            models.Task.time_picked_up.isnot(None),
+            models.Task.time_dropped_off.is_(None),
+            models.Task.time_cancelled.is_(None),
+            models.Task.time_rejected.is_(None)
+        )
+    elif status == "delivered":
+        return query.filter(
+            models.Task.assigned_riders.any(),
+            ~models.Task.time_dropped_off.is_(None),
+            models.Task.time_cancelled.is_(None),
+            models.Task.time_rejected.is_(None)
+        )
+    elif status == "cancelled":
+        return query.filter(
+            models.Task.time_cancelled.isnot(None),
+            models.Task.time_rejected.is_(None)
+        )
+    elif status == "rejected":
+        return query.filter(
+            models.Task.time_rejected.isnot(None),
+            models.Task.time_cancelled.is_(None)
+        )
+    else:
+        return query
+
+
+
 def get_filtered_query_by_status(query, status):
     if status == "new":
         return query.join(models.TasksParent).filter(
