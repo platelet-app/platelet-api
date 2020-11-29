@@ -106,14 +106,15 @@ class Task(Resource):
         set_previous_relay_uuids(task_parent)
         db.session.commit()
 
-        request_json = request.get_json()
-        emit_socket_broadcast(request_json, UPDATE_TASK, uuid=task_id)
+        socket_payload = request.get_json()
         db.session.commit()
         task_dump = task_schema.dump(task)
         try:
             etag = task_dump['etag']
         except KeyError:
             etag = ""
+        socket_payload['etag'] = etag
+        emit_socket_broadcast(socket_payload, UPDATE_TASK, uuid=task_id)
         return {"etag": etag, "uuid": str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}
 
 
