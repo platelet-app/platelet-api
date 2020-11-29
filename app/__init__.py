@@ -61,7 +61,7 @@ app.config.from_object(Config)
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
         if app.config['ELASTICSEARCH_URL'] else None
 
-db = SQLAlchemy(app, engine_options={"connect_args": {"options": "-c timezone=UTC"}})
+db = SQLAlchemy(app, engine_options={"pool_size": 20, "max_overflow": 0, "connect_args": {"options": "-c timezone=UTC"}})
 ma = Marshmallow(app)
 cors = flask_cors.CORS()
 cors.init_app(app)
@@ -206,3 +206,8 @@ def log_input(response):
 def after_request(response):
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
+
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()

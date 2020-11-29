@@ -109,7 +109,12 @@ class Task(Resource):
         request_json = request.get_json()
         emit_socket_broadcast(request_json, UPDATE_TASK, uuid=task_id)
         db.session.commit()
-        return {"task": task_schema.dump(task), "uuid": str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}
+        task_dump = task_schema.dump(task)
+        try:
+            etag = task_dump['etag']
+        except KeyError:
+            etag = ""
+        return {"etag": etag, "uuid": str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}
 
 
 @ns.route(
@@ -319,7 +324,6 @@ class UsersTasks(Resource):
                 filtered = get_filtered_query_by_status(query_deleted, status)
             else:
                 filtered = get_filtered_query_by_status_non_relays(query_deleted, status)
-
 
             if status in ["new", "delivered", "cancelled", "rejected"]:
                 filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
