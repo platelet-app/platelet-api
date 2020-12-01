@@ -261,6 +261,8 @@ class Tasks(Resource):
             new_parent = models.TasksParent()
             db.session.add(new_parent)
             db.session.flush()
+            # TODO: When organisations tables are implemented, make first four characters be from there
+            new_parent.reference = "FEVS{}".format(new_parent.id)
             next_order_in_relay_int = 1
             task.parent_id = new_parent.id
         task.order_in_relay = next_order_in_relay_int

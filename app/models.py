@@ -2,6 +2,7 @@ import redis
 from flask_sqlalchemy import BaseQuery
 from redis import Connection
 from rq import Queue
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from app import db, socketio
 from datetime import datetime
@@ -251,6 +252,8 @@ class TasksParent(db.Model, CommonMixin):
         lazy="dynamic"
     )
 
+    reference = db.Column(db.String(32))
+
     query_class = QueryWithSoftDelete
 
 
@@ -270,6 +273,7 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
                         'Task.time_rejected.is_(None))',
             lazy='dynamic')
     )
+    reference = association_proxy('parent', 'reference')
     order_in_relay = db.Column(db.Integer, nullable=False)
     author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     author = db.relationship("User", foreign_keys=[author_uuid], backref=db.backref('tasks_as_author', lazy='dynamic'))

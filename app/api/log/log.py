@@ -70,7 +70,10 @@ class MyLogs(Resource):
         returns = args['return'] if args['return'] else "everything"
         # everything, mine_only, others_only
 
-        user = get_object(models.Objects.USER, user_uuid)
+        try:
+            user = get_object(models.Objects.USER, user_uuid)
+        except ObjectNotFoundError:
+            return not_found(models.Objects.USER, user_uuid)
 
         if role == "coordinator":
             query = user.tasks_as_coordinator
@@ -106,9 +109,9 @@ class MyLogs(Resource):
             logs.sort(key=lambda log: log.time_created)
             logs.reverse()
 
-        deduped_logs = list(dedup_log(logs))  # Use `loc` with index values
+        #deduped_logs = list(dedup_log(logs))  # Use `loc` with index values
 
-        return logs_schema.dump(deduped_logs)
+        return logs_schema.dump(logs)
 
 
 def dedup_log(logs):

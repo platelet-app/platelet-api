@@ -252,6 +252,17 @@ class ContactSchema(ma.SQLAlchemySchema, PostLoadMixin):
   #      validate_tel_number(value)
 
 
+class TasksParentSchema(ma.SQLAlchemySchema):
+    class Meta:
+        unknown = EXCLUDE
+        model = models.TasksParent
+
+        fields = ('relays', 'reference')
+
+    relays = ma.Nested('TaskSchema', many=True, dump_only=True)
+    reference = ma.String(dump_only=True)
+
+
 class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
@@ -263,7 +274,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
                   'relay_previous_uuid', 'relay_next', 'relay_previous', 'parent_id', 'order_in_relay',
-                  'e-tag')
+                  'etag', 'reference')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
@@ -334,14 +345,6 @@ def int_check(value):
     except ValueError:
         return True
     return False
-
-
-class TasksParentSchema(ma.SQLAlchemySchema):
-    class Meta:
-        unknown = EXCLUDE
-        model = models.TasksParent
-
-    relays = ma.Nested(TaskSchema, many=True, dump_only=True)
 
 
 class UserUsernameSchema(ma.SQLAlchemySchema):
