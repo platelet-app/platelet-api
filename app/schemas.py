@@ -281,10 +281,10 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
     dropoff_address = ma.Nested(AddressSchema, allow_none=True)
     assigned_riders = ma.Nested(UserSchema,
-                                only=('uuid', 'display_name', 'patch', 'profile_picture_thumbnail_url'),
+                                only=('uuid', 'display_name', 'patch'),
                                 many=True, dump_only=True)
     assigned_coordinators = ma.Nested(UserSchema,
-                                      only=('uuid', 'display_name', 'profile_picture_thumbnail_url'),
+                                      only=('uuid', 'display_name'),
                                       many=True, dump_only=True)
     author = ma.Nested(UserSchema, only=('uuid', 'display_name'), dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)

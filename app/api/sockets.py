@@ -25,8 +25,8 @@ namespace_assignments = "/api/{}/subscribe_assignments".format(api_version)
 
 TASK = models.Objects.TASK
 USER = models.Objects.USER
-task_schema = schemas.TaskSchema(exclude=("assigned_coordinators", "comments"))
-tasks_schema = schemas.TaskSchema(many=True, exclude=("assigned_coordinators", "comments"))
+task_schema = schemas.TaskSchema(exclude=("comments",))
+tasks_schema = schemas.TaskSchema(many=True, exclude=("comments",))
 
 
 @socketio.on('refresh_task_data', namespace=namespace)
@@ -42,7 +42,7 @@ def check_etags(uuid_etag_dict):
             except ObjectNotFoundError:
                 result.append({"uuid": entry, "deleted": True})
     else:
-        print("IT'S NONE")
+        print("Empty uuid etag dict received")
     emit('request_response', {
         'data': json.dumps(result),
         'type': TASKS_REFRESH
