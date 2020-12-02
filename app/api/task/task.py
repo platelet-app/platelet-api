@@ -20,7 +20,7 @@ from flask_praetorian import utilities
 from app import db
 
 task_schema = schemas.TaskSchema()
-tasks_schema = schemas.TaskSchema(many=True, exclude=("assigned_coordinators", "comments"))
+tasks_schema = schemas.TaskSchema(many=True, exclude=("comments",))
 tasks_parent_schema = schemas.TasksParentSchema(many=True)
 assigned_users_schema = schemas.UserSchema(many=True)
 
