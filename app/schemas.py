@@ -1,3 +1,4 @@
+import copy
 import json
 from functools import reduce
 
@@ -281,10 +282,10 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
     dropoff_address = ma.Nested(AddressSchema, allow_none=True)
     assigned_riders = ma.Nested(UserSchema,
-                                only=('uuid', 'display_name', 'patch'),
+                                only=('uuid', 'display_name', 'patch', 'profile_picture_thumbnail_url'),
                                 many=True, dump_only=True)
     assigned_coordinators = ma.Nested(UserSchema,
-                                      only=('uuid', 'display_name'),
+                                      only=('uuid', 'display_name', 'profile_picture_thumbnail_url'),
                                       many=True, dump_only=True)
     author = ma.Nested(UserSchema, only=('uuid', 'display_name'), dump_only=True)
     deliverables = ma.Nested(DeliverableSchema, many=True)
@@ -321,7 +322,16 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
 
     @post_dump
     def calculate_etag(self, data, many):
-        data['etag'] = calculate_task_etag(json.dumps(data))
+        copied_data = copy.deepcopy(data)
+        # TODO: slightly annoying workaround to avoid new cloud urls changing the etag, dunno if it can be done better
+        try:
+            for i in copied_data['assigned_coordinators']:
+                del i['profile_picture_thumbnail_url']
+            for i in copied_data['assigned_riders']:
+                del i['profile_picture_thumbnail_url']
+        except KeyError:
+            pass
+        data['etag'] = calculate_task_etag(json.dumps(copied_data))
         return data
 
 
