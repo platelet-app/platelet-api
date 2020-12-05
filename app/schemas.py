@@ -15,7 +15,7 @@ from app.api.functions.utilities import get_all_objects, object_type_to_string
 
 
 class TimesMixin:
-    time_created = ma.DateTime()
+    time_created = ma.DateTime(dump_only=True)
     time_modified = ma.DateTime(dump_only=True)
 
 

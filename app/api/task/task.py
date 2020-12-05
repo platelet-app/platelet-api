@@ -1,3 +1,4 @@
+import dateutil
 from flask import jsonify, request
 from marshmallow import ValidationError
 
@@ -304,11 +305,16 @@ class UsersTasks(Resource):
             parser.add_argument("role", type=str, location="args")
             parser.add_argument("order", type=str, location="args")
             parser.add_argument("status", type=str, location="args")
+            parser.add_argument("after", type=str, location="args")
             args = parser.parse_args()
             page = args['page'] if args['page'] is not None else 1
             role = args['role']
             status = args['status']
+            after = args['after']
             order = args['order'] if args['order'] else "descending"
+            after_date_time = None
+            if after:
+                after_date_time = dateutil.parser.parse(after)
             if role == "rider":
                 query = requested_user.tasks_as_rider
             elif role == "coordinator":
@@ -323,23 +329,37 @@ class UsersTasks(Resource):
                 models.Task.deleted.is_(False)
             )
 
-            if (role == "coordinator"):
+            if role == "coordinator":
                 filtered = get_filtered_query_by_status(query_deleted, status)
             else:
                 filtered = get_filtered_query_by_status_non_relays(query_deleted, status)
 
-            if status in ["new", "delivered", "cancelled", "rejected"]:
-                filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
-            else:
-                filtered_ordered = filtered.order_by(models.Task.parent_id.asc(), models.Task.order_in_relay)
+            # just keep things ordered by newest first for now
+           #  if status in ["new", "delivered", "cancelled", "rejected"]:
+           #      filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
+           #  else:
+            filtered_ordered = filtered.order_by(models.Task.parent_id.asc(), models.Task.order_in_relay)
 
-            if page > 0:
-                items = get_page(filtered_ordered, page, order=order, model=models.Task)
+            if after_date_time:
+                filtered_ordered_after = filtered_ordered.filter(models.Task.time_created > after_date_time)
             else:
-                items = filtered_ordered.all()
+                filtered_ordered_after = filtered_ordered
+
+            print(filtered_ordered_after.count())
+
+            if after and filtered_ordered_after.count() == 0:
+                return not_found(TASK)
+            if page > 0:
+                items = get_page(filtered_ordered_after, page, order=order, model=models.Task)
+            else:
+                items = filtered_ordered_after.all()
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
             return internal_error(e)
+
+        if len(items) == 0:
+            pass
+            #return not_found(TASK)
 
         return tasks_schema.dump(items)
