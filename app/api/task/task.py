@@ -363,7 +363,6 @@ class UsersTasks(Resource):
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
-            raise
             return internal_error(e)
 
         if len(items) == 0:
