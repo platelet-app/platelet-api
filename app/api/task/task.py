@@ -306,11 +306,13 @@ class UsersTasks(Resource):
             parser.add_argument("order", type=str, location="args")
             parser.add_argument("status", type=str, location="args")
             parser.add_argument("after", type=str, location="args")
+            parser.add_argument("before_parent", type=str, location="args")
             args = parser.parse_args()
             page = args['page'] if args['page'] is not None else 1
             role = args['role']
             status = args['status']
             after = args['after']
+            before_parent = args['before_parent']
             order = args['order'] if args['order'] else "descending"
             after_date_time = None
             if after:
@@ -340,14 +342,19 @@ class UsersTasks(Resource):
            #  else:
             filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
 
-            if after_date_time:
-                filtered_ordered_after = filtered_ordered.filter(models.Task.time_created > after_date_time)
+         #    if after_date_time:
+         #        filtered_ordered_after = filtered_ordered.filter(models.Task.time_created > after_date_time)
+         #    else:
+         #        filtered_ordered_after = filtered_ordered
+
+            if before_parent:
+                filtered_ordered_after = filtered_ordered.filter(models.Task.parent_id < before_parent)
             else:
                 filtered_ordered_after = filtered_ordered
 
             print(filtered_ordered_after.count())
 
-            if after and filtered_ordered_after.count() == 0:
+            if before_parent and filtered_ordered_after.count() == 0:
                 return not_found(TASK)
             if page > 0:
                 items = get_page(filtered_ordered_after, page, order=order, model=models.Task)
@@ -356,6 +363,7 @@ class UsersTasks(Resource):
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
+            raise
             return internal_error(e)
 
         if len(items) == 0:
