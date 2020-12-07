@@ -338,7 +338,7 @@ class UsersTasks(Resource):
            #  if status in ["new", "delivered", "cancelled", "rejected"]:
            #      filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
            #  else:
-            filtered_ordered = filtered.order_by(models.Task.parent_id.asc(), models.Task.order_in_relay)
+            filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
 
             if after_date_time:
                 filtered_ordered_after = filtered_ordered.filter(models.Task.time_created > after_date_time)
