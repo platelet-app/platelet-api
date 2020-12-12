@@ -52,9 +52,8 @@ class Query(Resource):
     @flask_praetorian.auth_required
     def get(self):
         request_json = request.get_json()
-        query_data = search_schema.load(request_json).data
-        query, total = models.Task.search(query_data['query'], int(query_data['page']) if 'page' in query_data else 1, 100)
-        result = tasks_schema.dump(query.all()).data
+        query, total = models.Task.search(request_json['query'], int(request_json['page']) if 'page' in request_json else 1, 100)
+        result = tasks_schema.dump(query.all())
         return jsonify({"total": total, "results": result})
 
 @ns.route('/locations',

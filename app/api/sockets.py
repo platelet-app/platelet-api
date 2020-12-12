@@ -1,15 +1,22 @@
 import json
 
-import datetime
+from flask_praetorian.utilities import (
+    current_guard,
+    add_jwt_data_to_app_context,
+    app_context_has_jwt_data,
+    remove_jwt_data_from_app_context,
+    current_rolenames,
+    current_user
+)
+from flask_praetorian import auth_required
 from uuid import UUID
 
 from flask_socketio import emit, join_room, leave_room
 from sqlalchemy import union_all
 
-from app import socketio, models, schemas
+from app import socketio, models, schemas, guard
 from app import api_version
 from threading import Lock
-from dateutil import parser
 
 from app.api.functions.utilities import get_object
 from app.api.task.task_utilities.task_socket_actions import TASKS_REFRESH, TASK_ASSIGNMENTS_REFRESH
@@ -67,8 +74,6 @@ def check_assignments(user_uuid, task_uuids, role):
 
     q = active_deleted_query.filter(~models.Task.uuid.in_(task_uuids_converted))
 
-
-
     emit('request_response', {
         'data': tasks_schema.dump(q.all()),
         'type': TASK_ASSIGNMENTS_REFRESH
@@ -83,6 +88,7 @@ def subscribe_to_object(obj_uuid):
 
 @socketio.on('subscribe_many', namespace=namespace)
 def subscribe_to_objects(uuids_list):
+    print("AAAAAAAAAAAAAAAAAAAAAAAAAAA", uuids_list)
     for i in uuids_list:
         join_room(i)
     emit('response', {'data': "Subscribed to {} objects".format(len(uuids_list))})
@@ -138,16 +144,16 @@ def unsubscribe_from_coordinator_assignments(user_uuid):
 
 
 @socketio.on('connect', namespace=namespace)
-def test_connect():
+def connect():
     print("client connected")
     emit('my response', {'data': 'Connected'})
 
 
 @socketio.on('disconnect', namespace=namespace)
-def test_disconnect():
+def disconnect():
     print('Client disconnected')
 
 
 @socketio.on('authenticated', namespace=namespace)
-def test_authenticated():
+def authenticated():
     print('Authed')

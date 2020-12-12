@@ -1,7 +1,10 @@
+import flask_praetorian
 from flask_restx import reqparse, Resource
 from app import guard
+import app
 from app import login_ns as ns
 from flask import jsonify
+from app.api.login.login_utilities.login_functions import get_jwt_expire_data
 
 
 parser = reqparse.RequestParser()
@@ -14,13 +17,26 @@ class Login(Resource):
     def post(self):
         args = parser.parse_args()
         user = guard.authenticate(args['username'], args['password'])
-        ret = {'access_token': guard.encode_jwt_token(user)}
-        return ret, 200
+        access_token = guard.encode_jwt_token(user)
+        expires = get_jwt_expire_data(access_token)
+        result = {
+            "refresh_expiry": expires[0],
+            "expiry": expires[1],
+            "access_token": guard.encode_jwt_token(user)
+        }
+        return result, 200
 
 
 @ns.route('/refresh_token')
 class Login(Resource):
+    @flask_praetorian.auth_required
     def get(self):
         old_token = guard.read_token_from_header()
         new_token = guard.refresh_jwt_token(old_token)
-        return jsonify(access_token=new_token)
+        expires = get_jwt_expire_data(new_token)
+        result = {
+            "refresh_expiry": expires[0],
+            "expiry": expires[1],
+            "access_token": new_token
+        }
+        return result, 200

@@ -59,11 +59,11 @@ class QueryWithSoftDelete(BaseQuery):
         return obj if obj is None or self._with_deleted or not obj.deleted else None
 
 
-class SearchableMixin:
+class SearchableMixin(object):
     @classmethod
     def search(cls, expression, page, per_page):
         ids, total = query_index(cls.__tablename__, expression, page, per_page)
-        if total['value'] == 0:
+        if total == 0:
             return cls.query.filter_by(id=0), 0
         when = []
         for i in range(len(ids)):
@@ -90,12 +90,15 @@ class SearchableMixin:
         for obj in session._changes['delete']:
             if isinstance(obj, SearchableMixin):
                 remove_from_index(obj.__tablename__, obj)
+        session._changes = None
 
     @classmethod
     def reindex(cls):
         for obj in cls.query:
             add_to_index(cls.__tablename__, obj)
 
+db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
+db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 class SocketsMixin:
     @classmethod
@@ -116,8 +119,6 @@ class SocketsMixin:
         session._changes = None
 
 
-db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
-db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 
 class CommonMixin:
@@ -345,7 +346,10 @@ class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
         primaryjoin="and_(LogEntry.parent_type == {}, foreign(LogEntry.parent_uuid) == Task.uuid)".format(Objects.TASK)
     )
 
-    __searchable__ = ['contact_name', 'contact_number', 'session_uuid']
+    __searchable__ = [
+        'reference',
+        'uuid',
+    ]
 
     query_class = QueryWithSoftDelete
 

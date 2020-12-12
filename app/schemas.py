@@ -424,6 +424,6 @@ class LogEntrySchema(ma.SQLAlchemySchema):
     calling_user = ma.Nested(UserSchema, dump_only=True, only=("uuid", "display_name"))
 
 
-class SearchSchema:
+class SearchSchema():
     class Meta:
         fields = ('query', 'type', 'page')

@@ -61,7 +61,7 @@ app.config.from_object(Config)
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
         if app.config['ELASTICSEARCH_URL'] else None
 
-db = SQLAlchemy(app, engine_options={"pool_size": 20, "max_overflow": 0, "connect_args": {"options": "-c timezone=UTC"}})
+db = SQLAlchemy(app, engine_options={"pool_size": 100, "max_overflow": 0, "connect_args": {"options": "-c timezone=UTC"}})
 ma = Marshmallow(app)
 cors = flask_cors.CORS()
 cors.init_app(app)

@@ -179,7 +179,6 @@ class TasksAssignees(Resource):
         else:
             return forbidden_error("Type of role must be specified.", task_id)
 
-        db.session.add(task)
         db.session.commit()
         request_json = request.get_json()
         emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)

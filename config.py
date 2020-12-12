@@ -18,13 +18,13 @@ class Config:
     PROFILE_PROCESSING_DIRECTORY = os.environ.get("PROFILE_PROCESSING_DIRECTORY") or ""
     DEFAULT_PROFILE_PICTURE_URL = os.environ.get("DEFAULT_PROFILE_PICTURE_URL") or ""
 
-    JWT_ACCESS_LIFESPAN = {"days": 15}
+    JWT_ACCESS_LIFESPAN = {"days": 7}
 
-    JWT_REFRESH_LIFESPAN = {"days": 7}
+    JWT_REFRESH_LIFESPAN = {"days": 24}
 
     DEFAULT_DELETE_TIME = 10
 
-    ELASTICSEARCH_URL = None
     REDIS_URL = os.environ.get("REDIS_URL") or "redis://"
-    #ELASTICSEARCH_URL = os.environ.get("ELASTICSEARCH_URL") or \
-    #    "http://localhost:9200"
+    ELASTICSEARCH_URL = os.environ.get("ELASTICSEARCH_URL") or \
+        "http://localhost:9200"
+    ELASTICSEARCH_URL = None
