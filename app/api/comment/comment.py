@@ -86,8 +86,7 @@ class Comment(Resource):
 
         load_request_into_object(COMMENT, instance=comment)
         db.session.commit()
-        request_json = request.get_json()
-        emit_socket_comment_broadcast(request_json, EDIT_COMMENT, comment.parent_uuid, uuid=comment.uuid)
+        emit_socket_comment_broadcast(comment_schema.dump(comment), EDIT_COMMENT, comment.parent_uuid, uuid=comment.uuid)
         return {'uuid': str(comment.uuid), 'message': 'Comment {} updated.'.format(comment.uuid)}, 200
 
 
@@ -96,21 +95,21 @@ class Comment(Resource):
 class Comments(Resource):
     @flask_praetorian.auth_required
     def post(self):
-        calling_user = get_user_object_by_int_id(prae_utils.current_user_id()).uuid
+        calling_user = prae_utils.current_user().uuid
         try:
             comment = load_request_into_object(COMMENT)
-        except Exception as e:
-            return internal_error(e)
 
-        parent = get_unspecified_object(comment.parent_uuid)
-        comment.parent_type = parent.object_type
-        comment.parent_uuid = parent.uuid
-        if not comment.author:
+            parent = get_unspecified_object(comment.parent_uuid)
+            comment.parent_type = parent.object_type
+            comment.parent_uuid = parent.uuid
             comment.author_uuid = calling_user
 
-        db.session.add(comment)
-        db.session.commit()
-        emit_socket_comment_broadcast(comment_schema.dump(comment), ADD_COMMENT, comment.parent_uuid)
+            db.session.add(comment)
+            db.session.commit()
+            emit_socket_comment_broadcast(comment_schema.dump(comment), ADD_COMMENT, comment.parent_uuid)
+
+        except Exception as e:
+            return internal_error(e)
 
         return {'uuid': str(comment.uuid), 'message': 'Comment {} created'.format(comment.uuid)}, 201
 

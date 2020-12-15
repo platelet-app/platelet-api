@@ -8,12 +8,20 @@ def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
     try:
         tab_indentifier = request.headers['Tab-Identification']
     except KeyError:
-        tab_indentifier = ""
+        return
+    try:
+        if not data['publicly_visible']:
+            print(data['author_uuid'])
+            if not socketio.user_uuid == data['author_uuid']:
+                return
+    except KeyError:
+        raise
+    print("ALL GOOD")
     if type == ADD_COMMENT:
         socketio.socketIO.emit(
             'subscribed_response',
             {
-                'parent_uuid': str(uuid),
+                'parent_uuid': str(parent_uuid),
                 'type': type,
                 'data': data,
                 'tab_id': tab_indentifier
@@ -30,6 +38,6 @@ def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
                 'data': data,
                 'tab_id': tab_indentifier
             },
-            room=str(parent_uuid) ,
+            room=str(parent_uuid),
             namespace="/api/v0.1/subscribe_comments"
         )

@@ -52,10 +52,15 @@ class AuthenticatedSocketConnection:
         self.socketIO.on_event('authenticate', self.authenticate, namespace=namespace_comments)
         self.socketIO.on_event('authenticate', self.authenticate, namespace=namespace_assignments)
 
+        self.user_uuid = None
+
     def authenticate(self, token):
         guard = current_guard()
         try:
             jwt_data = guard.extract_jwt_token(token)
+            user_id = jwt_data.get('id')
+            user = guard.user_class.identify(user_id)
+            self.user_uuid = user.uuid
             self.authenticated = True
             emit("auth_response", {"auth_status": True, "message": "Authentication successful"})
         except Exception as e:
