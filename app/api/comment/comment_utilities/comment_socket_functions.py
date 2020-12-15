@@ -11,8 +11,8 @@ def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
         return
     try:
         if not data['publicly_visible']:
-            print(data['author_uuid'])
-            if not socketio.user_uuid == data['author_uuid']:
+            print(data['author_uuid'], socketio.user_uuid)
+            if not str(socketio.user_uuid) == data['author_uuid']:
                 return
     except KeyError:
         raise
