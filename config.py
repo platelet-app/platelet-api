@@ -18,7 +18,7 @@ class Config:
     PROFILE_PROCESSING_DIRECTORY = os.environ.get("PROFILE_PROCESSING_DIRECTORY") or ""
     DEFAULT_PROFILE_PICTURE_URL = os.environ.get("DEFAULT_PROFILE_PICTURE_URL") or ""
 
-    JWT_ACCESS_LIFESPAN = {"days": 7}
+    JWT_ACCESS_LIFESPAN = {"minutes": 15}
 
     JWT_REFRESH_LIFESPAN = {"days": 24}
 

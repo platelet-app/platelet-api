@@ -4,7 +4,7 @@ from redis import Connection
 from rq import Queue
 from sqlalchemy.ext.associationproxy import association_proxy
 
-from app import db, socketio
+from app import db
 from datetime import datetime
 from enum import IntEnum, auto
 from sqlalchemy_utils import EmailType
@@ -99,25 +99,6 @@ class SearchableMixin(object):
 
 db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
 db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
-
-class SocketsMixin:
-    @classmethod
-    def after_commit(cls, session):
-        for obj in session._changes['add']:
-            if isinstance(obj, SocketsMixin):
-                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid),
-                              namespace="/socket")
-        for obj in session._changes['update']:
-            if isinstance(obj, SocketsMixin):
-                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid),
-                              namespace="/socket")
-        for obj in session._changes['delete']:
-            if isinstance(obj, SocketsMixin):
-                socketio.emit('subscribed_response', {'object_uuid': str(obj.uuid)}, room=str(obj.uuid),
-                              namespace="/socket")
-
-        session._changes = None
-
 
 
 
@@ -258,7 +239,7 @@ class TasksParent(db.Model, CommonMixin):
     query_class = QueryWithSoftDelete
 
 
-class Task(SearchableMixin, db.Model, CommonMixin, SocketsMixin):
+class Task(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     parent_id = db.Column(db.Integer, db.ForeignKey(TasksParent.id), nullable=False)

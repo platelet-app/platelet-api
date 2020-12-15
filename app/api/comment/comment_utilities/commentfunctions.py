@@ -1,8 +1,7 @@
 import functools
-import logging
 
 from flask_praetorian import utilities
-from app import models, schemas, socketio
+from app import models, schemas
 from app.api.functions.errors import forbidden_error
 from app.exceptions import ObjectNotFoundError
 from flask import json, request
@@ -40,32 +39,3 @@ def calculate_comments_etag(data):
     return hashlib.sha1(bytes(json_data, 'utf-8')).hexdigest()
 
 
-def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
-    try:
-        tab_indentifier = request.headers['Tab-Identification']
-    except KeyError:
-        tab_indentifier = ""
-    if type == ADD_COMMENT:
-        socketio.emit(
-            'subscribed_response',
-            {
-                'parent_uuid': str(uuid),
-                'type': type,
-                'data': data,
-                'tab_id': tab_indentifier
-            },
-            room=str(parent_uuid),
-            namespace="/api/v0.1/subscribe_comments"
-        )
-    else:
-        socketio.emit(
-            'subscribed_response',
-            {
-                'uuid': str(uuid),
-                'type': type,
-                'data': data,
-                'tab_id': tab_indentifier
-            },
-            room=str(parent_uuid) ,
-            namespace="/api/v0.1/subscribe_comments"
-        )

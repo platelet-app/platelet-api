@@ -88,7 +88,6 @@ statistics_ns = api.namespace('api/{}/statistics'.format(api_version), descripti
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
 Payload.max_decode_packets = 50
-socketio = SocketIO(app, cors_allowed_origins='*', message_queue=app.config['REDIS_URL'])
 
 
 FlaskBuzz.register_error_handler_with_flask_restplus(api)
