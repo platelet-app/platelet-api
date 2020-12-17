@@ -332,7 +332,7 @@ class UsersTasks(Resource):
             filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
 
             if before_parent:
-                filtered_ordered_after = filtered_ordered.filter(models.Task.parent_id <= before_parent)
+                filtered_ordered_after = filtered_ordered.filter(models.Task.parent_id < before_parent)
             else:
                 filtered_ordered_after = filtered_ordered
 
