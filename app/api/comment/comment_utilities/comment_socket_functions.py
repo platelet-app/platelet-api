@@ -15,7 +15,7 @@ def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
             if not str(socketio.user_uuid) == data['author_uuid']:
                 return
     except KeyError:
-        raise
+        return
     print("ALL GOOD")
     if type == ADD_COMMENT:
         socketio.socketIO.emit(

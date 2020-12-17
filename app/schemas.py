@@ -327,8 +327,15 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
         try:
             for i in copied_data['assigned_coordinators']:
                 del i['profile_picture_thumbnail_url']
+        except KeyError:
+            pass
+        try:
             for i in copied_data['assigned_riders']:
                 del i['profile_picture_thumbnail_url']
+        except KeyError:
+            pass
+        try:
+            del copied_data['comments']
         except KeyError:
             pass
         data['etag'] = calculate_task_etag(json.dumps(copied_data))

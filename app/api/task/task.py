@@ -20,7 +20,7 @@ from flask_praetorian import utilities
 
 from app import db
 
-task_schema = schemas.TaskSchema()
+task_schema = schemas.TaskSchema(exclude=("comments",))
 tasks_schema = schemas.TaskSchema(many=True, exclude=("comments",))
 tasks_parent_schema = schemas.TasksParentSchema(many=True)
 assigned_users_schema = schemas.UserSchema(many=True)
@@ -106,9 +106,8 @@ class Task(Resource):
         task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
         set_previous_relay_uuids(task_parent)
         db.session.commit()
-
         socket_payload = request.get_json()
-        db.session.commit()
+        db.session.flush()
         task_dump = task_schema.dump(task)
         try:
             etag = task_dump['etag']
@@ -304,18 +303,13 @@ class UsersTasks(Resource):
             parser.add_argument("role", type=str, location="args")
             parser.add_argument("order", type=str, location="args")
             parser.add_argument("status", type=str, location="args")
-            parser.add_argument("after", type=str, location="args")
             parser.add_argument("before_parent", type=str, location="args")
             args = parser.parse_args()
             page = args['page'] if args['page'] is not None else 1
             role = args['role']
             status = args['status']
-            after = args['after']
             before_parent = args['before_parent']
             order = args['order'] if args['order'] else "descending"
-            after_date_time = None
-            if after:
-                after_date_time = dateutil.parser.parse(after)
             if role == "rider":
                 query = requested_user.tasks_as_rider
             elif role == "coordinator":
@@ -335,19 +329,10 @@ class UsersTasks(Resource):
             else:
                 filtered = get_filtered_query_by_status_non_relays(query_deleted, status)
 
-            # just keep things ordered by newest first for now
-           #  if status in ["new", "delivered", "cancelled", "rejected"]:
-           #      filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
-           #  else:
             filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
 
-         #    if after_date_time:
-         #        filtered_ordered_after = filtered_ordered.filter(models.Task.time_created > after_date_time)
-         #    else:
-         #        filtered_ordered_after = filtered_ordered
-
             if before_parent:
-                filtered_ordered_after = filtered_ordered.filter(models.Task.parent_id < before_parent)
+                filtered_ordered_after = filtered_ordered.filter(models.Task.parent_id <= before_parent)
             else:
                 filtered_ordered_after = filtered_ordered
 
