@@ -9,7 +9,7 @@ def check_rider_match(func):
     def wrapper(self, task_id):
         if "coordinator" in utilities.current_rolenames() or "admin" in utilities.current_rolenames():
             return func(self, task_id)
-        assigned_riders = models.Task.query.filter_by(uuid=task_id).first().assigned_users
+        assigned_riders = models.Task.query.filter_by(uuid=task_id).first().assigned_riders
         if utilities.current_user().uuid in [rider.uuid for rider in assigned_riders]:
             return func(self, task_id)
         else:

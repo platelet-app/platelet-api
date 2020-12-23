@@ -256,6 +256,9 @@ class Tasks(Resource):
             if not parent:
                 return not_found(TASK_PARENT, task.parent_id)
             next_order_in_relay_int = parent.relays_with_deleted_cancelled_rejected.count() + 1
+            # TODO: could this go into marshmallow schema validation?
+            if parent.relays.count() > 19:
+                return forbidden_error("Cannot add more than 19 relays to a job", task.parent_id)
         else:
             new_parent = models.TasksParent()
             db.session.add(new_parent)
