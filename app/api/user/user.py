@@ -1,4 +1,5 @@
 import imghdr
+import logging
 import os
 import base64
 
@@ -70,7 +71,17 @@ class Myself(Resource):
         except ObjectNotFoundError:
             return not_found(USER, None)
         result = user_dump_schema.dump(user)
-        result['login_expiry'] = jwt_details['rf_exp'] if jwt_details else None
+        result['login_expiry'] = None
+        result['refresh_expiry'] = None
+        if jwt_details:
+            try:
+                result['login_expiry'] = int(jwt_details['rf_exp']) * 1000
+                result['refresh_expiry'] = int(jwt_details['exp']) * 1000
+            except ValueError:
+                logging.warning("The expiry is not an int for some reason.")
+            except KeyError as e:
+                logging.warning("Could not find login or refresh expiry data:".format(str(e)))
+
         return jsonify(result)
 
 

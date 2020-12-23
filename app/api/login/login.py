@@ -29,14 +29,13 @@ class Login(Resource):
 
 @ns.route('/refresh_token')
 class Login(Resource):
-    @flask_praetorian.auth_required
     def get(self):
         old_token = guard.read_token_from_header()
         new_token = guard.refresh_jwt_token(old_token)
         expires = get_jwt_expire_data(new_token)
         result = {
             "refresh_expiry": expires[0],
-            "expiry": expires[1],
+            "login_expiry": expires[1],
             "access_token": new_token
         }
         return result, 200
