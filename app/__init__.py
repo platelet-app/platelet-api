@@ -194,7 +194,7 @@ def log_input_add_headers(response):
                             request_data = json.loads(request.get_data())
                             fields = ",".join(list(request_data.keys()))
                         except Exception as e:
-                            logging.warning("Could not parse request data. Reason: {}".format(e))
+                            logging.exception("Could not parse request data. Reason: {}".format(e))
                     entry = models.LogEntry(
                         parent_type=endpoint_to_object_type(request.endpoint),
                         calling_user_uuid=user.uuid,
