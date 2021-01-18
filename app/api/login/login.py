@@ -1,9 +1,6 @@
-import flask_praetorian
 from flask_restx import reqparse, Resource
 from app import guard
-import app
 from app import login_ns as ns
-from flask import jsonify
 from app.api.login.login_utilities.login_functions import get_jwt_expire_data
 
 
