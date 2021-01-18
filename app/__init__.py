@@ -36,7 +36,6 @@ if eventlet_run:
 import flask
 from flask import Flask, Blueprint, json
 from flask_restx import Api
-from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
@@ -45,13 +44,12 @@ from flask import request
 
 from app.cloud.utilities import CloudStores
 from config import Config
-import flask_cors
+from flask_cors import CORS
 from flask_buzz import FlaskBuzz
 from elasticsearch import Elasticsearch
 from engineio.payload import Payload
 from rq import Queue
 from redis_worker import conn
-
 
 app = Flask(__name__, static_folder="site/static", template_folder="site")
 flask_version = flask.__version__
@@ -59,12 +57,18 @@ flask_version = flask.__version__
 app.config.from_object(Config)
 
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
-        if app.config['ELASTICSEARCH_URL'] else None
+    if app.config['ELASTICSEARCH_URL'] else None
 
-db = SQLAlchemy(app, engine_options={"pool_size": 100, "max_overflow": 0, "connect_args": {"options": "-c timezone=UTC"}})
+db = SQLAlchemy(app,
+                engine_options={"pool_size": 100, "max_overflow": 0, "connect_args": {"options": "-c timezone=UTC"}})
 ma = Marshmallow(app)
-cors = flask_cors.CORS()
-cors.init_app(app)
+
+if app.config['CORS_ENABLED'] is True:
+    cors = CORS(
+        app,
+        supports_credentials=True
+        )
+    cors.init_app(app)
 
 guard = flask_praetorian.Praetorian()
 
@@ -88,7 +92,6 @@ statistics_ns = api.namespace('api/{}/statistics'.format(api_version), descripti
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
 
 Payload.max_decode_packets = 50
-
 
 FlaskBuzz.register_error_handler_with_flask_restplus(api)
 
@@ -115,7 +118,6 @@ if not ipython:
     else:
         raise EnvironmentError("A profile picture processing directory must be specified.")
 
-
 from app import models
 from app.api.task import task
 from app.api.user import user
@@ -139,7 +141,9 @@ site_blueprint = Blueprint('site', __name__, url_prefix='/')
 
 guard.init_app(app, models.User)
 app.register_blueprint(site_blueprint)
-#app.register_blueprint(testing_views.mod)
+
+
+# app.register_blueprint(testing_views.mod)
 
 
 def get_http_code_int(label):
@@ -170,40 +174,44 @@ def endpoint_to_object_type(endpoint):
 
 
 @app.after_request
-def log_input(response):
-    if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
-        if not request.endpoint.endswith("login_login"):
-            response_data = json.loads(response.get_data())
-            request_data = json.loads(request.get_data())
-            try:
-                object_uuid = response_data['uuid']
-            except KeyError:
-                object_uuid = None
-            token = guard.read_token_from_header()
-            if token:
-                jwt_data = guard.extract_jwt_token(token)
-                user = models.User.query.filter_by(id=jwt_data['id']).one()
-                response_status = models.HTTPResponseStatus.query.filter_by(status=int(response.status_code)).first()
-                fields = ",".join(list(request_data.keys()))
-                entry = models.LogEntry(
-                    parent_type=endpoint_to_object_type(request.endpoint),
-                    calling_user_uuid=user.uuid,
-                    http_request_type_id=get_http_code_int(request.method),
-                    parent_uuid=object_uuid,
-                    http_response_status_id=response_status.id if response_status else None,
-                    data_fields=fields,
-                    ip_address=request.environ['REMOTE_ADDR']
-                )
-                db.session.add(entry)
-                db.session.commit()
-            else:
-                logger.error("Missing token when attempting to log request.")
-    return response
+def log_input_add_headers(response):
+    try:
+        if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
+            if not request.endpoint.endswith("login_login"):
+                response_data = json.loads(response.get_data())
+                try:
+                    object_uuid = response_data['uuid']
+                except KeyError:
+                    object_uuid = None
+                token = guard.read_token_from_header()
+                if token:
+                    jwt_data = guard.extract_jwt_token(token)
+                    user = models.User.query.filter_by(id=jwt_data['id']).one()
+                    response_status = models.HTTPResponseStatus.query.filter_by(status=int(response.status_code)).first()
+                    fields = ""
+                    if request.method in ["POST", "PUT", "PATCH"]:
+                        try:
+                            request_data = json.loads(request.get_data())
+                            fields = ",".join(list(request_data.keys()))
+                        except Exception as e:
+                            logging.warning("Could not parse request data. Reason: {}".format(e))
+                    entry = models.LogEntry(
+                        parent_type=endpoint_to_object_type(request.endpoint),
+                        calling_user_uuid=user.uuid,
+                        http_request_type_id=get_http_code_int(request.method),
+                        parent_uuid=object_uuid,
+                        http_response_status_id=response_status.id if response_status else None,
+                        data_fields=fields,
+                        ip_address=request.environ['REMOTE_ADDR']
+                    )
+                    db.session.add(entry)
+                    db.session.commit()
+                else:
+                    logger.error("Missing token when attempting to log request.")
 
+    except Exception as e:
+        logging.exception("An exception occurred while making a log entry. Continuing anyway. Reason: {}".format(e))
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
     return response
 
 
