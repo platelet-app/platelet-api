@@ -101,7 +101,6 @@ db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
 db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
 
-
 class CommonMixin:
     time_created = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow)
     time_modified = db.Column(db.DateTime(timezone=True), index=True, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -255,13 +254,13 @@ class Task(SearchableMixin, db.Model, CommonMixin):
                         'Task.time_rejected.is_(None))',
             lazy='dynamic')
     )
-    reference = association_proxy('parent', 'reference')
+    reference = association_proxy("parent", "reference")
     order_in_relay = db.Column(db.Integer, nullable=False)
-    author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    author = db.relationship("User", foreign_keys=[author_uuid], backref=db.backref('tasks_as_author', lazy='dynamic'))
+    author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("user.uuid"))
+    author = db.relationship("User", foreign_keys=[author_uuid], backref=db.backref("tasks_as_author", lazy="dynamic"))
     time_of_call = db.Column(db.DateTime(timezone=True), index=True)
 
-    requester_contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'))
+    requester_contact_id = db.Column(db.Integer, db.ForeignKey("contact.id"))
     requester_contact = db.relationship("Contact", foreign_keys=[requester_contact_id])
 
     time_picked_up = db.Column(db.DateTime(timezone=True))
@@ -270,8 +269,14 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     time_cancelled = db.Column(db.DateTime(timezone=True))
     time_rejected = db.Column(db.DateTime(timezone=True))
 
-    pickup_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
-    dropoff_address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
+    saved_location_pickup_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
+    saved_location_pickup = db.relationship("Location", foreign_keys=[saved_location_pickup_uuid], backref=db.backref("linked_tasks_as_pickup", lazy="dynamic"))
+
+    saved_location_dropoff_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
+    saved_location_dropoff = db.relationship("Location", foreign_keys=[saved_location_dropoff_uuid], backref=db.backref("linked_tasks_as_dropoff", lazy="dynamic"))
+
+    pickup_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+    dropoff_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
     pickup_address = db.relationship("Address", foreign_keys=[pickup_address_id])
     dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
@@ -286,13 +291,13 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     # sender_name = db.Column(db.String(64))
     # sender_signature = db.Column(db.String(4096))
 
-    patch_id = db.Column(db.Integer, db.ForeignKey('patch.id'))
+    patch_id = db.Column(db.Integer, db.ForeignKey("patch.id"))
     patch = db.relationship("Patch", foreign_keys=[patch_id])
     final_duration = db.Column(db.Time)
     miles = db.Column(db.Integer)
-    priority_id = db.Column(db.Integer, db.ForeignKey('priority.id'), nullable=True)
+    priority_id = db.Column(db.Integer, db.ForeignKey("priority.id"), nullable=True)
     priority = db.relationship("Priority", foreign_keys=[priority_id])
-    deliverables = db.relationship('Deliverable', backref='deliverable_task', lazy='dynamic')
+    deliverables = db.relationship("Deliverable", backref="deliverable_task", lazy="dynamic")
     assigned_riders = db.relationship(
         'User',
         secondary=task_rider_assignees,

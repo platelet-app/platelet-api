@@ -275,9 +275,12 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
                   'relay_previous_uuid', 'relay_next', 'relay_previous', 'parent_id', 'order_in_relay',
-                  'etag', 'reference')
+                  'etag', 'reference', 'saved_location_pickup', 'saved_location_dropoff')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
+
+    saved_location_pickup = ma.Nested("LocationSchema")
+    saved_location_dropoff = ma.Nested("LocationSchema")
 
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
     dropoff_address = ma.Nested(AddressSchema, allow_none=True)
