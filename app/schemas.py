@@ -58,6 +58,16 @@ class LocaleSchema(ma.SQLAlchemySchema, PostLoadMixin):
         fields = ('label', 'id', 'code')
 
 
+def comment_edits_only_filter(action):
+    if not action.http_request_type or not action.data_fields:
+        return False
+    return action.http_request_type.label in ["PATCH", "PUT"] and "body" in action.data_fields
+
+
+def count_comment_edits(comment):
+    return len(list(filter(comment_edits_only_filter, comment.logged_actions)))
+
+
 class CommentSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
@@ -71,7 +81,7 @@ class CommentSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
         only=("display_name", "uuid", "profile_picture_thumbnail_url")
     )
     num_edits = ma.Function(
-        lambda obj: len(list(filter(lambda action: action.http_request_type.label in ["PATCH", "PUT"] and "body" in action.data_fields, obj.logged_actions)))
+        count_comment_edits
     )
 
 
@@ -392,7 +402,7 @@ class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoa
 
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     address = ma.Nested(AddressSchema)
-    requester_contact = ma.Nested(ContactSchema, allow_none=True)
+    contact = ma.Nested(ContactSchema, allow_none=True)
 
     links = ma.Hyperlinks({
         'self': ma.URLFor('location_detail', location_id='<uuid>'),

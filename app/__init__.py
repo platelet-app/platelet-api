@@ -2,6 +2,9 @@ import os
 import eventlet
 import logging
 
+import sys
+
+
 logging.basicConfig(filename='/dev/null', level=logging.DEBUG)
 logger = logging.getLogger()
 handler = logging.StreamHandler()
@@ -17,6 +20,10 @@ logging.getLogger('botocore').setLevel(logging.CRITICAL)
 logging.getLogger('s3transfer').setLevel(logging.CRITICAL)
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
+pytest = False
+# Check if this is a unit test
+if "pytest" in sys.modules:
+    pytest = True
 # don't monkey patch eventlet if running with Flask or in IPython
 try:
     __IPYTHON__
@@ -110,7 +117,7 @@ cloud_stores = CloudStores(
 )
 
 # check if the profile picture processing directory exists (unless loading in ipython)
-if not ipython:
+if not ipython and not pytest:
     profile_pic_dir = app.config['PROFILE_PROCESSING_DIRECTORY']
     if profile_pic_dir:
         if not os.path.isdir(profile_pic_dir):
@@ -177,7 +184,7 @@ def endpoint_to_object_type(endpoint):
 def log_input_add_headers(response):
     try:
         if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
-            if not request.endpoint.endswith("login_login"):
+            if request.endpoint and not request.endpoint.endswith("login_login"):
                 response_data = json.loads(response.get_data())
                 try:
                     object_uuid = response_data['uuid']

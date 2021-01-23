@@ -30,15 +30,16 @@ def test_add_new_vehicle(client, login_header_admin, vehicle_data):
 
 
 def test_update_new_vehicle(client, login_header_admin, vehicle_data, vehicle_data_alternative, vehicle_obj):
+    vehicle_uuid = str(vehicle_obj.uuid)
     check_data = vehicle_data.copy()
     check_data['name'] = vehicle_obj.name
     check_data = convert_dates(check_data)
     attr_check(check_data, vehicle_obj, exclude=["time_created", "time_modified", "links", "comments"])
-    r = client.put("{}/{}".format(vehicle_url, vehicle_obj.uuid),
+    r = client.patch("{}/{}".format(vehicle_url, vehicle_uuid),
                    data=json.dumps(vehicle_data_alternative),
                    headers=login_header_admin)
     assert r.status_code == 200
-    obj_updated = get_object(VEHICLE, vehicle_obj.uuid)
+    obj_updated = get_object(VEHICLE, vehicle_uuid)
     check_new_data = vehicle_data_alternative.copy()
     check_new_data['name'] = obj_updated.name
     check_new_data = convert_dates(check_new_data)
@@ -55,24 +56,27 @@ def test_get_vehicle(client, login_header_coordinator, vehicle_data, vehicle_obj
 
 
 def test_delete_vehicle_admin(client, login_header_admin, vehicle_obj):
-    r = client.delete("{}/{}".format(vehicle_url, str(vehicle_obj.uuid)),
+    vehicle_uuid = str(vehicle_obj.uuid)
+    r = client.delete("{}/{}".format(vehicle_url, vehicle_uuid),
                       headers=login_header_admin)
     assert r.status_code == 202
-    db.session.flush()
-    assert vehicle_obj.deleted
-    r2 = client.get("{}/{}".format(vehicle_url, str(vehicle_obj.uuid)),
+    vehicle_deleted = get_object(VEHICLE, vehicle_uuid, with_deleted=True)
+    assert vehicle_deleted.deleted
+    r2 = client.get("{}/{}".format(vehicle_url, vehicle_uuid),
                     headers=login_header_admin)
     assert r2.status_code == 404
 
 
 def test_delete_vehicle_others(client, login_header_coordinator, login_header_rider, vehicle_obj):
-    r = client.delete("{}/{}".format(vehicle_url, str(vehicle_obj.uuid)),
+    vehicle_uuid = str(vehicle_obj.uuid)
+    r = client.delete("{}/{}".format(vehicle_url, str(vehicle_uuid)),
                       headers=login_header_coordinator)
     assert r.status_code == 403
-    db.session.flush()
-    assert not vehicle_obj.deleted
-    r2 = client.delete("{}/{}".format(vehicle_url, str(vehicle_obj.uuid)),
+    vehicle_new = get_object(VEHICLE, vehicle_uuid, with_deleted=True)
+    assert not vehicle_new.deleted
+    r2 = client.delete("{}/{}".format(vehicle_url, str(vehicle_uuid)),
                        headers=login_header_rider)
     assert r2.status_code == 403
-    db.session.flush()
-    assert not vehicle_obj.deleted
+    vehicle_new_2 = get_object(VEHICLE, vehicle_uuid, with_deleted=True)
+    assert not vehicle_new_2.deleted
+    assert not vehicle_new_2.deleted

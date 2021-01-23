@@ -50,14 +50,11 @@ class Comment(Resource):
     def get(self, _id):
         if not _id:
             return not_found(COMMENT)
-        comment = get_object(COMMENT, _id)
-        if comment:
-            try:
-                return jsonify(comment_schema.dump(comment))
-            except ObjectNotFoundError:
-                return not_found(COMMENT, _id)
-        else:
+        try:
+            comment = get_object(COMMENT, _id)
+        except ObjectNotFoundError:
             return not_found(COMMENT, _id)
+        return jsonify(comment_schema.dump(comment))
 
     @flask_praetorian.auth_required
     @comment_author_match_or_admin

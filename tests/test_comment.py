@@ -38,7 +38,7 @@ def test_update_comment(client, login_header_coordinator, comment_data, comment_
                     headers=login_header_coordinator)
     assert r.status_code == 201
     new_uuid = r.json['uuid']
-    r2 = client.put("{}/{}".format(comment_url, new_uuid),
+    r2 = client.patch("{}/{}".format(comment_url, new_uuid),
                    data=json.dumps(comment_data_alternative),
                    headers=login_header_coordinator)
     assert r2.status_code == 200
@@ -64,11 +64,10 @@ def test_delete_comment(client, login_header_rider, comment_data, user_coordinat
                     headers=login_header_rider)
     assert r.status_code == 201
     new_uuid = r.json['uuid']
-    comment_obj = get_object(COMMENT, new_uuid)
     r2 = client.delete("{}/{}".format(comment_url, new_uuid),
-                      headers=login_header_rider)
+                       headers=login_header_rider)
     assert r2.status_code == 202
-    db.session.flush()
+    comment_obj = get_object(COMMENT, new_uuid, with_deleted=True)
     assert comment_obj.deleted
     r3 = client.get("{}/{}".format(comment_url, str(comment_obj.uuid)),
                     headers=login_header_rider)
@@ -76,11 +75,12 @@ def test_delete_comment(client, login_header_rider, comment_data, user_coordinat
 
 
 def test_delete_comment_admin(client, login_header_admin, comment_obj):
-    r = client.delete("{}/{}".format(comment_url, str(comment_obj.uuid)),
+    comment_uuid = str(comment_obj.uuid)
+    r = client.delete("{}/{}".format(comment_url, comment_uuid),
                    headers=login_header_admin)
     assert r.status_code == 202
-    db.session.flush()
+    comment_obj = get_object(COMMENT, comment_uuid, with_deleted=True)
     assert comment_obj.deleted
-    r2 = client.get("{}/{}".format(comment_url, str(comment_obj.uuid)),
+    r2 = client.get("{}/{}".format(comment_url, comment_uuid),
                    headers=login_header_admin)
     assert r2.status_code == 404

@@ -85,21 +85,37 @@ def random_string(length=10):
     return ''.join(random.choice(string.ascii_letters) for m in range(length))
 
 
-def get_object(type, _id):
-    if type == models.Objects.USER:
-        return models.User.query.filter_by(uuid=_id).first()
-    elif type == models.Objects.TASK:
-        return models.Task.query.filter_by(uuid=_id).first()
-    elif type == models.Objects.VEHICLE:
-        return models.Vehicle.query.filter_by(uuid=_id).first()
-    elif type == models.Objects.COMMENT:
-        return models.Comment.query.filter_by(uuid=_id).first()
-    elif type == models.Objects.DELIVERABLE:
-        return models.Deliverable.query.filter_by(uuid=_id).first()
-    elif type == models.Objects.LOCATION:
-        return models.Location.query.filter_by(uuid=_id).first()
+def get_object(type, _id, with_deleted=False):
+    if with_deleted:
+        if type == models.Objects.USER:
+            return models.User.query.with_deleted().filter_by(uuid=_id).first()
+        elif type == models.Objects.TASK:
+            return models.Task.query.with_deleted().filter_by(uuid=_id).first()
+        elif type == models.Objects.VEHICLE:
+            return models.Vehicle.query.with_deleted().filter_by(uuid=_id).first()
+        elif type == models.Objects.COMMENT:
+            return models.Comment.query.with_deleted().filter_by(uuid=_id).first()
+        elif type == models.Objects.DELIVERABLE:
+            return models.Deliverable.query.with_deleted().filter_by(uuid=_id).first()
+        elif type == models.Objects.LOCATION:
+            return models.Location.query.with_deleted().filter_by(uuid=_id).first()
+        else:
+            return None
     else:
-        return None
+        if type == models.Objects.USER:
+            return models.User.query.filter_by(uuid=_id).first()
+        elif type == models.Objects.TASK:
+            return models.Task.query.filter_by(uuid=_id).first()
+        elif type == models.Objects.VEHICLE:
+            return models.Vehicle.query.filter_by(uuid=_id).first()
+        elif type == models.Objects.COMMENT:
+            return models.Comment.query.filter_by(uuid=_id).first()
+        elif type == models.Objects.DELIVERABLE:
+            return models.Deliverable.query.filter_by(uuid=_id).first()
+        elif type == models.Objects.LOCATION:
+            return models.Location.query.filter_by(uuid=_id).first()
+        else:
+            return None
 
 
 def login_as(client, user_type):

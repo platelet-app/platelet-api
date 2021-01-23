@@ -53,7 +53,7 @@ def test_update_task(client, login_header_coordinator, task_data):
     assert r2.status_code == 201
     task_uuid = json.loads(r2.data)['uuid']
     assert is_valid_uuid(task_uuid)
-    r3 = client.put("{}/{}".format(task_url, task_uuid),
+    r3 = client.patch("{}/{}".format(task_url, task_uuid),
                      data=json.dumps(task_data),
                      headers=login_header_coordinator)
     print_response(r3)

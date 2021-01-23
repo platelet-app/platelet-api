@@ -21,14 +21,15 @@ def test_add_new_location(client, login_header_admin, location_data):
 
 
 def test_update_location(client, login_header_admin, location_data, location_data_alternative, location_obj):
+    location_uuid = str(location_obj.uuid)
     check_data = location_data.copy()
     check_data['name'] = location_obj.name
     attr_check(check_data, location_obj, exclude=["timestamp", "links", "notes"])
-    r = client.put("{}/{}".format(location_url, location_obj.uuid),
+    r = client.patch("{}/{}".format(location_url, location_uuid),
                      data=json.dumps(location_data_alternative),
                      headers=login_header_admin)
     assert r.status_code == 200
-    obj_updated = get_object(LOCATION, location_obj.uuid)
+    obj_updated = get_object(LOCATION, location_uuid)
     check_new_data = location_data_alternative.copy()
     check_new_data['name'] = obj_updated.name
     attr_check(check_new_data, obj_updated, exclude=["timestamp", "links", "notes"])

@@ -22,6 +22,21 @@ payload = {"name": "Someone Person the 2nd",
 payload.update({"username": username})
 payload['address'] = address
 
+exclude_attrs_list = ["password",
+                      "id",
+                      "dob",
+                      "links",
+                      "comments",
+                      "assigned_vehicles",
+                      "uuid",
+                      "email",
+                      "time_created",
+                      "time_modified",
+                      "roles",
+                      "profile_picture_thumbnail_url",
+                      "profile_picture_url"
+                      ]
+
 
 # Test functions
 
@@ -51,19 +66,8 @@ def test_get_user(client, user_rider_uuid, login_header_admin):
     attr_check(
         data,
         user_model,
-        exclude=["password",
-                 "id",
-                 "dob",
-                 "links",
-                 "comments",
-                 "assigned_vehicles",
-                 "uuid",
-                 "email",
-                 "time_created",
-                 "time_modified",
-                 "roles",
-                 "tasks_etag"
-                 ])
+        exclude=exclude_attrs_list
+    )
 
     users_roles = user_model.roles.split(",")
     for role in data['roles']:
@@ -85,17 +89,7 @@ def test_get_users(client, all_user_uuids, login_header_admin):
                     attr_check(
                         i,
                         user,
-                        exclude=["password",
-                                 "id",
-                                 "dob",
-                                 "links",
-                                 "comments",
-                                 "assigned_vehicles",
-                                 "uuid",
-                                 "email",
-                                 "time_created",
-                                 "time_modified",
-                                 "roles"])
+                        exclude=exclude_attrs_list)
                     users_roles = user.roles.split(",")
                     for role in i['roles']:
                         assert role in users_roles
@@ -150,7 +144,7 @@ def test_add_invalid_user_existing_display_name(client, login_header_admin, user
     coord_user = json.loads(r.data)
     print(coord_user['display_name'])
     name = coord_user['display_name']
-    r3 = client.put(
+    r3 = client.patch(
         '{}/{}'.format(user_url, user_rider_uuid),
         data=json.dumps({"display_name": name}),
         headers=login_header_admin)
@@ -168,7 +162,7 @@ def test_delete_user(client, login_header_admin, user_rider_uuid):
     print_response(r)
     assert (r.status_code == 202)
 
-    user = get_object(USER, user_rider_uuid)
+    user = get_object(USER, user_rider_uuid, with_deleted=True)
     assert user.deleted
 
     queue = models.DeleteFlags.query.filter_by(uuid=user_rider_uuid, object_type=USER).first()
