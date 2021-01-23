@@ -357,3 +357,29 @@ class UsersTasks(Resource):
             #return not_found(TASK)
 
         return tasks_schema.dump(items)
+
+
+@ns.route('s/<task_uuid>',
+          endpoint="tasks_saved_location")
+class UsersTasks(Resource):
+    @flask_praetorian.auth_required
+    def put(self, task_uuid):
+        parser = reqparse.RequestParser()
+        parser.add_argument("location_uuid", type=str)
+        parser.add_argument("destination", type=str, location="args")
+        args = parser.parse_args()
+        if not args['destination']:
+            return forbidden_error("Must specify either pickup or dropoff in destination query parameter")
+        if not args['location_uuid']:
+            return schema_validation_error("A location UUID must be provided")
+        try:
+            task = get_object(TASK, task_uuid)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_uuid)
+        try:
+            location = get_object(models.Objects.LOCATION, args['location_uuid'])
+        except ObjectNotFoundError:
+            return not_found(models.Objects.LOCATION, args['location_uuid'])
+
+        task.pickup_address_id = location.address_id
+
