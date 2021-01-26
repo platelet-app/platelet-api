@@ -1,9 +1,10 @@
 import json
 import random
 import string
-from app import models, db
+from app import models, db, schemas
 from uuid import UUID
 from haikunator import Haikunator
+
 
 root_url = "http://localhost:5000/api/v0.1/"
 login_url = "{}login".format(root_url)
@@ -158,3 +159,19 @@ def is_valid_uuid(uuid_to_test, version=4):
         return False
 
     return str(uuid_obj) == uuid_to_test
+
+
+def create_task_obj():
+    parent = models.TasksParent()
+    db.session.add(parent)
+    db.session.flush()
+    schema = schemas.TaskSchema()
+    task_data = dict(**get_test_json()['task_data'], order_in_relay=1, parent_id=parent.id)
+    task = schema.load(task_data)
+    return task
+
+
+def create_user_obj(*args, **kwargs):
+    schema = schemas.UserSchema()
+    user = schema.load(dict(**get_test_json()['user'], username=generate_name(), display_name=generate_name(), **kwargs))
+    return user

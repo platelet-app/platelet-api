@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 from app import app, db, models, guard, schemas
-from tests.testutils import get_test_json, generate_name
+from tests.testutils import get_test_json, generate_name, create_task_obj, create_user_obj
 import json
 
 json_data = get_test_json()
@@ -193,20 +193,6 @@ def all_user_uuids():
 
 
 @pytest.fixture(scope="session")
-def coordinator_session_uuid():
-    schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['coordinator'], password="somepass", username=generate_name(), display_name=generate_name()))
-    db.session.add(user)
-    db.session.commit()
-    db.session.flush()
-    session = models.Session(coordinator_uuid=user.uuid)
-    db.session.add(session)
-    db.session.commit()
-    db.session.flush()
-    yield str(session.uuid)
-
-
-@pytest.fixture(scope="session")
 def priorities_ids():
     yield [p.id for p in models.Priority.query.all()]
 
@@ -219,27 +205,52 @@ def vehicle_obj():
     db.session.commit()
     db.session.flush()
     yield vehicle
+    db.session.delete(vehicle)
+    db.session.commit()
 
 
 @pytest.fixture(scope="function")
-def comment_obj():
+def comment_obj(parent_type):
     # Make an author
     user_schema = schemas.UserSchema()
     author = user_schema.load(dict(**json_data['users']['rider'], display_name=generate_name(), username=generate_name()))
     db.session.add(author)
     # Make a parent object
-    vehicle_schema = schemas.VehicleSchema()
-    vehicle = vehicle_schema.load(dict(**json_data['vehicle_data'], name=generate_name()))
-    db.session.add(vehicle)
+    if parent_type == "vehicle":
+        schema = schemas.VehicleSchema()
+        parent_obj = schema.load(dict(**json_data['vehicle_data'], name=generate_name()))
+    elif parent_type == "user":
+        schema = schemas.UserSchema()
+        parent_obj = schema.load(dict(**json_data['users']['rider'], username=generate_name(), display_name=generate_name()))
+    elif parent_type == "location":
+        schema = schemas.LocationSchema()
+        parent_obj = schema.load(dict(**json_data['location_data']))
+    elif parent_type == "task":
+        parent = models.TasksParent()
+        db.session.add(parent)
+        db.session.flush()
+        schema = schemas.TaskSchema()
+        parent_obj = schema.load(dict(**json_data['task_data'], order_in_relay=1, parent_id=parent.id))
+    else:
+        schema = schemas.VehicleSchema()
+        parent_obj = schema.load(dict(**json_data['vehicle_data'], name=generate_name()))
+
+    if not parent_obj:
+        return
+
+    db.session.add(parent_obj)
     db.session.commit()
     db.session.flush()
 
     schema = schemas.CommentSchema()
-    comment = schema.load(dict(**json_data['comment_data'], author_uuid=author.uuid, parent_uuid=vehicle.uuid))
+    comment = schema.load(dict(**json_data['comment_data'], author_uuid=author.uuid, parent_uuid=parent_obj.uuid))
     db.session.add(comment)
     db.session.commit()
     db.session.flush()
     yield comment
+    db.session.delete(comment)
+    db.session.commit()
+
 
 
 @pytest.fixture(scope="function")
@@ -250,29 +261,52 @@ def location_obj():
     db.session.commit()
     db.session.flush()
     yield location
+    db.session.delete(location)
+    db.session.commit()
 
 
-@pytest.fixture(scope="session")
-def task_objs_assigned():
+@pytest.fixture(scope="function")
+def task_obj():
+    task = create_task_obj()
+    db.session.add(task)
+    db.session.commit()
+    db.session.flush()
+    yield task
+
+
+@pytest.fixture(scope="function")
+def user_obj():
+    schema = schemas.UserSchema()
+    user = schema.load(dict(**json_data['users']['coordinator'], username=generate_name(), display_name=generate_name()))
+    db.session.add(user)
+    db.session.flush()
+    db.session.commit()
+    yield user
+    db.session.delete(user)
+    db.session.commit()
+
+
+@pytest.fixture(scope="function")
+def task_objs_assigned(user_role):
+    user = create_user_obj(roles=user_role)
+    db.session.add(user)
+    #db.session.flush()
     result = []
     for i in range(30):
-        parent = models.TasksParent()
-        db.session.add(parent)
-        db.session.flush()
-
-        schema = schemas.TaskSchema()
-        task_data = dict(**json_data['task_data'], order_in_relay=1, parent_id=parent.id)
-        ts = schema.load(task_data)
-        try:
-            ts.assigned_riders.append(users_models['rider'])
-        except KeyError:
-            raise KeyError("No rider is saved in the database for some reason.")
-        assert ts
+        ts = create_task_obj()
+        if user_role == "coordinator":
+            ts.assigned_coordinators.append(user)
+        else:
+            ts.assigned_riders.append(user)
         db.session.add(ts)
         result.append(ts)
 
     db.session.commit()
     yield result
+    for i in result:
+        db.session.delete(i)
+    db.session.delete(user)
+    db.session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -321,11 +355,12 @@ def user_rider():
     res = dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())
     return res
 
+
 @pytest.fixture(scope="session")
 def user_riders_different_patches():
     res = dict(**json_data['users']['rider'], password="somepass", username=generate_name(), display_name=generate_name())
     return res
 
 
-def pytest_sessionfinish(session, exitstatus):
-    db.drop_all()
+#def pytest_sessionfinish(session, exitstatus):
+#    db.drop_all()

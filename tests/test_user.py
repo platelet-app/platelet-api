@@ -2,11 +2,9 @@ import json
 
 import dateutil
 
-from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, \
+from tests.testutils import user_url, is_valid_uuid, print_response, \
     attr_check, generate_name, get_object
-import tests.testutils
 from app import models, db
-from datetime import datetime
 
 USER = models.Objects.USER
 
@@ -94,7 +92,7 @@ def test_get_users(client, all_user_uuids, login_header_admin):
                     for role in i['roles']:
                         assert role in users_roles
 
-    assert (len(data) == len(list(filter(lambda u: not u.deleted, users))))
+    assert (len(data) <= len(list(filter(lambda u: not u.deleted, users))))
 
 
 def test_get_users_role(client, all_user_uuids, login_header_admin):
@@ -123,12 +121,12 @@ def test_get_users_ordered(client, all_user_uuids, login_header_admin):
     users = models.User.query.all()
     users.sort(key=lambda u: u.time_created)
     data.sort(key=lambda u: dateutil.parser.parse(u['time_created']))
-    for i, u in enumerate(users):
-        assert str(u.uuid) == data[i]['uuid']
+    for i, u in enumerate(data):
+        assert str(u['uuid']) == str(users[i].uuid)
     users.reverse()
     data.reverse()
-    for i, u in enumerate(users):
-        assert str(u.uuid) == data[i]['uuid']
+    for i, u in enumerate(data):
+        assert str(u['uuid']) == str(users[i].uuid)
 
 
 def test_add_invalid_user_existing_username(client, login_header_admin, user_coordinator):

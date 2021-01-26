@@ -339,8 +339,6 @@ class UsersTasks(Resource):
             else:
                 filtered_ordered_after = filtered_ordered
 
-            print(filtered_ordered_after.count())
-
             if before_parent and filtered_ordered_after.count() == 0:
                 return not_found(TASK)
             if page > 0:

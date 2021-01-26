@@ -12,6 +12,18 @@
       "code": "en-GB"
     }
   ],
+  "user": {
+    "name": "Someone Person",
+    "address": {
+      "line1": "87 Iffley Road",
+      "line2": "",
+      "town": "Bristol",
+      "county": "Bristol",
+      "country": "UK",
+      "postcode": "BS19NR"
+    },
+    "dob": "01/01/1988"
+  },
   "users": {
     "admin": {
       "uuid": "13e9b391-42dd-4c19-83f4-abf72c73c924",
