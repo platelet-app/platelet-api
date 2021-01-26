@@ -10,6 +10,7 @@ from app import models
 COMMENT = models.Objects.COMMENT
 
 
+@pytest.mark.parametrize("user_role", ["rider", "coordinator"])
 @pytest.mark.parametrize("parent_type", ["vehicle", "user", "location", "task"])
 def test_add_new_comment(client, login_header_coordinator, comment_data, user_obj, task_obj, location_obj, vehicle_obj, parent_type):
     data = comment_data.copy()

@@ -4,6 +4,7 @@ import pytest
 from app import app, db, models, guard, schemas
 from tests.testutils import get_test_json, generate_name, create_task_obj, create_user_obj
 import json
+from flask_praetorian.utilities import current_guard
 
 json_data = get_test_json()
 
@@ -83,6 +84,23 @@ db.session.commit()
 @pytest.fixture(scope="session")
 def client():
     return _client
+
+
+@pytest.fixture(scope="function")
+def login_header(login_role):
+    password = generate_name()
+    user = create_user_obj(roles=login_role, password=guard.hash_password(password))
+    db.session.add(user)
+    db.session.commit()
+    # TODO: not sure if there is a way to do this without having to make a request
+    res = _client.post("{}login".format(api_url), data={"username": user.username, "password": password})
+    assert res.status == "200 OK"
+    token = json.loads(res.data)
+    assert "access_token" in token
+    header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
+    yield header
+    db.session.delete(user)
+    db.session.commit()
 
 
 @pytest.fixture(scope="session")
@@ -270,16 +288,15 @@ def task_obj():
     task = create_task_obj()
     db.session.add(task)
     db.session.commit()
-    db.session.flush()
     yield task
+    db.session.delete(task)
+    db.session.commit()
 
 
 @pytest.fixture(scope="function")
-def user_obj():
-    schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['coordinator'], username=generate_name(), display_name=generate_name()))
+def user_obj(user_role):
+    user = create_user_obj(roles=user_role)
     db.session.add(user)
-    db.session.flush()
     db.session.commit()
     yield user
     db.session.delete(user)
@@ -287,10 +304,26 @@ def user_obj():
 
 
 @pytest.fixture(scope="function")
+def task_obj_assigned(user_role):
+    user = create_user_obj(roles=user_role)
+    db.session.add(user)
+    task = create_task_obj()
+    if user_role == "coordinator":
+        task.assigned_coordinators.append(user)
+    else:
+        task.assigned_riders.append(user)
+    db.session.add(task)
+
+    db.session.commit()
+    yield task
+    db.session.delete(task)
+    db.session.delete(user)
+    db.session.commit()
+
+@pytest.fixture(scope="function")
 def task_objs_assigned(user_role):
     user = create_user_obj(roles=user_role)
     db.session.add(user)
-    #db.session.flush()
     result = []
     for i in range(30):
         ts = create_task_obj()

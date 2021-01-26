@@ -19,7 +19,7 @@ class Login(Resource):
         result = {
             "refresh_expiry": expires[0],
             "expiry": expires[1],
-            "access_token": guard.encode_jwt_token(user)
+            "access_token": access_token
         }
         return result, 200
 

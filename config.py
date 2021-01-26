@@ -17,8 +17,10 @@ class Config:
     CLOUD_PROFILE_PICTURE_STORE_NAME = os.environ.get("CLOUD_PROFILE_PICTURE_STORE_NAME") or ""
     PROFILE_PROCESSING_DIRECTORY = os.environ.get("PROFILE_PROCESSING_DIRECTORY") or ""
     DEFAULT_PROFILE_PICTURE_URL = os.environ.get("DEFAULT_PROFILE_PICTURE_URL") or ""
+    CORS_ENABLED = os.environ.get("CORS_ENABLED") == "True" or False
+    CORS_ORIGIN = os.environ.get("CORS_ORIGIN") or "http://localhost:3000"
 
-    JWT_ACCESS_LIFESPAN = {"minutes": 15}
+    JWT_ACCESS_LIFESPAN = {"minutes": 10}
 
     JWT_REFRESH_LIFESPAN = {"days": 24}
 
