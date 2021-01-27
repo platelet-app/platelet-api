@@ -48,16 +48,22 @@ def attr_check(data, obj, exclude=[]):
     for key in data:
         if key not in exclude:
             if not isinstance(data[key], dict):
-                assert getattr(obj, key) == data[key]
+                print(key)
+                if key == "uuid":
+                    assert str(getattr(obj, key)) == str(data[key])
+                else:
+                    assert getattr(obj, key) == data[key]
             else:
                 for key_second in data[key]:
                     if key_second not in exclude:
                         if not isinstance(data[key][key_second], dict):
+                            print(key_second)
                             assert getattr(getattr(obj, key), key_second) == data[key][key_second]
                         else:
                             for key_third in data[key][key_second]:
                                 if key_third not in exclude:
                                     if not isinstance(data[key][key_second][key_third], dict):
+                                        print(key_third)
                                         assert getattr(getattr(getattr(obj, key), key_second), key_third) == data[key][key_second][key_third]
 
 
@@ -161,17 +167,29 @@ def is_valid_uuid(uuid_to_test, version=4):
     return str(uuid_obj) == uuid_to_test
 
 
-def create_task_obj():
+def create_task_obj(**kwargs):
     parent = models.TasksParent()
     db.session.add(parent)
     db.session.flush()
     schema = schemas.TaskSchema()
-    task_data = dict(**get_test_json()['task_data'], order_in_relay=1, parent_id=parent.id)
+    task_data = dict(**get_test_json()['task_data'], order_in_relay=1, parent_id=parent.id, **kwargs)
     task = schema.load(task_data)
     return task
 
 
-def create_user_obj(*args, **kwargs):
+def create_user_obj(**kwargs):
     schema = schemas.UserSchema()
     user = schema.load(dict(**get_test_json()['user'], username=generate_name(), display_name=generate_name(), **kwargs))
     return user
+
+
+def create_vehicle_obj(**kwargs):
+    schema = schemas.VehicleSchema()
+    vehicle = schema.load(dict(**get_test_json()['vehicle_data'], name=generate_name(), **kwargs))
+    return vehicle
+
+
+def create_location_obj(**kwargs):
+    schema = schemas.LocationSchema()
+    location = schema.load(dict(**get_test_json()['location_data'], name=generate_name(), **kwargs))
+    return location

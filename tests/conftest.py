@@ -1,8 +1,10 @@
+import datetime
 import uuid
 
 import pytest
 from app import app, db, models, guard, schemas
-from tests.testutils import get_test_json, generate_name, create_task_obj, create_user_obj
+from tests.testutils import get_test_json, generate_name, create_task_obj, create_user_obj, create_vehicle_obj, \
+    create_location_obj
 import json
 from flask_praetorian.utilities import current_guard
 
@@ -67,6 +69,8 @@ for locale in json_data['locales']:
 user_schema = schemas.UserSchema()
 users_models = {}
 for key in json_data['users']:
+    # don't do this anymore for now and rely on user_objs fixture
+    continue
     user = user_schema.load(dict(**json_data['users'][key], password="somepass", username=generate_name(), display_name=generate_name()))
     users_models[key] = user
     db.session.add(user)
@@ -98,29 +102,9 @@ def login_header(login_role):
     token = json.loads(res.data)
     assert "access_token" in token
     header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
+    user_uuid = str(user.uuid)
     yield header
-    db.session.delete(user)
-    db.session.commit()
-
-
-@pytest.fixture(scope="session")
-def login_header_admin():
-    schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['admin'],
-                            username=generate_name(),
-                            display_name=generate_name(),
-                            password=guard.hash_password("somepass")
-                            ))
-    print(user)
-    assert isinstance(user, models.User)
-    db.session.add(user)
-    db.session.commit()
-    res = _client.post("{}login".format(api_url), data={"username": user.username, "password": "somepass"})
-    assert res.status == "200 OK"
-    token = json.loads(res.data)
-    assert "access_token" in token
-    header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
-    yield header
+    user = models.User.query.filter_by(uuid=user_uuid).one()
     db.session.delete(user)
     db.session.commit()
 
@@ -146,44 +130,6 @@ def rider_patches_uuids():
     users = map(rider_patch_mapper, json_data['rider_patches'])
     db.session.commit()
     return set(users)
-
-
-@pytest.fixture(scope="session")
-def login_header_coordinator():
-    schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['coordinator'],
-                            username=generate_name(),
-                            display_name=generate_name(),
-                            password=guard.hash_password("somepass")
-                            ))
-    assert isinstance(user, models.User)
-    db.session.add(user)
-    db.session.commit()
-    res = _client.post("{}login".format(api_url), data={"username": user.username, "password": "somepass"})
-    assert res.status == "200 OK"
-    token = json.loads(res.data)
-    assert "access_token" in token
-    header = {"Tab-Identification": "asdf", "Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
-    yield header
-
-
-@pytest.fixture(scope="session")
-def login_header_rider():
-    schema = schemas.UserSchema()
-    user = schema.load(dict(**json_data['users']['rider'],
-                            username=generate_name(),
-                            display_name=generate_name(),
-                            password=guard.hash_password("somepass")
-                            ))
-    assert isinstance(user, models.User)
-    db.session.add(user)
-    db.session.commit()
-    res = _client.post("{}login".format(api_url), data={"username": user.username, "password": "somepass"})
-    assert res.status == "200 OK"
-    token = json.loads(res.data)
-    assert "access_token" in token
-    header = {"Authorization": "Bearer {} ".format(token['access_token']), "content-type": "application/json"}
-    yield header
 
 
 @pytest.fixture(scope="session")
@@ -216,9 +162,40 @@ def priorities_ids():
 
 
 @pytest.fixture(scope="function")
+def comment_parent_obj(parent_type):
+    if parent_type == "user":
+        user = create_user_obj()
+        db.session.add(user)
+        db.session.commit()
+        yield user
+        db.session.delete(user)
+        db.session.commit()
+    elif parent_type == "location":
+        location = create_location_obj()
+        db.session.add(location)
+        db.session.commit()
+        yield location
+        db.session.delete(location)
+        db.session.commit()
+    elif parent_type == "vehicle":
+        vehicle = create_vehicle_obj()
+        db.session.add(vehicle)
+        db.session.commit()
+        yield vehicle
+        db.session.delete(vehicle)
+        db.session.commit()
+    elif parent_type == "task":
+        task = create_task_obj()
+        db.session.add(task)
+        db.session.commit()
+        yield task
+        db.session.delete(task)
+        db.session.commit()
+
+
+@pytest.fixture(scope="function")
 def vehicle_obj():
-    schema = schemas.VehicleSchema()
-    vehicle = schema.load(dict(**json_data['vehicle_data'], name=generate_name()))
+    vehicle = create_vehicle_obj()
     db.session.add(vehicle)
     db.session.commit()
     db.session.flush()
@@ -270,11 +247,9 @@ def comment_obj(parent_type):
     db.session.commit()
 
 
-
 @pytest.fixture(scope="function")
 def location_obj():
-    schema = schemas.LocationSchema()
-    location = schema.load(dict(**json_data['location_data'], name=generate_name()))
+    location = create_location_obj()
     db.session.add(location)
     db.session.commit()
     db.session.flush()
@@ -298,7 +273,9 @@ def user_obj(user_role):
     user = create_user_obj(roles=user_role)
     db.session.add(user)
     db.session.commit()
+    user_uuid = str(user.uuid)
     yield user
+    user = models.User.query.filter_by(uuid=user_uuid).one()
     db.session.delete(user)
     db.session.commit()
 
@@ -320,13 +297,29 @@ def task_obj_assigned(user_role):
     db.session.delete(user)
     db.session.commit()
 
+
 @pytest.fixture(scope="function")
-def task_objs_assigned(user_role):
+def task_objs_assigned(user_role, task_status):
     user = create_user_obj(roles=user_role)
+    user_rider = None
     db.session.add(user)
     result = []
+    task_create_kwargs = {}
+    if task_status == "picked_up":
+        task_create_kwargs = {"time_picked_up": datetime.datetime.now().isoformat()}
+    elif task_status == "delivered":
+        task_create_kwargs = {"time_dropped_off": datetime.datetime.now().isoformat()}
+    elif task_status == "cancelled":
+        task_create_kwargs = {"time_cancelled": datetime.datetime.now().isoformat()}
+    elif task_status == "rejected":
+        task_create_kwargs = {"time_rejected": datetime.datetime.now().isoformat()}
+
     for i in range(30):
-        ts = create_task_obj()
+        ts = create_task_obj(**task_create_kwargs)
+        if task_status != "new" and user_role == "coordinator":
+            user_rider = create_user_obj(roles="rider")
+            db.session.add(user_rider)
+            ts.assigned_riders.append(user)
         if user_role == "coordinator":
             ts.assigned_coordinators.append(user)
         else:
@@ -339,7 +332,25 @@ def task_objs_assigned(user_role):
     for i in result:
         db.session.delete(i)
     db.session.delete(user)
+    if user_rider:
+        db.session.delete(user_rider)
     db.session.commit()
+
+
+@pytest.fixture(scope="function")
+def user_objs():
+    result = []
+    for i in range(30):
+        user = create_user_obj()
+        result.append(user)
+        db.session.add(user)
+    db.session.commit()
+    db.session.flush()
+    yield result
+    for i in result:
+        db.session.delete(i)
+    db.session.commit()
+
 
 
 @pytest.fixture(scope="session")

@@ -1,9 +1,11 @@
 import json
 
 import dateutil
+import pytest
 
+from tests.conftest import api_url
 from tests.testutils import user_url, is_valid_uuid, print_response, \
-    attr_check, generate_name, get_object
+    attr_check, generate_name, get_object, whoami
 from app import models, db
 
 USER = models.Objects.USER
@@ -40,8 +42,9 @@ exclude_attrs_list = ["password",
 
 # User and Users
 
-def test_add_valid_user(client, user_coordinator, login_header_admin):
-    r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
+@pytest.mark.parametrize("login_role", ["admin"])
+def test_add_valid_user(client, user_coordinator, login_header):
+    r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header)
     print_response(r)
     assert (r.status_code == 201)
 
@@ -53,13 +56,16 @@ def test_add_valid_user(client, user_coordinator, login_header_admin):
     db.session.commit()
 
 
-def test_get_user(client, user_rider_uuid, login_header_admin):
-    r = client.get('{}/{}'.format(user_url, user_rider_uuid), headers=login_header_admin)
+@pytest.mark.parametrize("login_role", ["admin", "rider", "coordinator"])
+@pytest.mark.parametrize("user_role", ["admin"])
+def test_get_user(client, user_obj, login_header):
+    user_uuid = str(user_obj.uuid)
+    r = client.get('{}/{}'.format(user_url, user_uuid), headers=login_header)
     print_response(r)
     assert (r.status_code == 200)
 
     data = json.loads(r.data)
-    user_model = get_object(USER, user_rider_uuid)
+    user_model = get_object(USER, user_uuid)
 
     attr_check(
         data,
@@ -70,51 +76,72 @@ def test_get_user(client, user_rider_uuid, login_header_admin):
     users_roles = user_model.roles.split(",")
     for role in data['roles']:
         assert role in users_roles
-    # assert data['tasks_etag']
 
 
-def test_get_users(client, all_user_uuids, login_header_admin):
-    r = client.get('{}s'.format(user_url), headers=login_header_admin)
-    print_response(r)
+@pytest.mark.parametrize("login_role", ["admin", "coordinator", "rider"])
+def test_get_users(client, all_user_uuids, login_header, user_objs):
+    whoami_uuid = whoami(client, login_header)
+
+    r = client.get('{}s'.format(user_url), headers=login_header)
     assert (r.status_code == 200)
     data = json.loads(r.data)
-    users = models.User.query.all()
+    user_uuids = [str(u.uuid) for u in user_objs]
+    user_uuids.append(whoami_uuid)
 
-    for user in users:
-        if str(user.uuid) in all_user_uuids:
-            for i in data:
-                if i['uuid'] == str(user.uuid):
-                    attr_check(
-                        i,
-                        user,
-                        exclude=exclude_attrs_list)
-                    users_roles = user.roles.split(",")
-                    for role in i['roles']:
-                        assert role in users_roles
+    for user in data:
+        assert user['uuid'] in user_uuids
+        for i in user_objs:
+            if i.uuid == str(user['uuid']):
+                attr_check(
+                    user,
+                    i,
+                    exclude=exclude_attrs_list)
+                users_roles = user.roles.split(",")
+                for role in i['roles']:
+                    assert role in users_roles
 
-    assert (len(data) <= len(list(filter(lambda u: not u.deleted, users))))
+    r2 = client.get('{}s?page={}'.format(user_url, 2), headers=login_header)
+    assert (r.status_code == 200)
+    data2 = json.loads(r2.data)
+
+    for user in data2:
+        assert user['uuid'] in user_uuids
+        for i in user_objs:
+            if i.uuid == str(user['uuid']):
+                attr_check(
+                    user,
+                    i,
+                    exclude=exclude_attrs_list)
+                users_roles = user.roles.split(",")
+                for role in i['roles']:
+                    assert role in users_roles
+
+    assert (len(data + data2) == len(user_uuids))
 
 
-def test_get_users_role(client, all_user_uuids, login_header_admin):
-    r_coord = client.get('{}s?role={}'.format(user_url, "coordinator"), headers=login_header_admin)
+@pytest.mark.parametrize("login_role", ["admin", "rider", "coordinator"])
+def test_get_users_role(client, all_user_uuids, login_header):
+    r_coord = client.get('{}s?role={}'.format(user_url, "coordinator"), headers=login_header)
     assert (r_coord.status_code == 200)
     data = json.loads(r_coord.data)
     for u in data:
         assert "coordinator" in u['roles']
-    r_rider = client.get('{}s?role={}'.format(user_url, "rider"), headers=login_header_admin)
+    r_rider = client.get('{}s?role={}'.format(user_url, "rider"), headers=login_header)
     assert (r_rider.status_code == 200)
     data = json.loads(r_rider.data)
     for u in data:
         assert "rider" in u['roles']
-    r_admin = client.get('{}s?role={}'.format(user_url, "admin"), headers=login_header_admin)
+    r_admin = client.get('{}s?role={}'.format(user_url, "admin"), headers=login_header)
     assert (r_admin.status_code == 200)
     data = json.loads(r_admin.data)
     for u in data:
         assert "admin" in u['roles']
 
 
-def test_get_users_ordered(client, all_user_uuids, login_header_admin):
-    r_latest = client.get('{}s?order={}'.format(user_url, "latest"), headers=login_header_admin)
+@pytest.mark.parametrize("login_role", ["admin", "rider", "coordinator"])
+def test_get_users_ordered(client, all_user_uuids, login_header):
+    r_latest = client.get('{}s?order={}'.format(user_url, "latest"), headers=login_header)
+    whoami = client.get('{}/whoami'.format(api_url), headers=login_header)
     print_response(r_latest)
     assert (r_latest.status_code == 200)
     data = json.loads(r_latest.data)
@@ -129,34 +156,38 @@ def test_get_users_ordered(client, all_user_uuids, login_header_admin):
         assert str(u['uuid']) == str(users[i].uuid)
 
 
-def test_add_invalid_user_existing_username(client, login_header_admin, user_coordinator):
-    r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
+@pytest.mark.parametrize("login_role", ["admin"])
+def test_add_invalid_user_existing_username(client, login_header, user_coordinator):
+    r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header)
     assert (r.status_code == 201)
     user_coordinator['display_name'] = generate_name()
-    r2 = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header_admin)
+    r2 = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header)
     assert (r2.status_code == 400)
 
 
-def test_add_invalid_user_existing_display_name(client, login_header_admin, user_coordinator_uuid, user_rider_uuid):
-    r = client.get('{}/{}'.format(user_url, user_coordinator_uuid), headers=login_header_admin)
+@pytest.mark.parametrize("login_role", ["admin"])
+def test_add_invalid_user_existing_display_name(client, login_header, user_coordinator_uuid, user_rider_uuid):
+    r = client.get('{}/{}'.format(user_url, user_coordinator_uuid), headers=login_header)
     coord_user = json.loads(r.data)
     print(coord_user['display_name'])
     name = coord_user['display_name']
     r3 = client.patch(
         '{}/{}'.format(user_url, user_rider_uuid),
         data=json.dumps({"display_name": name}),
-        headers=login_header_admin)
+        headers=login_header)
     assert (r3.status_code == 400)
 
 
-def test_delete_other_user_as_coordinator(client, login_header_coordinator, user_rider_uuid):
-    r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header_coordinator)
+@pytest.mark.parametrize("login_role", ["rider", "coordinator"])
+def test_delete_user_as_other(client, login_header, user_rider_uuid):
+    r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header)
     print_response(r)
     assert (r.status_code == 403)
 
 
-def test_delete_user(client, login_header_admin, user_rider_uuid):
-    r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header_admin)
+@pytest.mark.parametrize("login_role", ["admin"])
+def test_delete_user(client, login_header, user_rider_uuid):
+    r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header)
     print_response(r)
     assert (r.status_code == 202)
 
@@ -167,16 +198,18 @@ def test_delete_user(client, login_header_admin, user_rider_uuid):
     assert int(queue.object_type) == int(USER)
 
 
-def test_add_invalid_user_email(client, user_rider, login_header_admin):
+@pytest.mark.parametrize("login_role", ["admin"])
+def test_add_invalid_user_email(client, user_rider, login_header):
     new_payload = user_rider.copy().update({"email": "invalidEmail"})
-    r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header_admin)
+    r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header)
     print_response(r)
     assert (r.status_code == 400)
 
 
-def test_add_invalid_user_dob(client, user_rider, login_header_admin):
+@pytest.mark.parametrize("login_role", ["admin"])
+def test_add_invalid_user_dob(client, user_rider, login_header):
     new_payload = user_rider.copy().update({"dob": "221256"})
-    r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header_admin)
+    r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header)
     print_response(r)
     assert (r.status_code == 400)
 
