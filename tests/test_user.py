@@ -138,64 +138,62 @@ def test_get_users_role(client, all_user_uuids, login_header):
         assert "admin" in u['roles']
 
 
-@pytest.mark.parametrize("login_role", ["admin", "rider", "coordinator"])
-def test_get_users_ordered(client, all_user_uuids, login_header):
-    r_latest = client.get('{}s?order={}'.format(user_url, "latest"), headers=login_header)
-    whoami = client.get('{}/whoami'.format(api_url), headers=login_header)
+@pytest.mark.parametrize("users_order", ["newest", "oldest"])
+@pytest.mark.parametrize("login_role", ["admin"])
+def test_get_users_ordered(client, login_header, user_objs, users_order):
+    r_latest = client.get('{}s?order={}'.format(user_url, users_order), headers=login_header)
     print_response(r_latest)
     assert (r_latest.status_code == 200)
     data = json.loads(r_latest.data)
-    users = models.User.query.all()
-    users.sort(key=lambda u: u.time_created)
-    data.sort(key=lambda u: dateutil.parser.parse(u['time_created']))
-    for i, u in enumerate(data):
-        assert str(u['uuid']) == str(users[i].uuid)
-    users.reverse()
-    data.reverse()
-    for i, u in enumerate(data):
-        assert str(u['uuid']) == str(users[i].uuid)
+    assert len(data) == 20
+    prev_user = None
+    for i in data:
+        print(i['time_created'])
+        i['time_created'] = dateutil.parser.parse(i['time_created'])
+    for user in data:
+        if prev_user:
+            if users_order == "newest":
+                assert user['time_created'] < prev_user['time_created']
+            else:
+                assert user['time_created'] > prev_user['time_created']
+        prev_user = user
 
 
+@pytest.mark.parametrize("user_role", ["admin"])
 @pytest.mark.parametrize("login_role", ["admin"])
-def test_add_invalid_user_existing_username(client, login_header, user_coordinator):
-    r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header)
-    assert (r.status_code == 201)
-    user_coordinator['display_name'] = generate_name()
-    r2 = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header)
+def test_add_invalid_user_existing_username(client, login_header, user_obj):
+    data = json.dumps({"username": user_obj.username})
+    r2 = client.post('{}s'.format(user_url), data=data, headers=login_header)
     assert (r2.status_code == 400)
 
 
+@pytest.mark.parametrize("user_role", ["admin"])
 @pytest.mark.parametrize("login_role", ["admin"])
-def test_add_invalid_user_existing_display_name(client, login_header, user_coordinator_uuid, user_rider_uuid):
-    r = client.get('{}/{}'.format(user_url, user_coordinator_uuid), headers=login_header)
-    coord_user = json.loads(r.data)
-    print(coord_user['display_name'])
-    name = coord_user['display_name']
-    r3 = client.patch(
-        '{}/{}'.format(user_url, user_rider_uuid),
-        data=json.dumps({"display_name": name}),
-        headers=login_header)
-    assert (r3.status_code == 400)
+def test_add_invalid_user_existing_display_name(client, login_header, user_obj):
+    data = json.dumps({"display_name": user_obj.display_name})
+    r = client.post('{}s'.format(user_url), data=data, headers=login_header)
+    assert (r.status_code == 400)
 
 
+@pytest.mark.parametrize("user_role", ["rider"])
 @pytest.mark.parametrize("login_role", ["rider", "coordinator"])
-def test_delete_user_as_other(client, login_header, user_rider_uuid):
-    r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header)
+def test_delete_user_as_other(client, login_header, user_obj):
+    user_uuid = str(user_obj.uuid)
+    r = client.delete('{}/{}'.format(user_url, user_uuid), headers=login_header)
     print_response(r)
     assert (r.status_code == 403)
 
 
+@pytest.mark.parametrize("user_role", ["rider"])
 @pytest.mark.parametrize("login_role", ["admin"])
-def test_delete_user(client, login_header, user_rider_uuid):
-    r = client.delete('{}/{}'.format(user_url, user_rider_uuid), headers=login_header)
+def test_delete_user(client, login_header, user_obj):
+    user_uuid = str(user_obj.uuid)
+    r = client.delete('{}/{}'.format(user_url, user_uuid), headers=login_header)
     print_response(r)
     assert (r.status_code == 202)
 
-    user = get_object(USER, user_rider_uuid, with_deleted=True)
+    user = get_object(USER, user_uuid, with_deleted=True)
     assert user.deleted
-
-    queue = models.DeleteFlags.query.filter_by(uuid=user_rider_uuid, object_type=USER).first()
-    assert int(queue.object_type) == int(USER)
 
 
 @pytest.mark.parametrize("login_role", ["admin"])

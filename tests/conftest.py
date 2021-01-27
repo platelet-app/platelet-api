@@ -1,4 +1,5 @@
 import datetime
+import random
 import uuid
 
 import pytest
@@ -275,7 +276,7 @@ def user_obj(user_role):
     db.session.commit()
     user_uuid = str(user.uuid)
     yield user
-    user = models.User.query.filter_by(uuid=user_uuid).one()
+    user = models.User.query.with_deleted().filter_by(uuid=user_uuid).one()
     db.session.delete(user)
     db.session.commit()
 
@@ -341,7 +342,9 @@ def task_objs_assigned(user_role, task_status):
 def user_objs():
     result = []
     for i in range(30):
+        time_created = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(seconds=random.randint(1, 10000))
         user = create_user_obj()
+        user.time_created = time_created
         result.append(user)
         db.session.add(user)
     db.session.commit()

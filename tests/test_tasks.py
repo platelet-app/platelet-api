@@ -9,9 +9,25 @@ TASK = models.Objects.TASK
 
 
 @pytest.mark.parametrize("login_role", ["coordinator"])
+def test_post_relay(client, login_header, task_obj):
+    r = client.post("{}s".format(task_url),
+                     data=json.dumps({
+                         "relay_previous_uuid": str(task_obj.uuid),
+                         "parent_id": task_obj.parent_id
+                     }),
+                     headers=login_header)
+    print_response(r)
+    assert r.status_code == 201
+    data = json.loads(r.data)
+    assert is_valid_uuid(data['uuid'])
+    new_task = get_object(TASK, data['uuid'])
+    assert new_task.relay_previous_uuid == task_obj.uuid
+
+
+@pytest.mark.parametrize("login_role", ["coordinator"])
 @pytest.mark.parametrize("user_role", ["coordinator"])
 @pytest.mark.parametrize("task_status", ["new"])
-def test_get_all_tasks(client, login_header, user_rider_uuid, task_objs_assigned):
+def test_get_all_tasks(client, login_header, task_objs_assigned):
     r = client.get("{}s".format(task_url, 1),
                    headers=login_header)
     assert r.status_code == 200
@@ -97,7 +113,7 @@ def test_get_assigned_tasks_by_status_coordinator(client, login_header, task_obj
 
 
 @pytest.mark.parametrize("login_role", ["coordinator"])
-def test_add_new_task(client, login_header):
+def test_post_task(client, login_header):
     r2 = client.post("{}s".format(task_url),
                      data=json.dumps({}),
                      headers=login_header)
