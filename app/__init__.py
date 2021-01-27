@@ -66,7 +66,8 @@ app.config.from_object(Config)
 app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
     if app.config['ELASTICSEARCH_URL'] else None
 
-db = SQLAlchemy(app,
+# If we're running in pytest don't let items expire after a commit to make using fixtures easier
+db = SQLAlchemy(app, session_options={"expire_on_commit": not pytest},
                 engine_options={"pool_size": 100, "max_overflow": 0, "connect_args": {"options": "-c timezone=UTC"}})
 ma = Marshmallow(app)
 

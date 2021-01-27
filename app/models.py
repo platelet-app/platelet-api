@@ -139,7 +139,7 @@ class Comment(db.Model, CommonMixin):
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     body = db.Column(db.String(10000))
     author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
-    author = db.relationship("User", foreign_keys=[author_uuid])
+    author = db.relationship("User", foreign_keys=[author_uuid], backref="authored_comments")
     parent_type = db.Column(db.Integer)
     parent_uuid = db.Column(UUID(as_uuid=True))
     publicly_visible = db.Column(db.Boolean, default=True)

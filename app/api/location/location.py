@@ -39,7 +39,7 @@ class Location(Resource):
 
         return add_item_to_delete_queue(location)
 
-    @flask_praetorian.roles_required('admin', 'coordinator')
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
     def patch(self, location_id):
         try:
             location = get_object(LOCATION, location_id)
@@ -73,7 +73,7 @@ class Locations(Resource):
 
         return jsonify(locations_schema.dump(items))
 
-    @flask_praetorian.roles_accepted('admin')
+    @flask_praetorian.roles_accepted('admin', 'coordinator')
     def post(self):
         try:
             location = load_request_into_object(LOCATION)

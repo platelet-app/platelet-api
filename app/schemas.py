@@ -193,7 +193,10 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     @post_dump
     def split_roles(self, data, many):
         try:
-            data['roles'] = data['roles'].split(",")
+            if data['roles']:
+                data['roles'] = data['roles'].split(",")
+            else:
+                data['roles'] = ""
         except KeyError:
             return data
         return data
@@ -207,8 +210,8 @@ class VehicleSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoad
                   'registration_number', 'comments', 'links', 'name', 'assigned_user', 'assigned_user_uuid',
                   "time_created", "time_modified")
 
-    date_of_manufacture = ma.DateTime(format='%d/%m/%Y')
-    date_of_registration = ma.DateTime(format='%d/%m/%Y')
+    date_of_manufacture = ma.Date(format='%d/%m/%Y')
+    date_of_registration = ma.Date(format='%d/%m/%Y')
     assigned_user = ma.Nested(UserSchema, dump_only=True)
     assigned_user_uuid = ma.String(allow_none=True)
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
