@@ -1,7 +1,7 @@
 from flask import jsonify
 
 from app import schemas, models
-from flask_restplus import Resource
+from flask_restx import Resource
 import flask_praetorian
 from app import location_ns as ns
 from app.api.functions.viewfunctions import load_request_into_object

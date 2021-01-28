@@ -357,7 +357,7 @@ class UsersTasks(Resource):
         return tasks_schema.dump(items)
 
 
-@ns.route('s/<task_uuid>',
+@ns.route('/<task_uuid>/destinations',
           endpoint="tasks_saved_location")
 class UsersTasks(Resource):
     @flask_praetorian.auth_required
@@ -379,5 +379,33 @@ class UsersTasks(Resource):
         except ObjectNotFoundError:
             return not_found(models.Objects.LOCATION, args['location_uuid'])
 
-        task.pickup_address_id = location.address_id
+        if args['destination'] == "pickup":
+            task.pickup_address_id = location.address_id
+            task.saved_location_pickup_uuid = location.uuid
+        else:
+            task.dropoff_address_id = location.address_id
+            task.saved_location_dropoff_uuid = location.uuid
+
+        return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+
+    @flask_praetorian.auth_required
+    def get(self, task_uuid):
+        parser = reqparse.RequestParser()
+        parser.add_argument("destination", type=str, location="args")
+        args = parser.parse_args()
+        address_schema = schemas.AddressSchema()
+        try:
+            task = get_object(TASK, task_uuid)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_uuid)
+        if args['destination'] == "pickup":
+            return address_schema.dump(task.pickup_address), 200
+        elif args['destination'] == "delivery":
+            return address_schema.dump(task.dropoff_address), 200
+        else:
+            result = {
+                "pickup": address_schema.dump(task.pickup_address),
+                "delivery": address_schema.dump(task.dropoff_address)
+            }
+            return result, 200
 

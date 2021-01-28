@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from tests.testutils import is_json, is_valid_uuid, session_url, task_url, login_as, find_user, is_valid_uuid, print_response, whoami, delete_by_uuid, get_object, attr_check
+from tests.testutils import task_url, is_valid_uuid, print_response, get_object, attr_check
 from app import models
 
 TASK = models.Objects.TASK
@@ -160,3 +160,42 @@ def test_task_assignment_put(client, login_header, task_obj, user_obj, user_role
     assert r.status_code == 200
     user_uuid = json.loads(r.data)[0]['uuid']
     assert user_uuid == assignee_uuid
+
+
+@pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
+@pytest.mark.parametrize("login_role", ["coordinator"])
+def test_task_assign_saved_location(client, login_header, destination_location, location_obj, task_obj):
+    task_uuid = str(task_obj.uuid)
+    r = client.put(
+        "{}/{}/destinations?destination={}".format(task_url, task_uuid, destination_location),
+        headers=login_header,
+        data=json.dumps({"location_uuid": str(location_obj.uuid)}))
+    assert r.status_code == 200
+    obj = get_object(TASK, task_uuid)
+    if destination_location == "pickup":
+        assert obj.pickup_address_id == location_obj.address_id
+        assert obj.saved_location_pickup_uuid == location_obj.uuid
+    else:
+        assert obj.dropoff_address_id == location_obj.address_id
+        assert obj.saved_location_dropoff_uuid == location_obj.uuid
+
+
+@pytest.mark.parametrize("destination_location", ["pickup", "delivery", "both"])
+@pytest.mark.parametrize("login_role", ["coordinator"])
+def test_get_task_destinations(client, login_header, location_obj, task_obj_addressed, destination_location):
+    task_uuid = str(task_obj_addressed.uuid)
+    r = client.get(
+        "{}/{}/destinations?destination={}".format(task_url, task_uuid, destination_location),
+        headers=login_header
+    )
+    assert r.status_code == 200
+    result = json.loads(r.data)
+    print(result)
+    if destination_location == "pickup":
+        attr_check(result, task_obj_addressed.pickup_address)
+    elif destination_location == "delivery":
+        attr_check(result, task_obj_addressed.dropoff_address)
+    else:
+        attr_check(result["pickup"], task_obj_addressed.pickup_address)
+        attr_check(result["delivery"], task_obj_addressed.dropoff_address)
+

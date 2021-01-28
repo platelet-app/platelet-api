@@ -255,6 +255,7 @@ def location_obj():
     db.session.commit()
     db.session.flush()
     yield location
+    location = models.Location.query.filter_by(uuid=str(location.uuid)).one()
     db.session.delete(location)
     db.session.commit()
 
@@ -296,6 +297,27 @@ def task_obj_assigned(user_role):
     yield task
     db.session.delete(task)
     db.session.delete(user)
+    db.session.commit()
+
+
+@pytest.fixture(scope="function")
+def task_obj_addressed(destination_location):
+    task = create_task_obj()
+    address_schema = schemas.AddressSchema()
+    address_1 = address_schema.load(get_test_json()['savedlocations'][0]['address'])
+    address_2 = address_schema.load(get_test_json()['savedlocations'][1]['address'])
+    if destination_location == "pickup":
+        task.pickup_address = address_1
+    elif destination_location == "delivery":
+        task.dropoff_address = address_2
+    else:
+        task.pickup_address = address_1
+        task.dropoff_address = address_2
+
+    db.session.add(task)
+    db.session.commit()
+    yield task
+    db.session.delete(task)
     db.session.commit()
 
 
