@@ -7,8 +7,8 @@ def internal_error(message, object_id="null"):
     return {'id': object_id, 'message': str(message)}, 500
 
 
-def schema_validation_error(message):
-    return {'message': "Invalid input: {}".format(str(message))}, 400
+def schema_validation_error(message, object_id="null"):
+    return {'id': object_id, 'message': "Invalid input: {}".format(str(message))}, 400
 
 
 def unprocessable_entity_error(message, object_id="null"):

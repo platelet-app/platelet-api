@@ -3,11 +3,14 @@ from flask_sqlalchemy import BaseQuery
 from redis import Connection
 from rq import Queue
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import validates
 
 from app import db
 from datetime import datetime
 from enum import IntEnum, auto
 from sqlalchemy_utils import EmailType
+
+from app.exceptions import ProtectedFieldError
 from app.search import add_to_index, remove_from_index, query_index
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
@@ -190,7 +193,7 @@ class Deliverable(db.Model, CommonMixin):
 
 class Address(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
+    #uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     ward = db.Column(db.String(64))
     line1 = db.Column(db.String(64))
     line2 = db.Column(db.String(64))
@@ -338,6 +341,20 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     ]
 
     query_class = QueryWithSoftDelete
+
+    @validates("pickup_address", "dropoff_address")
+    def _check_not_preset_location(self, key, value):
+        if key == "pickup_address":
+            if self.saved_location_pickup_uuid:
+                raise ProtectedFieldError(
+                    "The pickup address cannot be written to while it is associated with a saved location."
+                )
+        if key == "dropoff_address":
+            if self.saved_location_dropoff_uuid:
+                raise ProtectedFieldError(
+                    "The delivery address cannot be written to while it is associated with a saved location."
+                )
+        return value
 
     @property
     def object_type(self):

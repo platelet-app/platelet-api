@@ -12,8 +12,10 @@ from app.api.task.task_utilities.taskfunctions import set_previous_relay_uuids, 
 from app.api.functions.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
-from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error
-from app.exceptions import ObjectNotFoundError, SchemaValidationError, AlreadyFlaggedForDeletionError
+from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
+    unprocessable_entity_error
+from app.exceptions import ObjectNotFoundError, SchemaValidationError, AlreadyFlaggedForDeletionError, \
+    ProtectedFieldError
 from app.api.task.task_utilities.decorators import check_rider_match
 from app.api.functions.utilities import get_object
 from flask_praetorian import utilities
@@ -101,7 +103,9 @@ class Task(Resource):
         try:
             load_request_into_object(TASK, instance=task)
         except ValidationError as e:
-            return schema_validation_error(e)
+            return schema_validation_error(e, object_id=task_id)
+        except ProtectedFieldError as e:
+            return forbidden_error(e, object_id=task_id)
 
         task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
         set_previous_relay_uuids(task_parent)
@@ -213,7 +217,7 @@ class TasksAssignees(Resource):
 
         elif args['role'] == "coordinator":
             filtered_coordinators = list(filter(lambda u: u.uuid != user.uuid, task.assigned_coordinators))
-            task.assigned_riders = filtered_coordinators
+            task.assigned_coordinators = filtered_coordinators
             socket_update_type = REMOVE_ASSIGNED_COORDINATOR_FROM_TASK
         else:
             return forbidden_error("Type of role must be specified.", task_id)
@@ -358,7 +362,7 @@ class UsersTasks(Resource):
 
 
 @ns.route('/<task_uuid>/destinations',
-          endpoint="tasks_saved_location")
+          endpoint="task_destinations")
 class UsersTasks(Resource):
     @flask_praetorian.auth_required
     def put(self, task_uuid):
@@ -367,7 +371,7 @@ class UsersTasks(Resource):
         parser.add_argument("destination", type=str, location="args")
         args = parser.parse_args()
         if not args['destination']:
-            return forbidden_error("Must specify either pickup or dropoff in destination query parameter")
+            return forbidden_error("Must specify either pickup or delivery in destination query parameter")
         if not args['location_uuid']:
             return schema_validation_error("A location UUID must be provided")
         try:
@@ -382,9 +386,13 @@ class UsersTasks(Resource):
         if args['destination'] == "pickup":
             task.pickup_address_id = location.address_id
             task.saved_location_pickup_uuid = location.uuid
-        else:
+        elif args['destination'] == "delivery":
             task.dropoff_address_id = location.address_id
             task.saved_location_dropoff_uuid = location.uuid
+        else:
+            return unprocessable_entity_error(
+                "Must specify pickup or delivery in destination parameter.",
+                object_id=task_uuid)
 
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
@@ -408,4 +416,3 @@ class UsersTasks(Resource):
                 "delivery": address_schema.dump(task.dropoff_address)
             }
             return result, 200
-

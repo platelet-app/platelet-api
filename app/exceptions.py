@@ -20,3 +20,7 @@ class AlreadyFlaggedForDeletionError(Exception):
 
 class InvalidFileUploadError(Exception):
     """Raise when an invalid file is uploaded for a specific purpose"""
+
+
+class ProtectedFieldError(Exception):
+    """Raise when an attempt to write to a protected field is made"""

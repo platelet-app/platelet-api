@@ -21,8 +21,8 @@ def remove_item_from_delete_queue(item):
     flag = get_object(models.Objects.DELETE_FLAG, item.uuid)
     if flag:
         db.session.delete(flag)
-        item.deleted = False
-        db.session.commit()
+    item.deleted = False
+    db.session.commit()
 
 
 def add_item_to_delete_queue(item):
