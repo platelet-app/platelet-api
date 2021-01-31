@@ -92,7 +92,7 @@ def random_string(length=10):
     return ''.join(random.choice(string.ascii_letters) for m in range(length))
 
 
-def get_object(type, _id, with_deleted=False):
+def get_object(type, _id, with_deleted=True):
     if with_deleted:
         if type == models.Objects.USER:
             return models.User.query.with_deleted().filter_by(uuid=_id).first()

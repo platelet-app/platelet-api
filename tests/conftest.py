@@ -5,7 +5,7 @@ import uuid
 import pytest
 from app import app, db, models, guard, schemas
 from tests.testutils import get_test_json, generate_name, create_task_obj, create_user_obj, create_vehicle_obj, \
-    create_location_obj
+    create_location_obj, get_object
 import json
 from flask_praetorian.utilities import current_guard
 
@@ -266,6 +266,19 @@ def task_obj():
     db.session.add(task)
     db.session.commit()
     yield task
+    task = get_object(models.Objects.TASK, task.uuid)
+    db.session.delete(task)
+    db.session.commit()
+
+
+@pytest.fixture(scope="function")
+def task_obj_soft_deleted():
+    task = create_task_obj()
+    task.deleted = True
+    db.session.add(task)
+    db.session.commit()
+    yield task
+    task = get_object(models.Objects.TASK, str(task.uuid))
     db.session.delete(task)
     db.session.commit()
 
@@ -295,8 +308,27 @@ def task_obj_assigned(user_role):
 
     db.session.commit()
     yield task
+    task = get_object(models.Objects.TASK, task.uuid)
     db.session.delete(task)
     db.session.delete(user)
+    db.session.commit()
+
+
+@pytest.fixture(scope="function")
+def task_obj_address_preset(destination_location):
+    task = create_task_obj()
+    location = create_location_obj()
+    db.session.add(location)
+    db.session.flush()
+    if destination_location == "pickup":
+        task.saved_location_pickup_uuid = str(location.uuid)
+    elif destination_location == "delivery":
+        task.saved_location_dropoff_uuid = str(location.uuid)
+    db.session.add(task)
+    db.session.commit()
+    yield task
+    db.session.delete(task)
+    db.session.delete(location)
     db.session.commit()
 
 
