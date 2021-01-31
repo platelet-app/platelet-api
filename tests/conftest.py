@@ -321,9 +321,9 @@ def task_obj_address_preset(destination_location):
     db.session.add(location)
     db.session.flush()
     if destination_location == "pickup":
-        task.saved_location_pickup_uuid = str(location.uuid)
+        task.pickup_location_uuid = location.uuid
     elif destination_location == "delivery":
-        task.saved_location_dropoff_uuid = str(location.uuid)
+        task.delivery_location_uuid = location.uuid
     db.session.add(task)
     db.session.commit()
     yield task
@@ -335,16 +335,15 @@ def task_obj_address_preset(destination_location):
 @pytest.fixture(scope="function")
 def task_obj_addressed(destination_location):
     task = create_task_obj()
-    address_schema = schemas.AddressSchema()
-    address_1 = address_schema.load(get_test_json()['savedlocations'][0]['address'])
-    address_2 = address_schema.load(get_test_json()['savedlocations'][1]['address'])
+    location = create_location_obj()
     if destination_location == "pickup":
-        task.pickup_address = address_1
+        task.pickup_location_uuid = location.uuid
     elif destination_location == "delivery":
-        task.dropoff_address = address_2
+        task.delivery_location_uuid = location.uuid
     else:
-        task.pickup_address = address_1
-        task.dropoff_address = address_2
+        location_2 = create_location_obj()
+        task.pickup_location_uuid = location.uuid
+        task.delivery_location_uuid = location_2.uuid
 
     db.session.add(task)
     db.session.commit()

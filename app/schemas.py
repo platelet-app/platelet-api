@@ -281,7 +281,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
         model = models.Task
-        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'requester_contact',
+        fields = ('uuid', 'pickup_address', 'delivery_address', 'patch', 'patch_id', 'requester_contact',
                   'priority', 'time_of_call', 'deliverables',
                   'comments', 'links', 'time_picked_up', 'time_dropped_off', 'rider',
                   'priority_id', 'time_cancelled', 'time_rejected',
@@ -296,7 +296,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     saved_location_dropoff = ma.Nested("LocationSchema")
 
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
-    dropoff_address = ma.Nested(AddressSchema, allow_none=True)
+    delivery_address = ma.Nested(AddressSchema, allow_none=True)
     assigned_riders = ma.Nested(UserSchema,
                                 only=('uuid', 'display_name', 'patch', 'profile_picture_thumbnail_url'),
                                 many=True, dump_only=True)

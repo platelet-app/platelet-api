@@ -384,11 +384,9 @@ class UsersTasks(Resource):
             return not_found(models.Objects.LOCATION, args['location_uuid'])
 
         if args['destination'] == "pickup":
-            task.pickup_address_id = location.address_id
-            task.saved_location_pickup_uuid = location.uuid
+            task.pickup_location_uuid = location.uuid
         elif args['destination'] == "delivery":
-            task.dropoff_address_id = location.address_id
-            task.saved_location_dropoff_uuid = location.uuid
+            task.delivery_location_uuid = location.uuid
         else:
             return unprocessable_entity_error(
                 "Must specify pickup or delivery in destination parameter.",
@@ -409,10 +407,10 @@ class UsersTasks(Resource):
         if args['destination'] == "pickup":
             return address_schema.dump(task.pickup_address), 200
         elif args['destination'] == "delivery":
-            return address_schema.dump(task.dropoff_address), 200
+            return address_schema.dump(task.delivery_address), 200
         else:
             result = {
                 "pickup": address_schema.dump(task.pickup_address),
-                "delivery": address_schema.dump(task.dropoff_address)
+                "delivery": address_schema.dump(task.delivery_address)
             }
             return result, 200

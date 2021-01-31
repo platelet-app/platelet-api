@@ -100,6 +100,7 @@ class SearchableMixin(object):
         for obj in cls.query:
             add_to_index(cls.__tablename__, obj)
 
+
 db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
 db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
 
@@ -193,7 +194,6 @@ class Deliverable(db.Model, CommonMixin):
 
 class Address(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    #uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     ward = db.Column(db.String(64))
     line1 = db.Column(db.String(64))
     line2 = db.Column(db.String(64))
@@ -272,17 +272,24 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     time_cancelled = db.Column(db.DateTime(timezone=True))
     time_rejected = db.Column(db.DateTime(timezone=True))
 
-    saved_location_pickup_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
-    saved_location_pickup = db.relationship("Location", foreign_keys=[saved_location_pickup_uuid], backref=db.backref("linked_tasks_as_pickup", lazy="dynamic"))
+    pickup_location_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
+    pickup_location = db.relationship(
+        "Location",
+        foreign_keys=[pickup_location_uuid],
+        backref=db.backref("linked_tasks_as_pickup", lazy="dynamic")
+    )
 
-    saved_location_dropoff_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
-    saved_location_dropoff = db.relationship("Location", foreign_keys=[saved_location_dropoff_uuid], backref=db.backref("linked_tasks_as_dropoff", lazy="dynamic"))
+    delivery_location_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
+    delivery_location = db.relationship(
+        "Location",
+        foreign_keys=[delivery_location_uuid],
+        backref=db.backref("linked_tasks_as_delivery", lazy="dynamic"))
 
-    pickup_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
-    dropoff_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+    # pickup_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
+    # dropoff_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
-    pickup_address = db.relationship("Address", foreign_keys=[pickup_address_id])
-    dropoff_address = db.relationship("Address", foreign_keys=[dropoff_address_id])
+    pickup_address = association_proxy("pickup_location", "address")
+    delivery_address = association_proxy("delivery_location", "address")
 
     ## TODO: figure out how to add more than one signature for relays
     # destination_contact_name = db.Column(db.String(64))
@@ -342,18 +349,16 @@ class Task(SearchableMixin, db.Model, CommonMixin):
 
     query_class = QueryWithSoftDelete
 
-    @validates("pickup_address", "dropoff_address")
+    @validates("pickup_address", "delivery_address")
     def _check_not_preset_location(self, key, value):
         if key == "pickup_address":
-            if self.saved_location_pickup_uuid:
-                raise ProtectedFieldError(
-                    "The pickup address cannot be written to while it is associated with a saved location."
-                )
-        if key == "dropoff_address":
-            if self.saved_location_dropoff_uuid:
-                raise ProtectedFieldError(
-                    "The delivery address cannot be written to while it is associated with a saved location."
-                )
+            raise ProtectedFieldError(
+                "The pickup address cannot be written directly. Change the associated Location entry."
+            )
+        if key == "delivery_address":
+            raise ProtectedFieldError(
+                "The delivery address cannot be written to directly. Change the associate Location entry."
+            )
         return value
 
     @property
@@ -491,6 +496,11 @@ class Contact(db.Model):
     email_address = db.Column(db.String(128), nullable=True)
 
 
+class LocationType(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String(64))
+
+
 class Location(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
@@ -499,6 +509,10 @@ class Location(SearchableMixin, db.Model, CommonMixin):
     contact = db.relationship("Contact", foreign_keys=[contact_id])
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
+    location_type_id = db.Column(db.Integer, db.ForeignKey(LocationType.id))
+    location_type = db.relationship("LocationType", foreign_keys=[location_type_id])
+    # next_version = db.Column(UUID(as_uuid=True), db.ForeignKey("Location.uuid"))
+    # previous_versions = db.relationship("Location", lazy="dynamic")
 
     comments = db.relationship(
         'Comment',
