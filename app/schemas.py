@@ -281,22 +281,22 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
         model = models.Task
-        fields = ('uuid', 'pickup_address', 'delivery_address', 'patch', 'patch_id', 'requester_contact',
+        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'requester_contact',
                   'priority', 'time_of_call', 'deliverables',
                   'comments', 'links', 'time_picked_up', 'time_dropped_off', 'rider',
                   'priority_id', 'time_cancelled', 'time_rejected',
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
                   'relay_previous_uuid', 'relay_next', 'relay_previous', 'parent_id', 'order_in_relay',
-                  'etag', 'reference', 'saved_location_pickup', 'saved_location_dropoff')
+                  'etag', 'reference', 'pickup_location', 'dropoff_location')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
-    saved_location_pickup = ma.Nested("LocationSchema")
-    saved_location_dropoff = ma.Nested("LocationSchema")
+    pickup_location = ma.Nested("LocationSchema", only=('uuid', 'name'))
+    dropoff_location = ma.Nested("LocationSchema", only=('uuid', 'name'))
 
     pickup_address = ma.Nested(AddressSchema, allow_none=True)
-    delivery_address = ma.Nested(AddressSchema, allow_none=True)
+    dropoff_address = ma.Nested(AddressSchema, allow_none=True)
     assigned_riders = ma.Nested(UserSchema,
                                 only=('uuid', 'display_name', 'patch', 'profile_picture_thumbnail_url'),
                                 many=True, dump_only=True)

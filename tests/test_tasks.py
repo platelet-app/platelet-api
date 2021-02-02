@@ -273,6 +273,17 @@ def test_task_assignment_delete(client, login_header, task_obj_assigned, user_ro
 
 
 @pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
+@pytest.mark.parametrize("login_role", ["coordinator", "rider"])
+def test_get_task(client, login_header, task_obj_address_preset):
+    task_uuid = str(task_obj_address_preset.uuid)
+    r = client.get(
+        "{}/{}".format(task_url, task_uuid),
+        headers=login_header
+    )
+    assert r.status_code == 200
+
+
+@pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
 @pytest.mark.parametrize("login_role", ["coordinator"])
 def test_task_assign_saved_location(client, login_header, destination_location, location_obj, task_obj):
     task_uuid = str(task_obj.uuid)
@@ -287,8 +298,8 @@ def test_task_assign_saved_location(client, login_header, destination_location, 
         assert obj.pickup_location_uuid == location_obj.uuid
         attr_check(address_schema.dump(location_obj.address), obj.pickup_address)
     else:
-        assert obj.delivery_location_uuid == location_obj.uuid
-        attr_check(address_schema.dump(location_obj.address), obj.delivery_address)
+        assert obj.dropoff_location_uuid == location_obj.uuid
+        attr_check(address_schema.dump(location_obj.address), obj.dropoff_address)
 
 
 @pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
@@ -305,7 +316,7 @@ def test_task_restrict_changing_address_on_preset_location(client, login_header,
         r = client.patch(
             "{}/{}".format(task_url, task_uuid),
             headers=login_header,
-            data=json.dumps({"delivery_address": get_test_json()['savedlocations'][0]['address']}))
+            data=json.dumps({"dropoff_address": get_test_json()['savedlocations'][0]['address']}))
         assert r.status_code == 403
 
 
@@ -323,8 +334,8 @@ def test_get_task_destinations(client, login_header, task_obj_addressed, destina
     if destination_location == "pickup":
         attr_check(result, task_obj_addressed.pickup_address)
     elif destination_location == "delivery":
-        attr_check(result, task_obj_addressed.delivery_address)
+        attr_check(result, task_obj_addressed.dropoff_address)
     else:
         attr_check(result["pickup"], task_obj_addressed.pickup_address)
-        attr_check(result["delivery"], task_obj_addressed.delivery_address)
+        attr_check(result["dropoff"], task_obj_addressed.dropoff_address)
 

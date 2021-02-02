@@ -279,17 +279,17 @@ class Task(SearchableMixin, db.Model, CommonMixin):
         backref=db.backref("linked_tasks_as_pickup", lazy="dynamic")
     )
 
-    delivery_location_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
-    delivery_location = db.relationship(
+    dropoff_location_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey("location.uuid"))
+    dropoff_location = db.relationship(
         "Location",
-        foreign_keys=[delivery_location_uuid],
-        backref=db.backref("linked_tasks_as_delivery", lazy="dynamic"))
+        foreign_keys=[dropoff_location_uuid],
+        backref=db.backref("linked_tasks_as_dropoff", lazy="dynamic"))
 
     # pickup_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
     # dropoff_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
     pickup_address = association_proxy("pickup_location", "address")
-    delivery_address = association_proxy("delivery_location", "address")
+    dropoff_address = association_proxy("dropoff_location", "address")
 
     ## TODO: figure out how to add more than one signature for relays
     # destination_contact_name = db.Column(db.String(64))
@@ -349,15 +349,15 @@ class Task(SearchableMixin, db.Model, CommonMixin):
 
     query_class = QueryWithSoftDelete
 
-    @validates("pickup_address", "delivery_address")
+    @validates("pickup_address", "dropoff_address")
     def _check_not_preset_location(self, key, value):
         if key == "pickup_address":
             raise ProtectedFieldError(
                 "The pickup address cannot be written directly. Change the associated Location entry."
             )
-        if key == "delivery_address":
+        if key == "dropoff_address":
             raise ProtectedFieldError(
-                "The delivery address cannot be written to directly. Change the associate Location entry."
+                "The dropoff address cannot be written to directly. Change the associate Location entry."
             )
         return value
 
