@@ -302,7 +302,7 @@ def test_task_assign_saved_location(client, login_header, destination_location, 
         attr_check(address_schema.dump(location_obj.address), obj.dropoff_address)
 
 
-@pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
+@pytest.mark.parametrize("destination_location", ["pickup"])
 @pytest.mark.parametrize("login_role", ["coordinator"])
 def test_task_restrict_changing_address_on_preset_location(client, login_header, task_obj_address_preset, destination_location):
     task_uuid = str(task_obj_address_preset.uuid)
@@ -311,6 +311,8 @@ def test_task_restrict_changing_address_on_preset_location(client, login_header,
             "{}/{}".format(task_url, task_uuid),
             headers=login_header,
             data=json.dumps({"pickup_address": get_test_json()['savedlocations'][0]['address']}))
+        task_test = get_object(TASK, task_uuid)
+        assert task_test.pickup_location.address_id == task_obj_address_preset.pickup_location.address_id
         assert r.status_code == 403
     elif destination_location == "delivery":
         r = client.patch(

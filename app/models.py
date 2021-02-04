@@ -1,7 +1,4 @@
-import redis
 from flask_sqlalchemy import BaseQuery
-from redis import Connection
-from rq import Queue
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import validates
 
@@ -288,8 +285,8 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     # pickup_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
     # dropoff_address_id = db.Column(db.Integer, db.ForeignKey("address.id"))
 
-    pickup_address = association_proxy("pickup_location", "address")
-    dropoff_address = association_proxy("dropoff_location", "address")
+    #pickup_address = association_proxy("pickup_location", "address")
+    #dropoff_address = association_proxy("dropoff_location", "address")
 
     ## TODO: figure out how to add more than one signature for relays
     # destination_contact_name = db.Column(db.String(64))
@@ -348,18 +345,6 @@ class Task(SearchableMixin, db.Model, CommonMixin):
     ]
 
     query_class = QueryWithSoftDelete
-
-    @validates("pickup_address", "dropoff_address")
-    def _check_not_preset_location(self, key, value):
-        if key == "pickup_address":
-            raise ProtectedFieldError(
-                "The pickup address cannot be written directly. Change the associated Location entry."
-            )
-        if key == "dropoff_address":
-            raise ProtectedFieldError(
-                "The dropoff address cannot be written to directly. Change the associate Location entry."
-            )
-        return value
 
     @property
     def object_type(self):
@@ -511,6 +496,9 @@ class Location(SearchableMixin, db.Model, CommonMixin):
     address = db.relationship("Address", foreign_keys=[address_id])
     location_type_id = db.Column(db.Integer, db.ForeignKey(LocationType.id))
     location_type = db.relationship("LocationType", foreign_keys=[location_type_id])
+    listed = db.Column(db.Boolean, default=False)
+    protected = db.Column(db.Boolean, default=False)
+
     # next_version = db.Column(UUID(as_uuid=True), db.ForeignKey("Location.uuid"))
     # previous_versions = db.relationship("Location", lazy="dynamic")
 
@@ -528,6 +516,14 @@ class Location(SearchableMixin, db.Model, CommonMixin):
 
     __searchable__ = ['name', 'contact_name', 'contact_number', 'address']
     query_class = QueryWithSoftDelete
+
+    @validates("address")
+    def _check_not_protected(self, key, value):
+        if self.protected:
+            raise ProtectedFieldError(
+                "Cannot write to the address of a protected Location"
+            )
+        return value
 
     @property
     def object_type(self):

@@ -318,6 +318,8 @@ def task_obj_assigned(user_role):
 def task_obj_address_preset(destination_location):
     task = create_task_obj()
     location = create_location_obj()
+    location.protected = True
+    location.listed = True
     db.session.add(location)
     db.session.flush()
     if destination_location == "pickup":

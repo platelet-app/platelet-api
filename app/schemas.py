@@ -106,7 +106,7 @@ class AddressSchema(ma.SQLAlchemySchema, PostLoadMixin):
     class Meta:
         model = models.Address
 
-        fields = ('ward', 'line1', 'line2', 'town',
+        fields = ('id', 'ward', 'line1', 'line2', 'town',
                   'county', 'country', 'postcode',
                   'what3words')
 
@@ -281,7 +281,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
         model = models.Task
-        fields = ('uuid', 'pickup_address', 'dropoff_address', 'patch', 'patch_id', 'requester_contact',
+        fields = ('uuid', 'patch', 'patch_id', 'requester_contact',
                   'priority', 'time_of_call', 'deliverables',
                   'comments', 'links', 'time_picked_up', 'time_dropped_off', 'rider',
                   'priority_id', 'time_cancelled', 'time_rejected',
@@ -292,11 +292,9 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
-    pickup_location = ma.Nested("LocationSchema", only=('uuid', 'name'))
-    dropoff_location = ma.Nested("LocationSchema", only=('uuid', 'name'))
+    pickup_location = ma.Nested("LocationSchema", only=('uuid', 'name', 'address', 'contact', 'protected'))
+    dropoff_location = ma.Nested("LocationSchema", only=('uuid', 'name', 'address', 'contact', 'protected'))
 
-    pickup_address = ma.Nested(AddressSchema, allow_none=True)
-    dropoff_address = ma.Nested(AddressSchema, allow_none=True)
     assigned_riders = ma.Nested(UserSchema,
                                 only=('uuid', 'display_name', 'patch', 'profile_picture_thumbnail_url'),
                                 many=True, dump_only=True)
@@ -401,7 +399,7 @@ class LocationSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoa
     class Meta:
         model = models.Location
         fields = ('uuid', 'name', 'contact', 'address', 'comments', 'links',
-                  "time_created", "time_modified")
+                  "time_created", "time_modified", "protected", "listed")
 
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     address = ma.Nested(AddressSchema)
