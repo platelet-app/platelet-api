@@ -1,5 +1,5 @@
 import os
-import eventlet
+from gevent import monkey
 import logging
 
 import sys
@@ -24,21 +24,21 @@ pytest = False
 # Check if this is a unit test
 if "pytest" in sys.modules:
     pytest = True
-# don't monkey patch eventlet if running with Flask or in IPython
+# don't monkey patch gevent if running with Flask or in IPython
 try:
     __IPYTHON__
-    eventlet_run = False
+    gevent_run = False
     ipython = True
 except NameError:
-    eventlet_run = True
+    gevent_run = True
     ipython = False
 
 if os.getenv("FLASK_APP"):
     logging.warning("Running with Flask, sockets will not work!")
-    eventlet_run = False
+    gevent_run = False
 
-if eventlet_run:
-    eventlet.monkey_patch()
+if gevent_run:
+    monkey.patch_all()
 
 import flask
 from flask import Flask, Blueprint, json
