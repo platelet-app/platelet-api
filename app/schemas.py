@@ -12,6 +12,7 @@ from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
 from app import models, ma, app
 from app.api.functions.utilities import get_all_objects, object_type_to_string
+from marshmallow_sqlalchemy.fields import Related
 
 
 class TimesMixin:
@@ -106,7 +107,7 @@ class AddressSchema(ma.SQLAlchemySchema, PostLoadMixin):
     class Meta:
         model = models.Address
 
-        fields = ('id', 'ward', 'line1', 'line2', 'town',
+        fields = ('ward', 'line1', 'line2', 'town',
                   'county', 'country', 'postcode',
                   'what3words')
 
@@ -240,7 +241,7 @@ class ContactSchema(ma.SQLAlchemySchema, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
         model = models.Contact
-        fields = ('name', 'address', 'telephone_number', 'mobile_number', 'email_address')
+        fields = ('id', 'name', 'address', 'telephone_number', 'mobile_number', 'email_address')
 
     name = ma.String(allow_none=True)
     address = ma.String(allow_none=True)
@@ -292,8 +293,8 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
-    pickup_location = ma.Nested("LocationSchema", only=('uuid', 'name', 'address', 'contact', 'protected'))
-    dropoff_location = ma.Nested("LocationSchema", only=('uuid', 'name', 'address', 'contact', 'protected'))
+    pickup_location = ma.Nested("LocationSchema", only=('uuid', 'name', 'address', 'contact', 'protected', 'listed'))
+    dropoff_location = ma.Nested("LocationSchema", only=('uuid', 'name', 'address', 'contact', 'protected', 'listed'))
 
     assigned_riders = ma.Nested(UserSchema,
                                 only=('uuid', 'display_name', 'patch', 'profile_picture_thumbnail_url'),
@@ -445,6 +446,6 @@ class LogEntrySchema(ma.SQLAlchemySchema):
     calling_user = ma.Nested(UserSchema, dump_only=True, only=("uuid", "display_name"))
 
 
-class SearchSchema():
+class SearchSchema:
     class Meta:
         fields = ('query', 'type', 'page')

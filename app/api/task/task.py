@@ -268,7 +268,7 @@ class Tasks(Resource):
             db.session.add(new_parent)
             db.session.flush()
             # TODO: When organisations tables are implemented, make first four characters be from there
-            new_parent.reference = "FEVS{}".format(new_parent.id)
+            new_parent.reference = "FEVS-{}".format(new_parent.id)
             next_order_in_relay_int = 1
             task.parent_id = new_parent.id
         task.order_in_relay = next_order_in_relay_int
@@ -281,6 +281,7 @@ class Tasks(Resource):
         return {
                    'uuid': str(task.uuid),
                    'time_created': str(task.time_created),
+                   'reference': str(task.reference),
                    'message': 'Task {} created'.format(task.uuid),
                    'author_uuid': str(task.author_uuid),
                    'parent_id': str(task.parent_id),
@@ -385,8 +386,10 @@ class UsersTasks(Resource):
 
         if args['destination'] == "pickup":
             task.pickup_location_uuid = location.uuid
+            socket_update_type = UPDATE_TASK_PICKUP_LOCATION
         elif args['destination'] == "delivery":
             task.dropoff_location_uuid = location.uuid
+            socket_update_type = UPDATE_TASK_DROPOFF_LOCATION
         else:
             return unprocessable_entity_error(
                 "Must specify pickup or delivery in destination parameter.",
@@ -399,6 +402,14 @@ class UsersTasks(Resource):
             etag = task_dump['etag']
         except KeyError:
             etag = ""
+
+        socket_response = {}
+        if socket_update_type == UPDATE_TASK_PICKUP_LOCATION:
+            socket_response = {"pickup_location": task_dump['pickup_location']}
+        elif socket_update_type == UPDATE_TASK_DROPOFF_LOCATION:
+            socket_response = {"dropoff_location": task_dump['dropoff_location']}
+
+        emit_socket_broadcast(socket_response, socket_update_type, uuid=task_uuid)
 
         return {'etag': etag, 'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
