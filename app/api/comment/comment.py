@@ -70,6 +70,8 @@ class Comment(Resource):
             return {'uuid': str(comment.uuid), 'message': "Comment queued for deletion"}, 202
             #return already_flagged_for_deletion_error(COMMENT, comment.uuid)
 
+        print(comment.uuid)
+        print(_id)
         emit_socket_comment_broadcast({}, DELETE_COMMENT, comment.parent_uuid, uuid=comment.uuid)
         return {'uuid': str(comment.uuid), 'message': "Comment queued for deletion"}, 202
 

@@ -241,7 +241,7 @@ class ContactSchema(ma.SQLAlchemySchema, PostLoadMixin):
     class Meta:
         unknown = EXCLUDE
         model = models.Contact
-        fields = ('id', 'name', 'address', 'telephone_number', 'mobile_number', 'email_address')
+        fields = ('name', 'address', 'telephone_number', 'mobile_number', 'email_address')
 
     name = ma.String(allow_none=True)
     address = ma.String(allow_none=True)

@@ -9,13 +9,13 @@ def emit_socket_comment_broadcast(data, type, parent_uuid, uuid=None):
         tab_indentifier = request.headers['Tab-Identification']
     except KeyError:
         return
-    try:
-        if not data['publicly_visible']:
-            print(data['author_uuid'], socketio.user_uuid)
-            if not str(socketio.user_uuid) == data['author_uuid']:
-                return
-    except KeyError:
-        return
+    # try:
+    #     if not data['publicly_visible']:
+    #         print(data['author_uuid'], socketio.user_uuid)
+    #         if not str(socketio.user_uuid) == data['author_uuid']:
+    #             return
+    # except KeyError:
+    #     return
     if type == ADD_COMMENT:
         socketio.socketIO.emit(
             'subscribed_response',
