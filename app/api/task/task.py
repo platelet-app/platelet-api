@@ -395,6 +395,7 @@ class UsersTasks(Resource):
                 "Must specify pickup or delivery in destination parameter.",
                 object_id=task_uuid)
 
+        db.session.commit()
         db.session.flush()
 
         task_dump = task_schema.dump(task)
@@ -412,6 +413,47 @@ class UsersTasks(Resource):
         emit_socket_broadcast(socket_response, socket_update_type, uuid=task_uuid)
 
         return {'etag': etag, 'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+
+    @flask_praetorian.auth_required
+    def delete(self, task_uuid):
+        parser = reqparse.RequestParser()
+        parser.add_argument("destination", type=str, location="args")
+        args = parser.parse_args()
+        if not args['destination']:
+            return forbidden_error("Must specify either pickup or delivery in destination query parameter")
+        try:
+            task = get_object(TASK, task_uuid)
+        except ObjectNotFoundError:
+            return not_found(TASK, task_uuid)
+        if args['destination'] == "pickup":
+            socket_update_type = UPDATE_TASK_PICKUP_LOCATION
+            task.pickup_location_uuid = None
+        elif args['destination'] == "delivery":
+            socket_update_type = UPDATE_TASK_DROPOFF_LOCATION
+            task.dropoff_location_uuid = None
+        else:
+            return unprocessable_entity_error(
+                "Must specify pickup or delivery in destination parameter.",
+                object_id=task_uuid)
+        db.session.commit()
+        db.session.flush()
+
+        task_dump = task_schema.dump(task)
+        try:
+            etag = task_dump['etag']
+        except KeyError:
+            etag = ""
+
+        socket_response = {}
+        if socket_update_type == UPDATE_TASK_PICKUP_LOCATION:
+            socket_response = {"pickup_location": None}
+        elif socket_update_type == UPDATE_TASK_DROPOFF_LOCATION:
+            socket_response = {"dropoff_location": None}
+
+        emit_socket_broadcast(socket_response, socket_update_type, uuid=task_uuid)
+
+        return {'etag': etag, 'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+
 
     @flask_praetorian.auth_required
     def get(self, task_uuid):

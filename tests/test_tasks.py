@@ -302,6 +302,25 @@ def test_task_assign_saved_location(client, login_header, destination_location, 
         attr_check(address_schema.dump(location_obj.address), obj.dropoff_address)
 
 
+@pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
+@pytest.mark.parametrize("login_role", ["coordinator"])
+def test_task_unassign_saved_location(client, login_header, destination_location, task_obj_address_preset):
+    task_uuid = str(task_obj_address_preset.uuid)
+    if destination_location == "pickup":
+        assert task_obj_address_preset.pickup_location_uuid
+    else:
+        assert task_obj_address_preset.dropoff_location_uuid
+    r = client.delete(
+        "{}/{}/destinations?destination={}".format(task_url, task_uuid, destination_location),
+        headers=login_header)
+    assert r.status_code == 200
+    obj = get_object(TASK, task_uuid)
+    if destination_location == "pickup":
+        assert not obj.pickup_location_uuid
+    else:
+        assert not obj.dropoff_location_uuid
+
+
 @pytest.mark.parametrize("destination_location", ["pickup"])
 @pytest.mark.parametrize("login_role", ["coordinator"])
 def test_task_restrict_changing_address_on_preset_location(client, login_header, task_obj_address_preset, destination_location):

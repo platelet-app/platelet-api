@@ -325,7 +325,7 @@ def task_obj_address_preset(destination_location):
     if destination_location == "pickup":
         task.pickup_location_uuid = location.uuid
     elif destination_location == "delivery":
-        task.delivery_location_uuid = location.uuid
+        task.dropoff_location_uuid = location.uuid
     db.session.add(task)
     db.session.commit()
     yield task
