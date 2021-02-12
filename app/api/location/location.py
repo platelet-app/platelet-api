@@ -65,7 +65,7 @@ class Locations(Resource):
             # page = args['page'] if args['page'] else 1
             # order = args['order'] if args['order'] else "newest"
             # items = get_page(get_query(LOCATION), page, order=order, model=models.Location)
-            items = get_all_objects(LOCATION)
+            items = models.Location.query.filter_by(listed=True)
         except InvalidRangeError as e:
             return forbidden_error(e)
         except Exception as e:
