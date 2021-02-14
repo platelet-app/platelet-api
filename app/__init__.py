@@ -1,6 +1,6 @@
 import os
-from gevent import monkey
 import logging
+import eventlet
 
 import sys
 
@@ -27,18 +27,18 @@ if "pytest" in sys.modules:
 # don't monkey patch gevent if running with Flask or in IPython
 try:
     __IPYTHON__
-    gevent_run = False
+    eventlet_run = False
     ipython = True
 except NameError:
-    gevent_run = True
+    eventlet_run = True
     ipython = False
 
 if os.getenv("FLASK_APP"):
     logging.warning("Running with Flask, sockets will not work!")
-    gevent_run = False
+    eventlet_run = False
 
-if gevent_run:
-    monkey.patch_all()
+if eventlet_run:
+    eventlet.monkey_patch()
 
 import flask
 from flask import Flask, Blueprint, json
