@@ -101,7 +101,7 @@ def generate_statistics_from_tasks(tasks):
             rider_counts[rider.display_name]["None"] = len(list(filter(lambda t: not t.priority_id, riders_tasks)))
         else:
             # same as above but for tasks that are unassigned
-            unassigned_tasks = list(filter(lambda t: not t.assigned_riders, tasks))
+            unassigned_tasks = list(filter(lambda t: not t.assigned_riders.count(), tasks))
             rider_counts["Unassigned"] = dict(map(lambda priority: (
                 priority.label, len(list(filter(lambda t: t.priority_id == priority.id, unassigned_tasks)))),
                                                   available_priorities))
