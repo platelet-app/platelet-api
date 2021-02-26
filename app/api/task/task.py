@@ -368,32 +368,32 @@ class UsersTasks(Resource):
     @flask_praetorian.auth_required
     def put(self, task_uuid):
         parser = reqparse.RequestParser()
-        parser.add_argument("location_uuid", type=str)
-        parser.add_argument("destination", type=str, location="args")
+        parser.add_argument("pickup_location_uuid", type=str)
+        parser.add_argument("dropoff_location_uuid", type=str)
         args = parser.parse_args()
-        if not args['destination']:
-            return forbidden_error("Must specify either pickup or delivery in destination query parameter")
-        if not args['location_uuid']:
-            return schema_validation_error("A location UUID must be provided")
         try:
             task = get_object(TASK, task_uuid)
         except ObjectNotFoundError:
             return not_found(TASK, task_uuid)
-        try:
-            location = get_object(models.Objects.LOCATION, args['location_uuid'])
-        except ObjectNotFoundError:
-            return not_found(models.Objects.LOCATION, args['location_uuid'])
 
-        if args['destination'] == "pickup":
+        pickup_socket_update = None
+        dropoff_socket_update = None
+        if args['pickup_location_uuid']:
+            location_uuid = args['pickup_location_uuid']
+            try:
+                location = get_object(models.Objects.LOCATION, location_uuid)
+            except ObjectNotFoundError:
+                return not_found(models.Objects.LOCATION, location_uuid)
             task.pickup_location_uuid = location.uuid
-            socket_update_type = UPDATE_TASK_PICKUP_LOCATION
-        elif args['destination'] == "delivery":
+            pickup_socket_update = UPDATE_TASK_PICKUP_LOCATION
+        elif args['dropoff_location_uuid']:
+            location_uuid = args['dropoff_location_uuid']
+            try:
+                location = get_object(models.Objects.LOCATION, location_uuid)
+            except ObjectNotFoundError:
+                return not_found(models.Objects.LOCATION, location_uuid)
             task.dropoff_location_uuid = location.uuid
-            socket_update_type = UPDATE_TASK_DROPOFF_LOCATION
-        else:
-            return unprocessable_entity_error(
-                "Must specify pickup or delivery in destination parameter.",
-                object_id=task_uuid)
+            dropoff_socket_update = UPDATE_TASK_DROPOFF_LOCATION
 
         db.session.commit()
         db.session.flush()
@@ -404,13 +404,12 @@ class UsersTasks(Resource):
         except KeyError:
             etag = ""
 
-        socket_response = {}
-        if socket_update_type == UPDATE_TASK_PICKUP_LOCATION:
+        if pickup_socket_update:
             socket_response = {"pickup_location": task_dump['pickup_location']}
-        elif socket_update_type == UPDATE_TASK_DROPOFF_LOCATION:
+            emit_socket_broadcast(socket_response, pickup_socket_update, uuid=task_uuid)
+        elif dropoff_socket_update == UPDATE_TASK_DROPOFF_LOCATION:
             socket_response = {"dropoff_location": task_dump['dropoff_location']}
-
-        emit_socket_broadcast(socket_response, socket_update_type, uuid=task_uuid)
+            emit_socket_broadcast(socket_response, dropoff_socket_update, uuid=task_uuid)
 
         return {'etag': etag, 'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
@@ -454,24 +453,23 @@ class UsersTasks(Resource):
 
         return {'etag': etag, 'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
-
     @flask_praetorian.auth_required
     def get(self, task_uuid):
         parser = reqparse.RequestParser()
         parser.add_argument("destination", type=str, location="args")
         args = parser.parse_args()
-        address_schema = schemas.AddressSchema()
+        location_schema = schemas.LocationSchema()
         try:
             task = get_object(TASK, task_uuid)
         except ObjectNotFoundError:
             return not_found(TASK, task_uuid)
         if args['destination'] == "pickup":
-            return address_schema.dump(task.pickup_address), 200
+            return location_schema.dump(task.pickup_location), 200
         elif args['destination'] == "delivery":
-            return address_schema.dump(task.dropoff_address), 200
+            return location_schema.dump(task.dropoff_location), 200
         else:
             result = {
-                "pickup": address_schema.dump(task.pickup_address),
-                "dropoff": address_schema.dump(task.dropoff_address)
+                "pickup": location_schema.dump(task.pickup_location),
+                "dropoff": location_schema.dump(task.dropoff_location)
             }
             return result, 200

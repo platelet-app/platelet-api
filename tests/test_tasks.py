@@ -288,18 +288,23 @@ def test_get_task(client, login_header, task_obj_address_preset):
 def test_task_assign_saved_location(client, login_header, destination_location, location_obj, task_obj):
     task_uuid = str(task_obj.uuid)
     address_schema = schemas.AddressSchema()
+    payload = {}
+    if destination_location == "pickup":
+        payload = json.dumps({"pickup_location_uuid": str(location_obj.uuid)})
+    elif destination_location == "delivery":
+        payload = json.dumps({"dropoff_location_uuid": str(location_obj.uuid)})
     r = client.put(
-        "{}/{}/destinations?destination={}".format(task_url, task_uuid, destination_location),
+        "{}/{}/destinations".format(task_url, task_uuid),
         headers=login_header,
-        data=json.dumps({"location_uuid": str(location_obj.uuid)}))
+        data=payload)
     assert r.status_code == 200
     obj = get_object(TASK, task_uuid)
     if destination_location == "pickup":
         assert obj.pickup_location_uuid == location_obj.uuid
-        attr_check(address_schema.dump(location_obj.address), obj.pickup_address)
+        attr_check(address_schema.dump(location_obj.address), obj.pickup_location.address)
     else:
         assert obj.dropoff_location_uuid == location_obj.uuid
-        attr_check(address_schema.dump(location_obj.address), obj.dropoff_address)
+        attr_check(address_schema.dump(location_obj.address), obj.dropoff_location.address)
 
 
 @pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
@@ -321,29 +326,10 @@ def test_task_unassign_saved_location(client, login_header, destination_location
         assert not obj.dropoff_location_uuid
 
 
-@pytest.mark.parametrize("destination_location", ["pickup"])
-@pytest.mark.parametrize("login_role", ["coordinator"])
-def test_task_restrict_changing_address_on_preset_location(client, login_header, task_obj_address_preset, destination_location):
-    task_uuid = str(task_obj_address_preset.uuid)
-    if destination_location == "pickup":
-        r = client.patch(
-            "{}/{}".format(task_url, task_uuid),
-            headers=login_header,
-            data=json.dumps({"pickup_address": get_test_json()['savedlocations'][0]['address']}))
-        task_test = get_object(TASK, task_uuid)
-        assert task_test.pickup_location.address_id == task_obj_address_preset.pickup_location.address_id
-        assert r.status_code == 403
-    elif destination_location == "delivery":
-        r = client.patch(
-            "{}/{}".format(task_url, task_uuid),
-            headers=login_header,
-            data=json.dumps({"dropoff_address": get_test_json()['savedlocations'][0]['address']}))
-        assert r.status_code == 403
-
-
 @pytest.mark.parametrize("destination_location", ["pickup", "delivery", "both"])
 @pytest.mark.parametrize("login_role", ["coordinator"])
 def test_get_task_destinations(client, login_header, task_obj_addressed, destination_location):
+    # I really don't know why this one causes the links in marshmallow schema to fail
     task_uuid = str(task_obj_addressed.uuid)
     r = client.get(
         "{}/{}/destinations?destination={}".format(task_url, task_uuid, destination_location),
@@ -353,10 +339,10 @@ def test_get_task_destinations(client, login_header, task_obj_addressed, destina
     result = json.loads(r.data)
     print(result)
     if destination_location == "pickup":
-        attr_check(result, task_obj_addressed.pickup_address)
+        attr_check(result, task_obj_addressed.pickup_location)
     elif destination_location == "delivery":
-        attr_check(result, task_obj_addressed.dropoff_address)
+        attr_check(result, task_obj_addressed.dropoff_location)
     else:
-        attr_check(result["pickup"], task_obj_addressed.pickup_address)
-        attr_check(result["dropoff"], task_obj_addressed.dropoff_address)
+        attr_check(result["pickup"], task_obj_addressed.pickup_location)
+        attr_check(result["dropoff"], task_obj_addressed.dropoff_location)
 

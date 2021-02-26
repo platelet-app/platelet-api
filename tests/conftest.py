@@ -329,6 +329,7 @@ def task_obj_address_preset(destination_location):
     db.session.add(task)
     db.session.commit()
     yield task
+    task = get_object(models.Objects.TASK, task.uuid)
     db.session.delete(task)
     db.session.delete(location)
     db.session.commit()
@@ -350,6 +351,7 @@ def task_obj_addressed(destination_location):
     db.session.add(task)
     db.session.commit()
     yield task
+    task = get_object(models.Objects.TASK, task.uuid)
     db.session.delete(task)
     db.session.commit()
 
