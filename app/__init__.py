@@ -97,7 +97,9 @@ any_object_ns = api.namespace('api/{}/any'.format(api_version), description='Loo
 log_ns = api.namespace('api/{}/log'.format(api_version), description='Logging lookups')
 search_ns = api.namespace('api/{}/search'.format(api_version), description='Elasticsearch operations')
 statistics_ns = api.namespace('api/{}/statistics'.format(api_version), description='Statistics operations')
+mailing_list_ns = api.namespace('api/{}/mailing_list'.format(api_version), description='Mailing list operations')
 root_ns = api.namespace('api/{}'.format(api_version), description='Root api calls')
+
 
 Payload.max_decode_packets = 50
 
@@ -111,6 +113,7 @@ redis_queue = Queue(connection=conn)
 cloud_stores = CloudStores(
     platform=app.config["CLOUD_PLATFORM"],
     profile_picture_store_name=app.config['CLOUD_PROFILE_PICTURE_STORE_NAME'],
+    mailing_list_store_name=app.config['CLOUD_MAILING_LIST_STORE_NAME'],
     region=app.config['AWS_DEFAULT_REGION'],
     access_key_id=app.config['AWS_ACCESS_KEY_ID'],
     secret_access_key_id=app.config['AWS_SECRET_ACCESS_KEY'],
@@ -140,6 +143,7 @@ from app.api.priority import priority
 from app.api.patch import patch
 from app.api.statistics import statistics
 from app.api.server_settings import server_settings
+from app.api.mailing_list import mailing_list
 from app.api import ping
 from app.api import redis
 from app.api import uuid_lookup
@@ -191,7 +195,11 @@ def log_input_add_headers(response):
                     object_uuid = response_data['uuid']
                 except KeyError:
                     object_uuid = None
-                token = guard.read_token_from_header()
+                token = None
+                try:
+                    token = guard.read_token_from_header()
+                except flask_praetorian.exceptions.MissingToken:
+                    logger.error("Missing token when attempting to log request.")
                 if token:
                     jwt_data = guard.extract_jwt_token(token)
                     user = models.User.query.filter_by(id=jwt_data['id']).one()
@@ -214,8 +222,6 @@ def log_input_add_headers(response):
                     )
                     db.session.add(entry)
                     db.session.commit()
-                else:
-                    logger.error("Missing token when attempting to log request.")
 
     except Exception as e:
         logging.exception("An exception occurred while making a log entry. Continuing anyway. Reason: {}".format(e))

@@ -11,6 +11,10 @@ def schema_validation_error(message, object_id="null"):
     return {'id': object_id, 'message': "Invalid input: {}".format(str(message))}, 400
 
 
+def bad_request_error(message, object_id="null"):
+    return {'id': object_id, 'message': "Bad request: {}".format(str(message))}, 400
+
+
 def unprocessable_entity_error(message, object_id="null"):
     return {'message': "Unprocessable entity: {}".format(str(message))}, 422
 

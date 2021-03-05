@@ -14,6 +14,7 @@ vehicle_url = "{}vehicle".format(root_url)
 comment_url = "{}comment".format(root_url)
 location_url = "{}location".format(root_url)
 task_url = "{}task".format(root_url)
+mailing_list_url = "{}mailing_list".format(root_url)
 jwtKey = ""
 authHeader = {}
 authJsonHeader = {}
