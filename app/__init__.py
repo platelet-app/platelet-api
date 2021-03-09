@@ -74,6 +74,7 @@ ma = Marshmallow(app)
 if app.config['CORS_ENABLED'] is True:
     cors = CORS(
         app,
+        resources={r"/api/*": {"origins": app.config['CORS_ORIGIN'].split(",")}},
         supports_credentials=True
         )
     cors.init_app(app)

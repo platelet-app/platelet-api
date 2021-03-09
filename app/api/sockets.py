@@ -31,7 +31,7 @@ class AuthenticatedSocketConnection:
         namespace_assignments = "/api/{}/subscribe_assignments".format(api_version)
         self.authenticated = False
         if app.config['CORS_ENABLED']:
-            self.socketIO = SocketIO(app, cors_allowed_origins=app.config['CORS_ORIGIN'], message_queue=app.config['REDIS_URL'])
+            self.socketIO = SocketIO(app, cors_allowed_origins=app.config['CORS_ORIGIN'].split(","), message_queue=app.config['REDIS_URL'])
         else:
             self.socketIO = SocketIO(app, message_queue=app.config['REDIS_URL'])
         self.socketIO.on_event("refresh_task_data", self.check_etags, namespace=namespace_tasks)

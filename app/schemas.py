@@ -170,7 +170,6 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
         if any(list(filter(lambda u: u.username == value, users))):
             raise ValidationError("This username is already taken.")
 
-
     @pre_dump
     def profile_picture_protected_url(self, data, many):
         store = cloud_stores.get_profile_picture_store()
