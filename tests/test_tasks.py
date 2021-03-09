@@ -215,9 +215,8 @@ def test_post_task(client, login_header):
 @pytest.mark.parametrize("login_role", ["coordinator", "rider"])
 @pytest.mark.parametrize("user_role", ["rider", "coordinator"])
 def test_post_task_and_auto_assign(client, login_header, login_role, user_obj, user_role):
-    data = {"user_uuid": str(user_obj.uuid)}
-    r2 = client.post("{}s?auto_assign_role={}".format(task_url, user_role),
-                     data=json.dumps(data),
+    r2 = client.post("{}s?auto_assign_role={}&user_uuid={}".format(task_url, user_role, user_obj.uuid),
+                     data=json.dumps({}),
                      headers=login_header)
     print_response(r2)
     assert r2.status_code == 201
@@ -233,11 +232,10 @@ def test_post_task_and_auto_assign(client, login_header, login_role, user_obj, u
 @pytest.mark.parametrize("login_role", ["coordinator", "rider"])
 @pytest.mark.parametrize("user_role", ["rider", "coordinator"])
 def test_post_task_relay_and_auto_assign(client, login_header, login_role, user_obj, user_role, task_obj):
-    r2 = client.post("{}s?auto_assign_role={}".format(task_url, user_role),
+    r2 = client.post("{}s?auto_assign_role={}&user_uuid={}".format(task_url, user_role, user_obj.uuid),
                      data=json.dumps({
                          "relay_previous_uuid": str(task_obj.uuid),
-                         "parent_id": task_obj.parent_id,
-                         "user_uuid": str(user_obj.uuid)
+                         "parent_id": task_obj.parent_id
                      }),
                      headers=login_header)
     print_response(r2)

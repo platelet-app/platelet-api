@@ -244,7 +244,7 @@ class Tasks(Resource):
     def post(self):
         parser = reqparse.RequestParser()
         parser.add_argument("auto_assign_role", type=str, location="args")
-        parser.add_argument("user_uuid", type=str)
+        parser.add_argument("user_uuid", type=str, location="args")
 
         args = parser.parse_args()
 
