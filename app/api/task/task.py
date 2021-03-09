@@ -7,12 +7,13 @@ import flask_praetorian
 from app import task_ns as ns
 from app.api.task.task_utilities.task_socket_actions import *
 from app.api.task.task_utilities.task_socket_functions import emit_socket_broadcast, emit_socket_assignment_broadcast
-from app.api.task.task_utilities.taskfunctions import set_previous_relay_uuids, get_filtered_query_by_status, get_filtered_query_by_status_non_relays
+from app.api.task.task_utilities.taskfunctions import set_previous_relay_uuids, get_filtered_query_by_status, \
+    get_filtered_query_by_status_non_relays, roles_check_and_assign_user
 from app.api.functions.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
 from app.api.functions.errors import internal_error, not_found, forbidden_error, schema_validation_error, \
-    unprocessable_entity_error
+    unprocessable_entity_error, bad_request_error
 from app.exceptions import ObjectNotFoundError, SchemaValidationError, AlreadyFlaggedForDeletionError, \
     ProtectedFieldError
 from app.api.task.task_utilities.decorators import check_rider_match
@@ -153,7 +154,6 @@ class TasksAssignees(Resource):
                 return not_found(TASK, task_id)
         except ObjectNotFoundError:
             return not_found(TASK, task_id)
-
         parser = reqparse.RequestParser()
         parser.add_argument("role", type=str, location="args")
         parser.add_argument('user_uuid')
@@ -166,26 +166,18 @@ class TasksAssignees(Resource):
         except ObjectNotFoundError:
             return not_found(models.Objects.USER, user_uuid)
 
-        if args['role'] == "rider":
-            if "rider" not in user.roles:
-                return forbidden_error("Can not assign a non-rider as a rider.", user_uuid)
-
-            task.assigned_riders.append(user)
-            socket_update_type = ASSIGN_RIDER_TO_TASK
-
-        elif args['role'] == "coordinator":
-            if "coordinator" not in user.roles:
-                return forbidden_error("Can not assign a non-coordinator as a coordinator.", user_uuid)
-            task.assigned_coordinators.append(user)
-            socket_update_type = ASSIGN_COORDINATOR_TO_TASK
-        else:
-            return forbidden_error("Type of role must be specified.", task_id)
+        try:
+            socket_update_type = roles_check_and_assign_user(task, user, args['role'])
+        except SchemaValidationError as e:
+            return bad_request_error(str(e), task_id)
 
         db.session.commit()
         request_json = request.get_json()
-        emit_socket_broadcast(request_json, socket_update_type, uuid=task_id)
-        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, user_uuid)
+        emit_socket_broadcast(request_json, socket_update_type, uuid=str(task.uuid))
+        emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, str(user.uuid))
+
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
+
 
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
     # @check_parent_or_collaborator_or_admin_match
@@ -250,6 +242,12 @@ class Tasks(Resource):
 
     @flask_praetorian.auth_required
     def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("auto_assign_role", type=str, location="args")
+        parser.add_argument("user_uuid", type=str)
+
+        args = parser.parse_args()
+
         try:
             task = load_request_into_object(TASK)
         except SchemaValidationError as e:
@@ -271,9 +269,28 @@ class Tasks(Resource):
             next_order_in_relay_int = 1
             task.parent_id = new_parent.id
         task.order_in_relay = next_order_in_relay_int
-        task.author_uuid = utilities.current_user().uuid
+        author = utilities.current_user()
+        task.author_uuid = author.uuid
         db.session.add(task)
         db.session.flush()
+
+        if args['auto_assign_role']:
+            # pass off the task, user and role off to the user assign function to make sure all is well with the request
+            user_uuid = args['user_uuid']
+            try:
+                assign_user = get_object(models.Objects.USER, user_uuid)
+                if assign_user.deleted:
+                    return not_found(models.Objects.USER, user_uuid)
+            except ObjectNotFoundError:
+                return not_found(models.Objects.USER, user_uuid)
+            try:
+                socket_update_type = roles_check_and_assign_user(task, assign_user, args['auto_assign_role'])
+                request_json = request.get_json()
+                emit_socket_broadcast(request_json, socket_update_type, uuid=str(task.uuid))
+                emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, str(assign_user.uuid))
+            except SchemaValidationError as e:
+                return bad_request_error(str(e), task.uuid)
+
         task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
         set_previous_relay_uuids(task_parent)
         db.session.commit()

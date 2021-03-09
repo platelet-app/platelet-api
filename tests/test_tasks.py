@@ -1,4 +1,5 @@
 import json
+import logging
 
 import pytest
 
@@ -11,11 +12,11 @@ TASK = models.Objects.TASK
 @pytest.mark.parametrize("login_role", ["coordinator"])
 def test_post_relay(client, login_header, task_obj):
     r = client.post("{}s".format(task_url),
-                     data=json.dumps({
-                         "relay_previous_uuid": str(task_obj.uuid),
-                         "parent_id": task_obj.parent_id
-                     }),
-                     headers=login_header)
+                    data=json.dumps({
+                        "relay_previous_uuid": str(task_obj.uuid),
+                        "parent_id": task_obj.parent_id
+                    }),
+                    headers=login_header)
     print_response(r)
     assert r.status_code == 201
     data = json.loads(r.data)
@@ -68,9 +69,10 @@ def test_get_all_tasks(client, login_header, task_objs_assigned):
 @pytest.mark.parametrize("user_role", ["rider", "coordinator"])
 @pytest.mark.parametrize("task_status", ["new"])
 def test_get_assigned_tasks(client, login_header, task_objs_assigned, user_role):
-    assigned_user_uuid = str(task_objs_assigned[0].assigned_riders[0].uuid) if user_role == "rider" else str(task_objs_assigned[0].assigned_coordinators[0].uuid)
+    assigned_user_uuid = str(task_objs_assigned[0].assigned_riders[0].uuid) if user_role == "rider" else str(
+        task_objs_assigned[0].assigned_coordinators[0].uuid)
     r = client.get("{}s/{}?page={}&role={}".format(task_url, assigned_user_uuid, 1, user_role),
-                    headers=login_header,)
+                   headers=login_header, )
     assert r.status_code == 200
     result = json.loads(r.data)
     assert len(result) == 20
@@ -82,7 +84,7 @@ def test_get_assigned_tasks(client, login_header, task_objs_assigned, user_role)
     assert len(result) == 20
     # test page 2
     r = client.get("{}s/{}?page={}&role={}".format(task_url, assigned_user_uuid, 2, user_role),
-                   headers=login_header,)
+                   headers=login_header, )
     assert r.status_code == 200
     result = json.loads(r.data)
     assert len(result) == 10
@@ -140,7 +142,7 @@ def test_get_assigned_tasks_by_status(client, login_header, task_objs_assigned, 
     assert len(result) == 20
     # test page 2
     r = client.get("{}s/{}?page={}&role={}".format(task_url, assigned_user_uuid, 2, user_role),
-                   headers=login_header,)
+                   headers=login_header, )
     assert r.status_code == 200
     result = json.loads(r.data)
     assert len(result) == 10
@@ -156,7 +158,8 @@ def test_get_assigned_tasks_by_status(client, login_header, task_objs_assigned, 
 @pytest.mark.parametrize("login_role", ["coordinator", "rider"])
 @pytest.mark.parametrize("user_role", ["coordinator", "rider"])
 @pytest.mark.parametrize("task_status", ["new", "active", "picked_up", "delivered", "cancelled", "rejected"])
-def test_get_assigned_tasks_by_status_and_before_parent_id(client, login_header, task_objs_assigned, user_role, task_status, login_role):
+def test_get_assigned_tasks_by_status_and_before_parent_id(client, login_header, task_objs_assigned, user_role,
+                                                           task_status, login_role):
     if login_role != user_role:
         return
     if user_role == "rider" and task_status == "new":
@@ -169,7 +172,8 @@ def test_get_assigned_tasks_by_status_and_before_parent_id(client, login_header,
     assert assigned_user_uuid
     parent_id = task_objs_assigned[29].parent_id
     r = client.get(
-        "{}s/{}?before_parent={}&role={}&status={}".format(task_url, assigned_user_uuid, parent_id, user_role, task_status),
+        "{}s/{}?before_parent={}&role={}&status={}".format(task_url, assigned_user_uuid, parent_id, user_role,
+                                                           task_status),
         headers=login_header
     )
     result = json.loads(r.data)
@@ -178,18 +182,19 @@ def test_get_assigned_tasks_by_status_and_before_parent_id(client, login_header,
         assert i['parent_id'] < parent_id
 
     # test with page set to 2
-    r = client.get("{}s/{}?before_parent={}&page={}&role={}".format(task_url, assigned_user_uuid, parent_id, 2, user_role),
-                   headers=login_header)
+    r = client.get(
+        "{}s/{}?before_parent={}&page={}&role={}".format(task_url, assigned_user_uuid, parent_id, 2, user_role),
+        headers=login_header)
     assert r.status_code == 200
     result = json.loads(r.data)
     assert len(result) == 9
     for i in result:
         assert i['parent_id'] < parent_id
 
-
     # test with page set to 0 (get all)
-    r = client.get("{}s/{}?before_parent={}&page={}&role={}".format(task_url, assigned_user_uuid, parent_id, 0, user_role),
-                   headers=login_header)
+    r = client.get(
+        "{}s/{}?before_parent={}&page={}&role={}".format(task_url, assigned_user_uuid, parent_id, 0, user_role),
+        headers=login_header)
     assert r.status_code == 200
     result = json.loads(r.data)
     assert len(result) == 29
@@ -207,12 +212,52 @@ def test_post_task(client, login_header):
     assert is_valid_uuid(json.loads(r2.data)['uuid'])
 
 
+@pytest.mark.parametrize("login_role", ["coordinator", "rider"])
+@pytest.mark.parametrize("user_role", ["rider", "coordinator"])
+def test_post_task_and_auto_assign(client, login_header, login_role, user_obj, user_role):
+    data = {"user_uuid": str(user_obj.uuid)}
+    r2 = client.post("{}s?auto_assign_role={}".format(task_url, user_role),
+                     data=json.dumps(data),
+                     headers=login_header)
+    print_response(r2)
+    assert r2.status_code == 201
+    new_uuid = json.loads(r2.data)['uuid']
+    assert is_valid_uuid(new_uuid)
+    new_task = get_object(models.Objects.TASK, new_uuid)
+    if user_role == "coordinator":
+        assert user_obj.uuid in [u.uuid for u in new_task.assigned_coordinators.all()]
+    else:
+        assert user_obj.uuid in [u.uuid for u in new_task.assigned_riders.all()]
+
+
+@pytest.mark.parametrize("login_role", ["coordinator", "rider"])
+@pytest.mark.parametrize("user_role", ["rider", "coordinator"])
+def test_post_task_relay_and_auto_assign(client, login_header, login_role, user_obj, user_role, task_obj):
+    r2 = client.post("{}s?auto_assign_role={}".format(task_url, user_role),
+                     data=json.dumps({
+                         "relay_previous_uuid": str(task_obj.uuid),
+                         "parent_id": task_obj.parent_id,
+                         "user_uuid": str(user_obj.uuid)
+                     }),
+                     headers=login_header)
+    print_response(r2)
+    assert r2.status_code == 201
+    data = json.loads(r2.data)
+    assert is_valid_uuid(data['uuid'])
+    new_task = get_object(TASK, data['uuid'])
+    assert new_task.relay_previous_uuid == task_obj.uuid
+    if user_role == "coordinator":
+        assert user_obj.uuid in [u.uuid for u in new_task.assigned_coordinators.all()]
+    else:
+        assert user_obj.uuid in [u.uuid for u in new_task.assigned_riders.all()]
+
+
 @pytest.mark.parametrize("login_role", ["coordinator"])
 def test_update_task(client, login_header, task_data, task_obj, login_role):
     task_uuid = str(task_obj.uuid)
     r3 = client.patch("{}/{}".format(task_url, task_uuid),
-                     data=json.dumps(task_data),
-                     headers=login_header)
+                      data=json.dumps(task_data),
+                      headers=login_header)
     print_response(r3)
     assert r3.status_code == 200
     obj = get_object(TASK, task_uuid)
@@ -222,7 +267,8 @@ def test_update_task(client, login_header, task_data, task_obj, login_role):
 @pytest.mark.parametrize("login_role", ["coordinator"])
 @pytest.mark.parametrize("user_role", ["rider", "coordinator"])
 def test_task_assignment_get(client, login_header, task_obj_assigned, user_role):
-    assignee_uuid = str(task_obj_assigned.assigned_riders[0].uuid) if user_role == "rider" else str(task_obj_assigned.assigned_coordinators[0].uuid)
+    assignee_uuid = str(task_obj_assigned.assigned_riders[0].uuid) if user_role == "rider" else str(
+        task_obj_assigned.assigned_coordinators[0].uuid)
     r = client.get("{}/{}/assigned_users?role={}".format(task_url, task_obj_assigned.uuid, user_role),
                    headers=login_header)
     assert r.status_code == 200
@@ -345,4 +391,3 @@ def test_get_task_destinations(client, login_header, task_obj_addressed, destina
     else:
         attr_check(result["pickup"], task_obj_addressed.pickup_location)
         attr_check(result["dropoff"], task_obj_addressed.dropoff_location)
-

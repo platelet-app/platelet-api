@@ -1,7 +1,25 @@
 from app import models, schemas
 from flask import json
 import hashlib
-from app.exceptions import ObjectNotFoundError
+from app import db
+from app.api.task.task_utilities.task_socket_actions import ASSIGN_RIDER_TO_TASK, ASSIGN_COORDINATOR_TO_TASK
+from app.exceptions import ObjectNotFoundError, SchemaValidationError
+
+
+def roles_check_and_assign_user(task, user, role):
+    if role == "rider":
+        if "rider" not in user.roles:
+            raise SchemaValidationError("Can not assign a non-rider as a rider")
+        task.assigned_riders.append(user)
+        socket_update_type = ASSIGN_RIDER_TO_TASK
+    elif role == "coordinator":
+        if "coordinator" not in user.roles:
+            raise SchemaValidationError("Can not assign a non-coordinator as a coordinator")
+        task.assigned_coordinators.append(user)
+        socket_update_type = ASSIGN_COORDINATOR_TO_TASK
+    else:
+        raise SchemaValidationError("A role must be specified.")
+    return socket_update_type
 
 
 def get_uncompleted_tasks_query(query):
