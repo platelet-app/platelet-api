@@ -142,7 +142,7 @@ class UserSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, PostLoadMix
     dob = ma.DateTime(format='%d/%m/%Y', allow_none=True)
     address = ma.Nested(AddressSchema)
     uuid = field_for(models.User, 'uuid', dump_only=True)
-    assigned_vehicles = ma.Nested("VehicleSchema", many=True, dump_only=True, exclude=("assigned_user",))
+    assigned_vehicles = ma.Nested("VehicleSchema", many=True, dump_only=True, only=("uuid", "name", "links"))
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     password = ma.Str(load_only=True)
     password_reset_on_login = ma.Bool(dump_only=True)
