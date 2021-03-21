@@ -10,6 +10,7 @@ from sqlalchemy_utils import EmailType
 from app.exceptions import ProtectedFieldError
 from app.search import add_to_index, remove_from_index, query_index
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.schema import Index
 import uuid
 
 
@@ -142,7 +143,7 @@ class Comment(db.Model, CommonMixin):
     author_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('user.uuid'))
     author = db.relationship("User", foreign_keys=[author_uuid], backref="authored_comments")
     parent_type = db.Column(db.Integer)
-    parent_uuid = db.Column(UUID(as_uuid=True), index=True)
+    parent_uuid = db.Column(UUID(as_uuid=True))
     publicly_visible = db.Column(db.Boolean, default=True)
 
     logged_actions = db.relationship(
@@ -152,6 +153,8 @@ class Comment(db.Model, CommonMixin):
     )
 
     query_class = QueryWithSoftDelete
+
+    Index("idx_col_uuid", "uuid", unique=True)
 
     @property
     def object_type(self):
@@ -171,7 +174,7 @@ class DeliverableType(db.Model, CommonMixin):
 
 class Deliverable(db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), index=True, unique=True, nullable=False, default=uuid.uuid4)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     type_id = db.Column(db.Integer, db.ForeignKey('deliverable_type.id'))
     type = db.relationship("DeliverableType", foreign_keys=[type_id])
@@ -183,6 +186,8 @@ class Deliverable(db.Model, CommonMixin):
     )
 
     query_class = QueryWithSoftDelete
+
+    Index("idx_col_uuid", "uuid", unique=True)
 
     @property
     def object_type(self):
@@ -240,7 +245,7 @@ class TasksParent(db.Model, CommonMixin):
 
 class Task(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), index=True, unique=True, nullable=False, default=uuid.uuid4)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     parent_id = db.Column(db.Integer, db.ForeignKey(TasksParent.id), nullable=False)
     parent = db.relationship(
         TasksParent,
@@ -346,6 +351,8 @@ class Task(SearchableMixin, db.Model, CommonMixin):
 
     query_class = QueryWithSoftDelete
 
+    Index("idx_col_uuid", "uuid", unique=True)
+
     @property
     def object_type(self):
         return Objects.TASK
@@ -357,7 +364,7 @@ class Task(SearchableMixin, db.Model, CommonMixin):
 
 class Vehicle(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), index=True, unique=True, nullable=False, default=uuid.uuid4)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     name = db.Column(db.String(64), unique=True)
     manufacturer = db.Column(db.String(64))
     model = db.Column(db.String(64))
@@ -381,6 +388,8 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
     __searchable__ = ['manufacturer', 'model', 'registration_number', 'name']
     query_class = QueryWithSoftDelete
 
+    Index("idx_col_uuid", "uuid", unique=True)
+
     @property
     def object_type(self):
         return Objects.VEHICLE
@@ -391,7 +400,7 @@ class Vehicle(SearchableMixin, db.Model, CommonMixin):
 
 class User(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), index=True, unique=True, nullable=False, default=uuid.uuid4)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
 
     address_id = db.Column(db.Integer, db.ForeignKey('address.id'))
     address = db.relationship("Address", foreign_keys=[address_id])
@@ -430,6 +439,8 @@ class User(SearchableMixin, db.Model, CommonMixin):
 
     __searchable__ = ['username', 'roles', 'name', 'email']
     query_class = QueryWithSoftDelete
+
+    Index("idx_col_uuid", "uuid", unique=True)
 
     @classmethod
     def lookup(cls, username):
@@ -488,7 +499,7 @@ class LocationType(db.Model):
 
 class Location(SearchableMixin, db.Model, CommonMixin):
     id = db.Column(db.Integer, primary_key=True)
-    uuid = db.Column(UUID(as_uuid=True), index=True, unique=True, nullable=False, default=uuid.uuid4)
+    uuid = db.Column(UUID(as_uuid=True), unique=True, nullable=False, default=uuid.uuid4)
     name = db.Column(db.String(64), unique=True)
     contact_id = db.Column(db.Integer, db.ForeignKey('contact.id'))
     contact = db.relationship("Contact", foreign_keys=[contact_id])
@@ -498,9 +509,6 @@ class Location(SearchableMixin, db.Model, CommonMixin):
     location_type = db.relationship("LocationType", foreign_keys=[location_type_id])
     listed = db.Column(db.Boolean, default=False)
     protected = db.Column(db.Boolean, default=False)
-
-    # next_version = db.Column(UUID(as_uuid=True), db.ForeignKey("Location.uuid"))
-    # previous_versions = db.relationship("Location", lazy="dynamic")
 
     comments = db.relationship(
         'Comment',
@@ -516,6 +524,8 @@ class Location(SearchableMixin, db.Model, CommonMixin):
 
     __searchable__ = ['name', 'contact_name', 'contact_number', 'address']
     query_class = QueryWithSoftDelete
+
+    Index("idx_col_uuid", "uuid", unique=True)
 
     @validates("address")
     def _check_not_protected(self, key, value):
