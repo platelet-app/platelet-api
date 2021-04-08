@@ -113,7 +113,11 @@ def get_query(model_type, filter_deleted=True):
     switch = {
         models.Objects.USER: models.User.query if filter_deleted else models.User.query.with_deleted(),
         models.Objects.TASK: models.Task.query if filter_deleted else models.Task.query.with_deleted(),
-        models.Objects.TASK_PARENT: models.TasksParent.query if filter_deleted else models.TasksParent.query.with_deleted(),
+        models.Objects.TASK_PARENT: models.TasksParent.query.filter(
+            models.TasksParent.relays.any()
+        ) if filter_deleted else models.TasksParent.query.with_deleted(
+            models.TasksParent.relays.any()
+        ),
         models.Objects.VEHICLE: models.Vehicle.query if filter_deleted else models.Vehicle.query.with_deleted(),
         models.Objects.LOCATION: models.Location.query if filter_deleted else models.Location.query.with_deleted(),
         models.Objects.PRIORITY: models.Priority.query if filter_deleted else models.Priority.query.with_deleted(),
