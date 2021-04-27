@@ -7,6 +7,7 @@ from marshmallow import ValidationError, pre_dump, post_dump, post_load, EXCLUDE
 from phonenumbers import NumberParseException
 
 from app import cloud_stores
+from app.api.barcode.barcode_utilities.barcode_functions import base36decode
 from app.api.task.task_utilities.taskfunctions import calculate_task_etag
 from app.exceptions import ObjectNotFoundError
 from marshmallow_sqlalchemy import field_for
@@ -273,7 +274,7 @@ class TasksParentSchema(ma.SQLAlchemySchema):
 
         fields = ('relays', 'reference')
 
-    relays = ma.Nested('TaskSchema', many=True, dump_only=True)
+    relays = ma.Nested('TaskSchema', many=True, dump_only=True, exclude=("comments",))
     reference = ma.String(dump_only=True)
 
 
@@ -288,7 +289,7 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
                   'time_created', 'time_modified', 'assigned_coordinators', 'assigned_riders',
                   'assigned_riders_display_string', 'assigned_coordinators_display_string', 'author',
                   'relay_previous_uuid', 'relay_next', 'relay_previous', 'parent_id', 'order_in_relay',
-                  'etag', 'reference', 'pickup_location', 'dropoff_location')
+                  'etag', 'reference', 'pickup_location', 'dropoff_location', 'barcode_number')
 
     requester_contact = ma.Nested(ContactSchema, allow_none=True)
 
@@ -324,7 +325,9 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
 
     @pre_dump
     def concatenate_assigned_riders_display_string(self, data, many):
-        data.assigned_riders_display_string = reduce(display_names_reducer, enumerate(data.assigned_riders), "")
+        data.assigned_riders_display_string = reduce(
+            display_names_reducer,
+            enumerate(data.assigned_riders), "")
         return data
 
     @pre_dump
@@ -332,6 +335,13 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
         data.assigned_coordinators_display_string = reduce(
             display_names_reducer,
             enumerate(data.assigned_coordinators), "")
+        return data
+
+    @pre_dump
+    def generate_barcode_number(self, data, many):
+        print(data.reference)
+        if data.reference:
+            data.barcode_number = base36decode(data.reference.translate({ord(c): None for c in "-"}))
         return data
 
     @post_dump
@@ -376,23 +386,6 @@ def int_check(value):
     except ValueError:
         return True
     return False
-
-
-class UserUsernameSchema(ma.SQLAlchemySchema):
-    class Meta:
-        model = models.User
-        fields = ('uuid', 'username')
-
-    username = ma.Str(required=True)
-
-
-class UserAddressSchema(ma.SQLAlchemySchema):
-    class Meta:
-        model = models.User
-        fields = ('uuid', 'name', 'address')
-
-    postcode = ma.Function(lambda obj: obj.postcode.upper())
-    address = ma.Nested(AddressSchema, exclude=("ward",))
 
 
 class LocationSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):

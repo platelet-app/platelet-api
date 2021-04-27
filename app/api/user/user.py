@@ -275,22 +275,3 @@ class UserProfilePicture(Resource):
         )
         return {'uuid': str(user_id), 'message': 'Profile picture uploaded and is processing.', 'job_id': job.get_id()}, 201
 
-
-@ns.route('/<user_id>/username')
-class UserNameField(Resource):
-    @flask_praetorian.auth_required
-    def get(self, user_id):
-        try:
-            return jsonify(user_username_schema.dump(get_object(USER, user_id)).data)
-        except ObjectNotFoundError:
-            return not_found(USER, user_id)
-
-
-@ns.route('/<user_id>/address')
-class UserAddressField(Resource):
-    @flask_praetorian.auth_required
-    def get(self, user_id):
-        try:
-            return jsonify(user_address_schema.dump(get_object(USER, user_id)).data)
-        except ObjectNotFoundError:
-            return not_found(USER, user_id)

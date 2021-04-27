@@ -3,6 +3,7 @@ import logging
 
 import pytest
 
+from app.api.barcode.barcode_utilities.barcode_functions import base36encode
 from tests.testutils import task_url, is_valid_uuid, print_response, get_object, attr_check, get_test_json
 from app import models, schemas
 
@@ -325,6 +326,20 @@ def test_get_task(client, login_header, task_obj_address_preset):
         headers=login_header
     )
     assert r.status_code == 200
+
+
+@pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
+@pytest.mark.parametrize("login_role", ["coordinator", "rider"])
+def test_get_task_barcode_number(client, login_header, task_obj_address_preset):
+    task_uuid = str(task_obj_address_preset.uuid)
+    r = client.get(
+        "{}/{}".format(task_url, task_uuid),
+        headers=login_header
+    )
+    assert r.status_code == 200
+    data = json.loads(r.data)
+    assert data['reference']
+    assert base36encode(data['barcode_number']) == data['reference'].translate(None, "-")
 
 
 @pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
