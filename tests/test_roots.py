@@ -1,8 +1,6 @@
 import json
-from tests.testutils import random_string, is_json, user_url, login_url, login_as, is_valid_uuid, print_response, attr_check, generate_name, get_object
-import tests.testutils
+from tests.testutils import login_url, attr_check, generate_name
 from app import models, db, schemas, guard
-from datetime import datetime
 
 def test_ping(client):
     res = client.get('/api/v0.1/ping')

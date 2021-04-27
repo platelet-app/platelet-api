@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from tests.testutils import dict_check, is_json, is_valid_uuid, location_url, vehicle_url, task_url, login_as, find_user, is_valid_uuid, print_response, whoami, delete_by_uuid, get_object, attr_check
+from tests.testutils import dict_check, location_url, is_valid_uuid, get_object, attr_check
 from app import db
 from app import models
 

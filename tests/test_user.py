@@ -3,9 +3,7 @@ import json
 import dateutil
 import pytest
 
-from tests.conftest import api_url
-from tests.testutils import user_url, is_valid_uuid, print_response, \
-    attr_check, generate_name, get_object, whoami
+from tests.testutils import user_url, is_valid_uuid, attr_check, get_object, whoami
 from app import models, db
 
 USER = models.Objects.USER
@@ -45,7 +43,6 @@ exclude_attrs_list = ["password",
 @pytest.mark.parametrize("login_role", ["admin"])
 def test_add_valid_user(client, user_coordinator, login_header):
     r = client.post('{}s'.format(user_url), data=json.dumps(user_coordinator), headers=login_header)
-    print_response(r)
     assert (r.status_code == 201)
 
     data = json.loads(r.data)
@@ -61,7 +58,6 @@ def test_add_valid_user(client, user_coordinator, login_header):
 def test_get_user(client, user_obj, login_header):
     user_uuid = str(user_obj.uuid)
     r = client.get('{}/{}'.format(user_url, user_uuid), headers=login_header)
-    print_response(r)
     assert (r.status_code == 200)
 
     data = json.loads(r.data)
@@ -142,7 +138,6 @@ def test_get_users_role(client, all_user_uuids, login_header):
 @pytest.mark.parametrize("login_role", ["admin"])
 def test_get_users_ordered(client, login_header, user_objs, users_order):
     r_latest = client.get('{}s?order={}'.format(user_url, users_order), headers=login_header)
-    print_response(r_latest)
     assert (r_latest.status_code == 200)
     data = json.loads(r_latest.data)
     assert len(data) == 20
@@ -180,7 +175,6 @@ def test_add_invalid_user_existing_display_name(client, login_header, user_obj):
 def test_delete_user_as_other(client, login_header, user_obj):
     user_uuid = str(user_obj.uuid)
     r = client.delete('{}/{}'.format(user_url, user_uuid), headers=login_header)
-    print_response(r)
     assert (r.status_code == 403)
 
 
@@ -189,7 +183,6 @@ def test_delete_user_as_other(client, login_header, user_obj):
 def test_delete_user(client, login_header, user_obj):
     user_uuid = str(user_obj.uuid)
     r = client.delete('{}/{}'.format(user_url, user_uuid), headers=login_header)
-    print_response(r)
     assert (r.status_code == 202)
 
     user = get_object(USER, user_uuid, with_deleted=True)
@@ -200,7 +193,6 @@ def test_delete_user(client, login_header, user_obj):
 def test_add_invalid_user_email(client, user_rider, login_header):
     new_payload = user_rider.copy().update({"email": "invalidEmail"})
     r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header)
-    print_response(r)
     assert (r.status_code == 400)
 
 
@@ -208,7 +200,6 @@ def test_add_invalid_user_email(client, user_rider, login_header):
 def test_add_invalid_user_dob(client, user_rider, login_header):
     new_payload = user_rider.copy().update({"dob": "221256"})
     r = client.post('{}s'.format(user_url), data=json.dumps(new_payload), headers=login_header)
-    print_response(r)
     assert (r.status_code == 400)
 
 # TODO more restricted fields

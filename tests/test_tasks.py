@@ -4,7 +4,7 @@ import logging
 import pytest
 
 from app.api.barcode.barcode_utilities.barcode_functions import base36encode
-from tests.testutils import task_url, is_valid_uuid, print_response, get_object, attr_check, get_test_json
+from tests.testutils import task_url, is_valid_uuid, get_object, attr_check
 from app import models, schemas
 
 TASK = models.Objects.TASK
@@ -18,7 +18,6 @@ def test_post_relay(client, login_header, task_obj):
                         "parent_id": task_obj.parent_id
                     }),
                     headers=login_header)
-    print_response(r)
     assert r.status_code == 201
     data = json.loads(r.data)
     assert is_valid_uuid(data['uuid'])
@@ -208,7 +207,6 @@ def test_post_task(client, login_header):
     r2 = client.post("{}s".format(task_url),
                      data=json.dumps({}),
                      headers=login_header)
-    print_response(r2)
     assert r2.status_code == 201
     assert is_valid_uuid(json.loads(r2.data)['uuid'])
 
@@ -219,7 +217,6 @@ def test_post_task_and_auto_assign(client, login_header, login_role, user_obj, u
     r2 = client.post("{}s?auto_assign_role={}&user_uuid={}".format(task_url, user_role, user_obj.uuid),
                      data=json.dumps({}),
                      headers=login_header)
-    print_response(r2)
     assert r2.status_code == 201
     new_uuid = json.loads(r2.data)['uuid']
     assert is_valid_uuid(new_uuid)
@@ -239,7 +236,6 @@ def test_post_task_relay_and_auto_assign(client, login_header, login_role, user_
                          "parent_id": task_obj.parent_id
                      }),
                      headers=login_header)
-    print_response(r2)
     assert r2.status_code == 201
     data = json.loads(r2.data)
     assert is_valid_uuid(data['uuid'])
@@ -257,7 +253,6 @@ def test_update_task(client, login_header, task_data, task_obj, login_role):
     r3 = client.patch("{}/{}".format(task_url, task_uuid),
                       data=json.dumps(task_data),
                       headers=login_header)
-    print_response(r3)
     assert r3.status_code == 200
     obj = get_object(TASK, task_uuid)
     attr_check(task_data, obj, exclude=["timestamp"])

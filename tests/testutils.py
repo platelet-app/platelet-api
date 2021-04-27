@@ -73,10 +73,6 @@ def get_test_json():
         json_data = json.load(f)
     return json_data
 
-
-def print_response(r):
-    print("Status Code: {}, Payload: {}".format(r.status_code,json.loads(r.data)))
-
 def is_json(js):
     try:
         json_object = json.loads(js)
@@ -125,39 +121,6 @@ def get_object(type, _id, with_deleted=True):
         else:
             return None
 
-
-def login_as(client, user_type):
-    if user_type == "admin":
-        login_details = {"username": "test_admin", "password": "9409u8fgrejki0"}
-    elif user_type == "coordinator":
-        login_details = {"username": "test_coordinator", "password": "9409u8fgrejki0"}
-    elif user_type == "rider":
-        login_details = {"username": "test_rider", "password": "9409u8fgrejki0"}
-    else:
-        raise ValueError("invalid user type")
-
-    r = client.post(login_url, data=login_details)
-    assert(r.status_code == 200)
-    global authJsonHeader
-    authJsonHeader = {"Authorization": "Bearer {}".format(json.loads(r.data)['access_token']), 'content-type': 'application/json'}
-    global authHeader
-    authHeader = {"Authorization": "Bearer {}".format(json.loads(r.data)['access_token'])}
-
-    # TODO also log out again?
-
-
-def find_user(user_type):
-    if user_type == "admin":
-        username = "test_admin"
-    elif user_type == "coordinator":
-        username = "test_coordinator"
-    elif user_type == "rider":
-        username = "test_admin"
-    else:
-        raise ValueError("invalid user type")
-
-    user = models.User.query.filter_by(username=username).first()
-    return user.uuid
 
 def is_valid_uuid(uuid_to_test, version=4):
     try:
