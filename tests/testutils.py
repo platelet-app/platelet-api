@@ -15,9 +15,6 @@ comment_url = "{}comment".format(root_url)
 location_url = "{}location".format(root_url)
 task_url = "{}task".format(root_url)
 mailing_list_url = "{}mailing_list".format(root_url)
-jwtKey = ""
-authHeader = {}
-authJsonHeader = {}
 
 
 def whoami(client, header):
@@ -73,20 +70,6 @@ def get_test_json():
         json_data = json.load(f)
     return json_data
 
-def is_json(js):
-    try:
-        json_object = json.loads(js)
-    except Exception as e:
-        return False
-    return True
-
-
-def get_user_id(js):
-    return json.loads(js)['uuid']
-
-
-def random_string(length=10):
-    return ''.join(random.choice(string.ascii_letters) for m in range(length))
 
 
 def get_object(type, _id, with_deleted=True):

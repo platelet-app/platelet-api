@@ -57,19 +57,6 @@ def get_user_object_by_int_id(user_id):
 
     return user
 
-
-def is_username_present(username):
-    if models.User.query.filter_by(username=username).first():
-        return True
-    return False
-
-
-def is_user_present(id):
-    if models.User.query.filter_by(uuid=id).first():
-        return True
-    return False
-
-
 def upload_profile_picture(picture_file_path, user_id, crop_dimensions=None):
     # get the profile pics store ready
     cloud_stores.initialise_profile_pictures_store()
