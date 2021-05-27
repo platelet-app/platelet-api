@@ -339,7 +339,6 @@ class TaskSchema(ma.SQLAlchemySchema, TimesMixin, PostLoadMixin):
 
     @pre_dump
     def generate_barcode_number(self, data, many):
-        print(data.reference)
         if data.reference:
             data.barcode_number = base36decode(data.reference.translate({ord(c): None for c in "-"}))
         return data

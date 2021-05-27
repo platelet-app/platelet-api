@@ -253,8 +253,9 @@ class Tasks(Resource):
         except SchemaValidationError as e:
             return schema_validation_error(str(e))
         if task.parent_id:
-            parent = get_object(TASK_PARENT, task.parent_id)
-            if not parent:
+            try:
+                parent = get_object(TASK_PARENT, task.parent_id)
+            except ObjectNotFoundError:
                 return not_found(TASK_PARENT, task.parent_id)
             next_order_in_relay_int = parent.relays_with_deleted_cancelled_rejected.count() + 1
             # TODO: could this go into marshmallow schema validation?
@@ -364,7 +365,14 @@ class UsersTasks(Resource):
             if before_parent and filtered_ordered_after.count() == 0:
                 return not_found(TASK)
             if page > 0:
+                # work around relays not fully being included when paginating
                 items = get_page(filtered_ordered_after, page, order=order, model=models.Task)
+                if len(items):
+                    lastParentID = items[-1].parent_id
+                    lastTaskParent = get_object(models.Objects.TASK_PARENT, lastParentID)
+                    items = [i for i in items if i.parent_id != lastParentID]
+                    for i in lastTaskParent.relays:
+                        items.append(i)
             else:
                 items = filtered_ordered_after.all()
         except ObjectNotFoundError:
