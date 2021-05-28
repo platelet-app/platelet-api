@@ -1,6 +1,6 @@
 ## Install
 ##### Install needed packages:
-`sudo apt install postgresql postgresql-server-dev-10 python3-virtualenv python3-dev`
+`sudo apt install postgresql postgresql-server-dev-12 python3-venv python3-dev python3-wheel`
 
 ##### Install elasticsearch:
 `sudo apt install apt-transport-https`
@@ -9,9 +9,7 @@
 
 `sudo add-apt-repository "deb https://artifacts.elastic.co/packages/7.x/apt stable main"`
 
-`sudo apt update`
-
-`sudo apt install elasticsearch`
+`sudo apt update && sudo apt install elasticsearch`
 
 ##### Configure postgresql:
 `sudo nano /etc/postgresql/10/main/pg_hba.conf`
@@ -28,8 +26,8 @@ host    all             all             127.0.0.1/32            trust
 ```
 **This will allow unauthenticated connections on localhost**
 
-##### Start the services:
-`sudo systemctl start postgresql && sudo systemctl start elasticsearch`
+##### Restart the services:
+`sudo systemctl restart postgresql && sudo systemctl restart elasticsearch`
 
 ##### Run the setup script:
 `./setup.sh`
@@ -38,6 +36,9 @@ Optionally input a json file with premade data to insert into the database.
 
 `./setup.sh dev_data.json`
 
+If you'd like to have the script set up a database locally to test with, add db_local:
+
+'./setup.sh dev_data.json db_local'
 
 ## Run
 
@@ -55,26 +56,12 @@ Optionally input a json file with premade data to insert into the database.
 ##### Run the tests (in another terminal):
 `source venv/bin/activate`
 
-`pytest --disable-pytest-warnings`
+`cd tests`
+
+`pytest -v .`
 
 ##### Visit root to see the swagger API documentation:
 http://localhost:5000
-
-### React
-
-cd into the react_app directory.
-
-`cd react_app`
-
-Install packages.
-
-`npm install`
-
-Start the React development server.
-
-`npm start`
-
-It'll likely load up the page in your default browser. If not, navigate to http://localhost:3000
 
 ## Development
 ##### Libraries
