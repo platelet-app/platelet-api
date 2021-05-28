@@ -121,15 +121,6 @@ cloud_stores = CloudStores(
     endpoint=app.config['AWS_ENDPOINT']
 )
 
-# check if the profile picture processing directory exists (unless loading in ipython)
-if not ipython and not pytest:
-    profile_pic_dir = app.config['PROFILE_PROCESSING_DIRECTORY']
-    if profile_pic_dir:
-        if not os.path.isdir(profile_pic_dir):
-            os.mkdir(profile_pic_dir)
-    else:
-        raise EnvironmentError("A profile picture processing directory must be specified.")
-
 from app import models
 from app.api.task import task
 from app.api.user import user
