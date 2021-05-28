@@ -29,5 +29,4 @@ class Config:
 
     REDIS_URL = os.environ.get("REDIS_URL") or "redis://"
     ELASTICSEARCH_URL = os.environ.get("ELASTICSEARCH_URL") or \
-        "http://localhost:9200"
-    ELASTICSEARCH_URL = None
+        None
