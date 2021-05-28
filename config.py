@@ -6,7 +6,7 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "some-key"
 
     SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI") or \
-        "postgresql://localhost/bloodbike_dev"
+        "postgresql://localhost/platelet_dev"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     CLOUD_PLATFORM = os.environ.get("CLOUD_PLATFORM") or "aws"
