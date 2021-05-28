@@ -13,7 +13,7 @@ json_data = get_test_json()
 
 app.config['TESTING'] = True
 app.config['WTF_CSRF_ENABLED'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/bloodbike_test'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://localhost/platelet_test'
 _client = app.test_client()
 
 db.drop_all()
