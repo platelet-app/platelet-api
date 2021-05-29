@@ -1,8 +1,14 @@
-## Install
+# Platelet API
+
+This is the API for Platelet. It makes use of Flask, RESTx, SQLALchemy and Marshmallow along with other Flask plugins.
+
+It is a REST API. Refer to api_routes.md for more detailed documentation.
+
+## Setup on Ubuntu 20.04
 ##### Install needed packages:
 `sudo apt install postgresql postgresql-server-dev-12 python3-venv python3-dev python3-wheel`
 
-##### Install elasticsearch:
+##### Install ElasticSearch:
 `sudo apt install apt-transport-https`
 
 `wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -`
@@ -11,7 +17,11 @@
 
 `sudo apt update && sudo apt install elasticsearch`
 
-##### Configure postgresql:
+##### Install Redis
+
+`sudo apt install redis`
+
+##### Configure postgresql for local testing:
 `sudo nano /etc/postgresql/10/main/pg_hba.conf`
 
 Edit the line:
@@ -27,7 +37,7 @@ host    all             all             127.0.0.1/32            trust
 **This will allow unauthenticated connections on localhost**
 
 ##### Restart the services:
-`sudo systemctl restart postgresql && sudo systemctl restart elasticsearch`
+`sudo systemctl restart postgresql && sudo systemctl restart elasticsearch && sudo systemctl restart redis`
 
 ##### Run the setup script:
 `./setup.sh`
@@ -50,8 +60,69 @@ If you'd like to have the script set up a database locally to test with, add db_
 ##### Source the environment:
 `source venv/bin/activate`
 
+##### Environment Variables:
+
+###### SQLALCHEMY_DATABASE_URI
+URI string for the database you are connecting to. E.g.:
+
+`postgres://user:password@some-database-host/database_name`
+
+If no URI is specified it will attempt to connect to a localhost database named platelet_dev
+
+###### CLOUD_PLATFORM
+
+Specify the cloud platform that should be used. Currently only `aws` is available.
+
+###### AWS_ENDPOINT
+
+If specified, it will attempt to connect to another endpoint. This can be useful for mocking AWS for testing (e.g with moto).
+
+###### AWS_ACCESS_KEY_ID
+
+The access key id for the AWS account you are connecting to.
+
+###### SECRET_ACCESS_KEY
+
+The secret access key for the AWS account you are connecting to.
+
+###### CLOUD_PROFILE_PICTURE_STORE_NAME
+
+The name of the image store on the cloud provider. On AWS this is the name of the bucket that has been created.
+
+###### PROFILE_PROCESSING_DIRECTORY
+
+A directory created locally that the flask process has write access to. Suggested `/tmp/profile_pics`
+
+###### DEFAULT_PROFILE_PICTURE_URL
+
+If a user has no profile picture set in the database, this URL will be returned for their picture instead.
+
+###### CORS_ENABLED
+
+Enable CORS. Defaults to `False`.
+When developing locally suggest setting this to `True` so that processes running on another port can access the API (e.g. a React server running on port 3000).
+
+###### CORS_ORIGIN
+
+The origin URL when `CORS_ENABLED` is set to `True`. Defaults to `http://localhost:3000`. Does nothing if `CORS_ENABLED` is set to `False`.
+
+###### REDIS_URL
+
+The URL for the Redis server. Defaults connecting to localhost if none is specified.
+
+###### ELASTICSEARCH_URL
+
+The URL for the ElasticSearch server. Defaults to `None` in which case no connection attempts will be made.
+
 ##### Start the server:
-`flask run`
+
+In a terminal, export your environment variables and run:
+
+`python app.py`
+
+For profile picture uploads, also run the redis worker. This must have the same environment variables as the Flask server.
+
+`python redis_worker.py`
 
 ##### Run the tests (in another terminal):
 `source venv/bin/activate`
@@ -61,13 +132,16 @@ If you'd like to have the script set up a database locally to test with, add db_
 `pytest -v .`
 
 ##### Visit root to see the swagger API documentation:
+
 http://localhost:5000
 
 ## Development
 ##### Libraries
+
 When you add a new library with `pip install` run:  
 `pip freeze > requirements.txt`
 
 ##### Database changes
+
 When you make changes that require database migrations run:  
 `flask db migrate -m "message"`
