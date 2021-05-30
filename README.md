@@ -2,7 +2,7 @@
 
 This is the API for Platelet. It makes use of Flask, RESTx, SQLALchemy and Marshmallow along with other Flask plugins.
 
-It is a REST API. Refer to api_routes.md for more detailed documentation.
+It is a REST API. Refer to api_routes.md or the generated Swagger documentation for more detailed documentation.
 
 ## Setup on Ubuntu 20.04
 ##### Install needed packages:

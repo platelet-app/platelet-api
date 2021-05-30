@@ -4,164 +4,194 @@
 
 ## Login
 
-### /api/v0.1/login
+### /api/<ver\>/login
 
 *POST*
 
 ####  Header:
-Content-Type: application/json
+`Content-Type: application/json`
 
 ####  Payload:
-username, password
+`{username, password}`
+
+#### Query strings:
+
+None.
 
 ####  Returns:
 status code 200 on success
 
-{ access_token }
+`{ access_token, refresh_expiry, login_expiry }`
 
-status code 401 on failure
+status code 401 on authentication failure
 
-{ error, message, status_code }
+`{ error, message, status_code }`
 
-## Sessions
-
-### /api/v0.1/sessions
-
-*POST*
-
-####  Header:
-Authorization: Bearer <token\>
-Content-Type: application/json (optional)
-
-####  Payload:
-{ user (optional), timestamp }
-
-####  Returns:
-status code 200 on success
-
-{ uuid, coordinator_uuid, message }
-
-status code 403 on failure
-
-{ message }
-
-####  Description:
-
-Creates a new session for the currently logged in user. If the user is an admin, they can specify creating a session for another user with user: uuid in the json payload.
-
-*GET*
-
-None
-
-*PUT*
-
-None
-
-### /api/v0.1/sessions/<user_id\>/<start\>-<end\>/<order\>
-
-*GET*
-
-####  Header:
-Authorization: Bearer <token\>
-
-####  Payload:
-
-None
-
-####  Returns:
-status code 200 on success
-
-sessions
-
--uuid, timestamp, username
-
-####  Description:
-
-Returns a list of sessions of user id <user_id\>, of range <start\> to <end\>, in ascending or descending order. Items are ordered by time creation.
-
-<start\>-<end\> and <order\> are optional.
-
-
-### /api/v0.1/session/<session_id\>
-
-*GET*
-
-####  Header:
-Authorization: Bearer <token\>
-
-####  Payload:
-
-None
-
-####  Returns:
-
-status code 200 on success
-
-{ id, timestamp, user_id }
-
-####  Description:
-
-Returns details of session <session_id\>
-
-### /api/v0.1/session/<session_id\>
-
-*DELETE*
-
-####  Header:
-Authorization: Bearer <token\>
-
-#### Payload:
-
-None
-
-#### Returns:
-status code 202 on success
-
-{id, message}
-
-#### Description:
-
-Puts session <session_id\> in a queue for deletion.
-
-*PUT*
-
-#### Payload:
-
-user (as uuid), timestamp
-
-## User
-
-### /api/v0.1/users/<start\>-<end\>/<order\>
+### /api/<ver\>/refresh_token
 
 *GET*
 
 #### Header:
 Authorization: Bearer <token\>
 
-#### Payload:
+#### Query strings:
 
-None
+None.
+
+#### Returns:
+
+status code 200 on success
+
+`{ access_token, refresh_expiry, login_expiry }`
+
+status code 401 on failure (typically when the login has expired)
+
+`{ error, message, status_code }`
+
+status code 425 when access permission has not expired yet
+
+`{ error, message, status_code }`
+
+## User
+
+### /api/<ver\>/whoami
+
+*GET*
+
+#### Query strings:
+
+None.
+
+#### Returns:
+
+status code 200 on success
+
+```
+{
+  "address": {
+    "country",
+    "county",
+    "line1",
+    "line2", 
+    "postcode", 
+    "town", 
+    "ward", 
+    "what3words", 
+  },
+  "assigned_vehicles": [], 
+  "contact_number", 
+  "display_name", 
+  "dob", 
+  "email", 
+  "links": {
+    "collection", 
+    "self", 
+  },
+  "login_expiry", 
+  "name", 
+  "password_reset_on_login", 
+  "patch", 
+  "patch_id", 
+  "profile_picture_thumbnail_url", 
+  "profile_picture_url", 
+  "refresh_expiry", 
+  "roles": [],
+  "time_created", 
+  "time_modified", 
+  "username", 
+  "uuid", 
+}
+```
+
+#### Description:
+
+Returns information about the currently logged in user.
+
+### /api/<ver\>/users
+
+*GET*
+
+#### Header:
+Authorization: Bearer <token\>
+
+#### Query strings:
+
+page=<int\>
+
+order=<string\>
+
+"newest" or "oldest"
 
 #### Returns:
 status code 200 on success
 
-[{id, username, links {collection, self}}]
+```
+[
+    {
+        "uuid", 
+        "display_name", 
+        "time_created", 
+        "username", 
+        "links", 
+            "self", 
+            "collection", 
+        },
+        "name", 
+        "patch_id", 
+        "patch", 
+        "time_modified", 
+        "contact_number", 
+        "profile_picture_thumbnail_url", 
+        "password_reset_on_login", 
+        "roles": [],
+        "assigned_vehicles": []
+    }
+]
+```
 
 #### Description:
 
-Retrieves a list of all users.
+Retrieves a list of registered users.
 
-<start\>-<end\> and <order\> are optional.
-
-### /api/v0.1/users
+### /api/<ver\>/users
 
 *POST*
 
 ####  Payload:
 
-{ username, { address: { country, county, line1, line2, postcode, town },
- password, name, email, dob, patch, roles }
 
+```
+{
+    "uuid",
+    "username",
+    "address",
+    "name",
+    "email",
+    "dob",
+    "patch",
+    "roles",
+    "display_name",
+    "patch_id",
+    "contact": {
+        "name",
+        "address": {
+           "ward",
+           "line1",
+           "line2",
+           "town",
+           "county",
+           "country",
+           "postcode",
+           "what3words
+        },
+        "telephone_number",
+        "mobile_number",
+        "email_address"
+    },
+    "password_reset_on_login",
+}
+                  
+```
 
 #### Returns:
 
@@ -169,9 +199,9 @@ Status code 200 on success.
 
 #### Description:
 
-Add a new user.
+Adds a new user.
 
-### /api/v0.1/user/<user_id>
+### /api/<ver\>/user/<user_id\>
 
 *GET*
 
@@ -179,15 +209,45 @@ Add a new user.
 
 Authorization: Bearer <token\>
 
-#### Payload:
-
-None
-
 #### Returns:
 
 status code 200 on success
+```
+{
+  "address": 
+    "country", 
+    "county", 
+    "line1", 
+    "line2", 
+    "postcode", 
+    "town", 
+    "ward", 
+    "what3words", 
+  },
+  "assigned_vehicles": []
+  "contact_number",
+  "display_name",
+  "dob",
+  "email",
+  "links": 
+    "collection",
+    "self",
+  },
+  "name",
+  "password_reset_on_login",
+  "patch",
+  "patch_id",
+  "profile_picture_thumbnail_url",
+  "profile_picture_url",
+  "roles": [],
+  "time_created",
+  "time_modified",
+  "username",
+  "uuid",
+}
 
-{ address: { country, county, line1, line2, postcode, town } dob, email, links: { collection, self }, name, [ notes: { body, subject } ], patch, roles, username, uuid }
+```
+
 
 #### Description:
 
@@ -211,7 +271,7 @@ Edits an existing user.
 
 ## Task
 
-### /api/v0.1/tasks/<session_id\>
+### /api/<ver\>/tasks/<session_id\>
 
 *GET*
 
@@ -233,7 +293,7 @@ status code 200 on success
 
 Retrieves a list of all tasks for a specific session.
 
-### /api/v0.1/tasks
+### /api/<ver\>/tasks
 
 *POST*
 
@@ -253,7 +313,7 @@ Status code 200 on success.
 
 Add a new task.
 
-### /api/v0.1/task/<task_id>
+### /api/<ver\>/task/<task_id>
 
 *GET*
 
