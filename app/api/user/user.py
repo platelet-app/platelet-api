@@ -103,10 +103,11 @@ class UserRestore(Resource):
 
 @ns.route(
     '/<user_id>',
-    endpoint='user')
+    endpoint='user',
+    doc={'params': {'user_id': 'UUID for the user'}}
+)
 class User(Resource):
     @flask_praetorian.auth_required
-    @ns.doc(params={'user_id': 'ID for the user'})
     def get(self, user_id):
         # we know this is going to return profile picture urls so initialise the store here
         from app import cloud_stores

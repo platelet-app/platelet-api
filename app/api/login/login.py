@@ -18,7 +18,7 @@ class Login(Resource):
         expires = get_jwt_expire_data(access_token)
         result = {
             "refresh_expiry": expires[0],
-            "expiry": expires[1],
+            "login_expiry": expires[1],
             "access_token": access_token
         }
         return result, 200
