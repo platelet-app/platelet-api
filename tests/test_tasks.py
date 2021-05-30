@@ -323,10 +323,9 @@ def test_get_task(client, login_header, task_obj_address_preset):
     assert r.status_code == 200
 
 
-@pytest.mark.parametrize("destination_location", ["pickup", "delivery"])
 @pytest.mark.parametrize("login_role", ["coordinator", "rider"])
-def test_get_task_barcode_number(client, login_header, task_obj_address_preset):
-    task_uuid = str(task_obj_address_preset.uuid)
+def test_get_task_barcode_number(client, login_header, task_obj):
+    task_uuid = str(task_obj.uuid)
     r = client.get(
         "{}/{}".format(task_url, task_uuid),
         headers=login_header
@@ -334,7 +333,7 @@ def test_get_task_barcode_number(client, login_header, task_obj_address_preset):
     assert r.status_code == 200
     data = json.loads(r.data)
     assert data['reference']
-    assert base36encode(data['barcode_number']) == data['reference'].translate(None, "-")
+    assert base36encode(data['barcode_number']) == data['reference'].translate({ord(c): None for c in "-"})
 
 
 @pytest.mark.parametrize("destination_location", ["pickup", "delivery"])

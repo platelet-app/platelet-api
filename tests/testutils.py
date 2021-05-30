@@ -115,7 +115,7 @@ def is_valid_uuid(uuid_to_test, version=4):
 
 
 def create_task_obj(**kwargs):
-    parent = models.TasksParent()
+    parent = models.TasksParent(reference="TEST-1234")
     db.session.add(parent)
     db.session.flush()
     schema = schemas.TaskSchema()
