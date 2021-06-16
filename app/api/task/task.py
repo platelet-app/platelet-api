@@ -328,12 +328,12 @@ class UsersTasks(Resource):
             parser.add_argument("role", type=str, location="args")
             parser.add_argument("order", type=str, location="args")
             parser.add_argument("status", type=str, location="args")
-            parser.add_argument("before_parent", type=str, location="args")
+            parser.add_argument("before_parent", type=int, location="args")
             args = parser.parse_args()
             page = args['page'] if args['page'] is not None else 1
             role = args['role']
             status = args['status']
-            before_parent = args['before_parent']
+            before_parent = args['before_parent'] if args['before_parent'] else 0
             order = args['order'] if args['order'] else "descending"
             if role == "rider":
                 query = requested_user.tasks_as_rider
@@ -357,32 +357,32 @@ class UsersTasks(Resource):
             filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
 
             # TODO: figure out how to enclose all task relays when paginate cuts some of them off
-            if before_parent:
+            if before_parent > 0:
                 filtered_ordered_after = filtered_ordered.filter(models.Task.parent_id < before_parent)
             else:
                 filtered_ordered_after = filtered_ordered
 
-            if before_parent and filtered_ordered_after.count() == 0:
+            if before_parent > 0 and filtered_ordered_after.count() == 0:
                 return not_found(TASK)
             if page > 0:
-                items = get_page(filtered_ordered_after, page, order=order, model=models.Task)
-                # TODO: work around missing last relay
-               #  if len(items):
-               #      lastParentID = items[-1].parent_id
-               #      lastTaskParent = get_object(models.Objects.TASK_PARENT, lastParentID)
-               #      items = [i for i in items if i.parent_id != lastParentID]
-               #      for i in lastTaskParent.relays:
-               #          items.append(i)
+                if before_parent != 0:
+                    shift = (page * 20) - 20
+                    range = (before_parent - shift, before_parent - shift - 20)
+                    items = filtered_ordered_after.filter(
+                        models.Task.parent_id.between(range[1], range[0])
+                    ).all()
+                else:
+                    items = get_page(filtered_ordered_after, page, models.Task, order)
             else:
                 items = filtered_ordered_after.all()
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
+            raise
             return internal_error(e)
 
         if len(items) == 0:
-            pass
-            #return not_found(TASK)
+            return not_found(TASK)
 
         return tasks_schema.dump(items)
 

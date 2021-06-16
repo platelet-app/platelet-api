@@ -158,7 +158,37 @@ def test_get_assigned_tasks_by_status(client, login_header, task_objs_assigned, 
 @pytest.mark.parametrize("login_role", ["coordinator", "rider"])
 @pytest.mark.parametrize("user_role", ["coordinator", "rider"])
 @pytest.mark.parametrize("task_status", ["new", "active", "picked_up", "delivered", "cancelled", "rejected"])
-def test_get_assigned_tasks_by_status_and_before_parent_id(client, login_header, task_objs_assigned, user_role,
+def test_paginate_tasks_before_parent_paginating(client, login_role, login_header, user_role, task_status, task_objs_assigned):
+    if login_role != user_role:
+        return
+    if user_role == "rider" and task_status == "new":
+        return
+    if user_role == "coordinator":
+        assigned_user_uuid = str(task_objs_assigned[0].assigned_coordinators[0].uuid)
+    else:
+        assigned_user_uuid = str(task_objs_assigned[0].assigned_riders[0].uuid)
+
+    r = client.get(
+        "{}s/{}?before_parent={}&role={}&status={}".format(task_url, assigned_user_uuid, 0, user_role,
+                                                           task_status),
+        headers=login_header
+    )
+    result = json.loads(r.data)
+    assert len(result) == 20
+    parent_id = result[19]["parent_id"]
+    r = client.get(
+        "{}s/{}?before_parent={}&role={}&status={}".format(task_url, assigned_user_uuid, parent_id, user_role,
+                                                           task_status),
+        headers=login_header
+    )
+    result = json.loads(r.data)
+    assert len(result) == 10
+
+
+@pytest.mark.parametrize("login_role", ["coordinator", "rider"])
+@pytest.mark.parametrize("user_role", ["coordinator", "rider"])
+@pytest.mark.parametrize("task_status", ["new", "active", "picked_up", "delivered", "cancelled", "rejected"])
+def test_get_assigned_tasks_paginated(client, login_header, task_objs_assigned, user_role,
                                                            task_status, login_role):
     if login_role != user_role:
         return
@@ -187,19 +217,17 @@ def test_get_assigned_tasks_by_status_and_before_parent_id(client, login_header,
         headers=login_header)
     assert r.status_code == 200
     result = json.loads(r.data)
-    assert len(result) == 9
+    assert len(result) == 10
     for i in result:
         assert i['parent_id'] < parent_id
 
     # test with page set to 0 (get all)
     r = client.get(
-        "{}s/{}?before_parent={}&page={}&role={}".format(task_url, assigned_user_uuid, parent_id, 0, user_role),
+        "{}s/{}?before_parent={}&page={}&role={}".format(task_url, assigned_user_uuid, 0, 0, user_role),
         headers=login_header)
     assert r.status_code == 200
     result = json.loads(r.data)
-    assert len(result) == 29
-    for i in result:
-        assert i['parent_id'] < parent_id
+    assert len(result) == 30
 
 
 @pytest.mark.parametrize("login_role", ["coordinator"])
