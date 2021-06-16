@@ -37,6 +37,9 @@ if os.getenv("FLASK_APP"):
     logging.warning("Running with Flask, sockets will not work!")
     eventlet_run = False
 
+if "pytest" in sys.modules:
+    eventlet_run = False
+
 if eventlet_run:
     eventlet.monkey_patch()
 
