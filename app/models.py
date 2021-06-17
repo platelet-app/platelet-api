@@ -178,6 +178,7 @@ class Deliverable(db.Model, CommonMixin):
     task_uuid = db.Column(UUID(as_uuid=True), db.ForeignKey('task.uuid'))
     type_id = db.Column(db.Integer, db.ForeignKey('deliverable_type.id'))
     type = db.relationship("DeliverableType", foreign_keys=[type_id])
+    count = db.Column(db.Integer, default=0)
 
     logged_actions = db.relationship(
         'LogEntry',
