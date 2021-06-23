@@ -97,8 +97,8 @@ class DeliverableSchema(ma.SQLAlchemySchema, TimesMixin, DeleteFilterMixin, Post
     class Meta:
         unknown = EXCLUDE
         model = models.Deliverable
-        fields = ('uuid', 'task_uuid', 'comments', 'type', 'type_id',
-                  "time_created", "time_modified")
+        fields = ("uuid", "task_uuid", "comments", "type", "type_id",
+                  "time_created", "time_modified", "count")
 
     comments = ma.Nested(CommentSchema, dump_only=True, many=True)
     type = fields.Pluck(DeliverableTypeSchema, "label", dump_only=True)

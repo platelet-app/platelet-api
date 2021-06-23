@@ -382,7 +382,8 @@ class UsersTasks(Resource):
             return internal_error(e)
 
         if len(items) == 0:
-            return not_found(TASK)
+            pass
+            #return not_found(TASK)
 
         return tasks_schema.dump(items)
 
