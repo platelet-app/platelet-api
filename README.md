@@ -22,7 +22,7 @@ It is a REST API. Refer to api_routes.md or the generated Swagger documentation 
 `sudo apt install redis`
 
 ##### Configure postgresql for local testing:
-`sudo nano /etc/postgresql/10/main/pg_hba.conf`
+`sudo nano /etc/postgresql/12/main/pg_hba.conf`
 
 Edit the line:
 ```
