@@ -1,7 +1,10 @@
+import logging
+
+from sqlalchemy import desc, asc
+
 from app import models, schemas
 from flask import json
 import hashlib
-from app import db
 from app.api.task.task_utilities.task_socket_actions import ASSIGN_RIDER_TO_TASK, ASSIGN_COORDINATOR_TO_TASK
 from app.exceptions import ObjectNotFoundError, SchemaValidationError
 
@@ -29,6 +32,58 @@ def get_uncompleted_tasks_query(query):
         models.Task.time_rejected.is_(None)
     )
 
+
+def get_items_before_parent(before_parent, page, order, query):
+    if before_parent > 0:
+        filtered_ordered_after = query.filter(models.Task.parent_id < before_parent)
+    else:
+        filtered_ordered_after = query
+
+    if before_parent > 0 and filtered_ordered_after.count() == 0:
+        raise ObjectNotFoundError
+    if page > 0:
+        if before_parent != 0:
+            shift = (page * 20) - 20
+            range = (before_parent - shift, before_parent - shift - 20)
+            items = filtered_ordered_after.filter(
+                models.Task.parent_id.between(range[1], range[0])
+            ).all()
+        else:
+            items = get_tasks_page(filtered_ordered_after, page, order)
+    else:
+        items = filtered_ordered_after.all()
+
+    return items
+
+
+def get_tasks_page(sqlalchemy_query, page_number, order="newest"):
+    model = models.Task
+    page = 1
+    try:
+        page = int(page_number)
+    except TypeError:
+        pass
+    try:
+        if model:
+            try:
+                if order == "newest":
+                    return sqlalchemy_query.order_by(
+                        desc(model.time_created)
+                    ).paginate(page).items
+                else:
+                    return sqlalchemy_query.order_by(
+                        asc(model.time_created)
+                    ).paginate(page).items
+            except AttributeError:
+                logging.warning("Could not sort model by creation_time".format(model))
+
+        return sqlalchemy_query.paginate(page).items
+    except Exception as e:
+        # SQLAlchemy returns its own kind of http exception so we catch it
+        if hasattr(e, "code"):
+            if e.code == 404:
+                raise ObjectNotFoundError
+        raise
 
 def get_filtered_query_by_status_non_relays(query, status):
     if status == "new":

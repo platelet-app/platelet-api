@@ -53,7 +53,7 @@ def test_restore_task(client, task_obj_soft_deleted, login_header):
 @pytest.mark.parametrize("user_role", ["coordinator"])
 @pytest.mark.parametrize("task_status", ["new"])
 def test_get_all_tasks(client, login_header, task_objs_assigned):
-    r = client.get("{}s".format(task_url, 1),
+    r = client.get("{}s".format(task_url),
                    headers=login_header)
     assert r.status_code == 200
     result = json.loads(r.data)

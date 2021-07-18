@@ -8,7 +8,7 @@ from app import task_ns as ns
 from app.api.task.task_utilities.task_socket_actions import *
 from app.api.task.task_utilities.task_socket_functions import emit_socket_broadcast, emit_socket_assignment_broadcast
 from app.api.task.task_utilities.taskfunctions import set_previous_relay_uuids, get_filtered_query_by_status, \
-    get_filtered_query_by_status_non_relays, roles_check_and_assign_user
+    get_filtered_query_by_status_non_relays, roles_check_and_assign_user, get_items_before_parent
 from app.api.functions.utilities import add_item_to_delete_queue, remove_item_from_delete_queue, get_page, \
     get_query
 from app.api.functions.viewfunctions import load_request_into_object
@@ -178,7 +178,6 @@ class TasksAssignees(Resource):
 
         return {'uuid': str(task.uuid), 'message': 'Task {} updated.'.format(task.uuid)}, 200
 
-
     @flask_praetorian.roles_accepted('admin', 'coordinator', 'rider')
     # @check_parent_or_collaborator_or_admin_match
     def delete(self, task_id):
@@ -226,84 +225,108 @@ class TasksAssignees(Resource):
 class Tasks(Resource):
     @flask_praetorian.roles_accepted('coordinator', 'admin')
     def get(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("page", type=int, location="args")
-        parser.add_argument("role", type=str, location="args")
-        parser.add_argument("order", type=str, location="args")
-        args = parser.parse_args()
-        page = args['page'] if args['page'] else 1
-        order = args['order'] if args['order'] else "newest"
-        query = get_query(TASK_PARENT)
         try:
-            items = get_page(query, page, order=order, model=models.TasksParent)
+            parser = reqparse.RequestParser()
+            parser.add_argument("page", type=int, location="args")
+            parser.add_argument("role", type=str, location="args")
+            parser.add_argument("order", type=str, location="args")
+            parser.add_argument("status", type=str, location="args")
+            parser.add_argument("before_parent", type=int, location="args")
+            args = parser.parse_args()
+            page = args['page'] if args['page'] is not None else 1
+            status = args['status']
+            before_parent = args['before_parent'] if args['before_parent'] else 0
+            order = args['order'] if args['order'] else "descending"
+
+            query = models.Task.query
+
+            # filter deleted tasks
+            query_deleted = query.filter(
+                models.Task.deleted.is_(False)
+            )
+
+            filtered = get_filtered_query_by_status(query_deleted, status)
+            filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
+
+            # TODO: figure out how to enclose all task relays when paginate cuts some of them off
+            items = get_items_before_parent(before_parent, page, order, filtered_ordered)
+
         except ObjectNotFoundError:
             return not_found(TASK)
-        return tasks_parent_schema.dump(items)
+        except Exception as e:
+            raise
+            return internal_error(e)
 
-    @flask_praetorian.auth_required
-    def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("auto_assign_role", type=str, location="args")
-        parser.add_argument("user_uuid", type=str, location="args")
+        if len(items) == 0:
+            pass
+            # return not_found(TASK)
 
-        args = parser.parse_args()
+        return tasks_schema.dump(items)
 
+@flask_praetorian.auth_required
+def post(self):
+    parser = reqparse.RequestParser()
+    parser.add_argument("auto_assign_role", type=str, location="args")
+    parser.add_argument("user_uuid", type=str, location="args")
+
+    args = parser.parse_args()
+
+    try:
+        task = load_request_into_object(TASK)
+    except SchemaValidationError as e:
+        return schema_validation_error(str(e))
+    if task.parent_id:
         try:
-            task = load_request_into_object(TASK)
-        except SchemaValidationError as e:
-            return schema_validation_error(str(e))
-        if task.parent_id:
-            try:
-                parent = get_object(TASK_PARENT, task.parent_id)
-            except ObjectNotFoundError:
-                return not_found(TASK_PARENT, task.parent_id)
-            next_order_in_relay_int = parent.relays_with_deleted_cancelled_rejected.count() + 1
-            # TODO: could this go into marshmallow schema validation?
-            if parent.relays.count() > 19:
-                return forbidden_error("Cannot add more than 19 relays to a job", task.parent_id)
-        else:
-            new_parent = models.TasksParent()
-            db.session.add(new_parent)
-            db.session.flush()
-            # TODO: When organisations tables are implemented, make first four characters be from there
-            new_parent.reference = "FEVS-{}".format(new_parent.id)
-            next_order_in_relay_int = 1
-            task.parent_id = new_parent.id
-        task.order_in_relay = next_order_in_relay_int
-        author = utilities.current_user()
-        task.author_uuid = author.uuid
-        db.session.add(task)
+            parent = get_object(TASK_PARENT, task.parent_id)
+        except ObjectNotFoundError:
+            return not_found(TASK_PARENT, task.parent_id)
+        next_order_in_relay_int = parent.relays_with_deleted_cancelled_rejected.count() + 1
+        # TODO: could this go into marshmallow schema validation?
+        if parent.relays.count() > 19:
+            return forbidden_error("Cannot add more than 19 relays to a job", task.parent_id)
+    else:
+        new_parent = models.TasksParent()
+        db.session.add(new_parent)
         db.session.flush()
+        # TODO: When organisations tables are implemented, make first four characters be from there
+        new_parent.reference = "FEVS-{}".format(new_parent.id)
+        next_order_in_relay_int = 1
+        task.parent_id = new_parent.id
+    task.order_in_relay = next_order_in_relay_int
+    author = utilities.current_user()
+    task.author_uuid = author.uuid
+    db.session.add(task)
+    db.session.flush()
 
-        if args['auto_assign_role']:
-            # pass off the task, user and role off to the user assign function to make sure all is well with the request
-            user_uuid = args['user_uuid']
-            try:
-                assign_user = get_object(models.Objects.USER, user_uuid)
-                if assign_user.deleted:
-                    return not_found(models.Objects.USER, user_uuid)
-            except ObjectNotFoundError:
+    if args['auto_assign_role']:
+        # pass off the task, user and role off to the user assign function to make sure all is well with the request
+        user_uuid = args['user_uuid']
+        try:
+            assign_user = get_object(models.Objects.USER, user_uuid)
+            if assign_user.deleted:
                 return not_found(models.Objects.USER, user_uuid)
-            try:
-                socket_update_type = roles_check_and_assign_user(task, assign_user, args['auto_assign_role'])
-                request_json = request.get_json()
-                emit_socket_broadcast(request_json, socket_update_type, uuid=str(task.uuid))
-                emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, str(assign_user.uuid))
-            except SchemaValidationError as e:
-                return bad_request_error(str(e), task.uuid)
+        except ObjectNotFoundError:
+            return not_found(models.Objects.USER, user_uuid)
+        try:
+            socket_update_type = roles_check_and_assign_user(task, assign_user, args['auto_assign_role'])
+            request_json = request.get_json()
+            emit_socket_broadcast(request_json, socket_update_type, uuid=str(task.uuid))
+            emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, str(assign_user.uuid))
+        except SchemaValidationError as e:
+            return bad_request_error(str(e), task.uuid)
 
-        task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
-        set_previous_relay_uuids(task_parent)
-        db.session.commit()
-        return {
-                   'uuid': str(task.uuid),
-                   'time_created': str(task.time_created),
-                   'reference': str(task.reference),
-                   'message': 'Task {} created'.format(task.uuid),
-                   'author_uuid': str(task.author_uuid),
-                   'parent_id': str(task.parent_id),
-                   'order_in_relay': str(task.order_in_relay)
-               }, 201
+    task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
+    set_previous_relay_uuids(task_parent)
+    db.session.commit()
+    return {
+               'uuid': str(task.uuid),
+               'time_created': str(task.time_created),
+               'reference': str(task.reference),
+               'message': 'Task {} created'.format(task.uuid),
+               'author_uuid': str(task.author_uuid),
+               'parent_id': str(task.parent_id),
+               'order_in_relay': str(task.order_in_relay)
+           }, 201
 
 
 @ns.route('s/<user_uuid>',
@@ -357,24 +380,7 @@ class UsersTasks(Resource):
             filtered_ordered = filtered.order_by(models.Task.parent_id.desc(), models.Task.order_in_relay)
 
             # TODO: figure out how to enclose all task relays when paginate cuts some of them off
-            if before_parent > 0:
-                filtered_ordered_after = filtered_ordered.filter(models.Task.parent_id < before_parent)
-            else:
-                filtered_ordered_after = filtered_ordered
-
-            if before_parent > 0 and filtered_ordered_after.count() == 0:
-                return not_found(TASK)
-            if page > 0:
-                if before_parent != 0:
-                    shift = (page * 20) - 20
-                    range = (before_parent - shift, before_parent - shift - 20)
-                    items = filtered_ordered_after.filter(
-                        models.Task.parent_id.between(range[1], range[0])
-                    ).all()
-                else:
-                    items = get_page(filtered_ordered_after, page, models.Task, order)
-            else:
-                items = filtered_ordered_after.all()
+            items = get_items_before_parent(before_parent, page, order, filtered_ordered)
         except ObjectNotFoundError:
             return not_found(TASK)
         except Exception as e:
@@ -383,7 +389,7 @@ class UsersTasks(Resource):
 
         if len(items) == 0:
             pass
-            #return not_found(TASK)
+            # return not_found(TASK)
 
         return tasks_schema.dump(items)
 
