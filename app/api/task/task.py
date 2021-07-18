@@ -263,70 +263,70 @@ class Tasks(Resource):
 
         return tasks_schema.dump(items)
 
-@flask_praetorian.auth_required
-def post(self):
-    parser = reqparse.RequestParser()
-    parser.add_argument("auto_assign_role", type=str, location="args")
-    parser.add_argument("user_uuid", type=str, location="args")
+    @flask_praetorian.auth_required
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument("auto_assign_role", type=str, location="args")
+        parser.add_argument("user_uuid", type=str, location="args")
 
-    args = parser.parse_args()
+        args = parser.parse_args()
 
-    try:
-        task = load_request_into_object(TASK)
-    except SchemaValidationError as e:
-        return schema_validation_error(str(e))
-    if task.parent_id:
         try:
-            parent = get_object(TASK_PARENT, task.parent_id)
-        except ObjectNotFoundError:
-            return not_found(TASK_PARENT, task.parent_id)
-        next_order_in_relay_int = parent.relays_with_deleted_cancelled_rejected.count() + 1
-        # TODO: could this go into marshmallow schema validation?
-        if parent.relays.count() > 19:
-            return forbidden_error("Cannot add more than 19 relays to a job", task.parent_id)
-    else:
-        new_parent = models.TasksParent()
-        db.session.add(new_parent)
-        db.session.flush()
-        # TODO: When organisations tables are implemented, make first four characters be from there
-        new_parent.reference = "FEVS-{}".format(new_parent.id)
-        next_order_in_relay_int = 1
-        task.parent_id = new_parent.id
-    task.order_in_relay = next_order_in_relay_int
-    author = utilities.current_user()
-    task.author_uuid = author.uuid
-    db.session.add(task)
-    db.session.flush()
-
-    if args['auto_assign_role']:
-        # pass off the task, user and role off to the user assign function to make sure all is well with the request
-        user_uuid = args['user_uuid']
-        try:
-            assign_user = get_object(models.Objects.USER, user_uuid)
-            if assign_user.deleted:
-                return not_found(models.Objects.USER, user_uuid)
-        except ObjectNotFoundError:
-            return not_found(models.Objects.USER, user_uuid)
-        try:
-            socket_update_type = roles_check_and_assign_user(task, assign_user, args['auto_assign_role'])
-            request_json = request.get_json()
-            emit_socket_broadcast(request_json, socket_update_type, uuid=str(task.uuid))
-            emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, str(assign_user.uuid))
+            task = load_request_into_object(TASK)
         except SchemaValidationError as e:
-            return bad_request_error(str(e), task.uuid)
+            return schema_validation_error(str(e))
+        if task.parent_id:
+            try:
+                parent = get_object(TASK_PARENT, task.parent_id)
+            except ObjectNotFoundError:
+                return not_found(TASK_PARENT, task.parent_id)
+            next_order_in_relay_int = parent.relays_with_deleted_cancelled_rejected.count() + 1
+            # TODO: could this go into marshmallow schema validation?
+            if parent.relays.count() > 19:
+                return forbidden_error("Cannot add more than 19 relays to a job", task.parent_id)
+        else:
+            new_parent = models.TasksParent()
+            db.session.add(new_parent)
+            db.session.flush()
+            # TODO: When organisations tables are implemented, make first four characters be from there
+            new_parent.reference = "FEVS-{}".format(new_parent.id)
+            next_order_in_relay_int = 1
+            task.parent_id = new_parent.id
+        task.order_in_relay = next_order_in_relay_int
+        author = utilities.current_user()
+        task.author_uuid = author.uuid
+        db.session.add(task)
+        db.session.flush()
 
-    task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
-    set_previous_relay_uuids(task_parent)
-    db.session.commit()
-    return {
-               'uuid': str(task.uuid),
-               'time_created': str(task.time_created),
-               'reference': str(task.reference),
-               'message': 'Task {} created'.format(task.uuid),
-               'author_uuid': str(task.author_uuid),
-               'parent_id': str(task.parent_id),
-               'order_in_relay': str(task.order_in_relay)
-           }, 201
+        if args['auto_assign_role']:
+            # pass off the task, user and role off to the user assign function to make sure all is well with the request
+            user_uuid = args['user_uuid']
+            try:
+                assign_user = get_object(models.Objects.USER, user_uuid)
+                if assign_user.deleted:
+                    return not_found(models.Objects.USER, user_uuid)
+            except ObjectNotFoundError:
+                return not_found(models.Objects.USER, user_uuid)
+            try:
+                socket_update_type = roles_check_and_assign_user(task, assign_user, args['auto_assign_role'])
+                request_json = request.get_json()
+                emit_socket_broadcast(request_json, socket_update_type, uuid=str(task.uuid))
+                emit_socket_assignment_broadcast(task_schema.dump(task), socket_update_type, str(assign_user.uuid))
+            except SchemaValidationError as e:
+                return bad_request_error(str(e), task.uuid)
+
+        task_parent = get_object(models.Objects.TASK_PARENT, task.parent_id)
+        set_previous_relay_uuids(task_parent)
+        db.session.commit()
+        return {
+                   'uuid': str(task.uuid),
+                   'time_created': str(task.time_created),
+                   'reference': str(task.reference),
+                   'message': 'Task {} created'.format(task.uuid),
+                   'author_uuid': str(task.author_uuid),
+                   'parent_id': str(task.parent_id),
+                   'order_in_relay': str(task.order_in_relay)
+               }, 201
 
 
 @ns.route('s/<user_uuid>',
