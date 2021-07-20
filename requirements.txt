@@ -11,7 +11,7 @@ click==7.1.2
 Deprecated==1.2.11
 dnspython==1.16.0
 elasticsearch==7.10.1
-eventlet==0.30.1
+eventlet==0.31.0
 Flask==1.1.2
 flask-buzz==0.1.15
 Flask-Cors==3.0.10
