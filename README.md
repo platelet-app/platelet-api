@@ -6,7 +6,7 @@ It is a REST API. Refer to api_routes.md or the generated Swagger documentation 
 
 ## Setup on Ubuntu 20.04
 ##### Install needed packages:
-`sudo apt install postgresql postgresql-server-dev-12 python3-venv python3-dev python3-wheel`
+`sudo apt install postgresql postgresql-server-dev-12 python3-venv python3-dev python3-wheel gcc`
 
 ##### Install ElasticSearch:
 `sudo apt install apt-transport-https`
@@ -130,6 +130,18 @@ For profile picture uploads, also run the redis worker. This must have the same 
 `cd tests`
 
 `pytest -v .`
+
+(Some fail at the moment when all tests are ran together, but won't fail when ran individually.)
+
+To run individual tests use
+
+`pytest -v . -k "some pattern"`
+
+e.g.:
+
+`pytest -v . -k "users"`
+
+Will run all tests associated with users.
 
 ##### Visit root to see the swagger API documentation:
 
