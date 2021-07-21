@@ -1,0 +1,527 @@
+{
+  "server_settings": {
+    "organisation_name": "platelet",
+    "image_url": "https://platelet.app/landing/static/media/platelet.1cd11baf.png",
+    "version": "1.0",
+    "hostname": "localhost",
+    "locale_id": 1
+  },
+  "locales": [
+    {
+      "label": "England",
+      "code": "en-GB"
+    }
+  ],
+  "users": [
+    {
+      "username": "josieposie",
+      "firstname": "Josie",
+      "secondname": "Whittle",
+      "display_name": "Josie Whittle",
+      "address": {
+        "line1": "87 Iffley Road",
+        "line2": "",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS19NR",
+        "what3words": "some.what.words"
+      },
+      "roles": "coordinator",
+      "dob": "14/10/1980"
+    },
+    {
+      "username": "someone",
+      "firstname": "Blessing",
+      "secondname": "McKnight",
+      "display_name": "Mr McKnight",
+      "address": {
+        "line1": "79 Somewhere Road",
+        "line2": "",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS6 8ZY",
+        "what3words": "some.what.words"
+      },
+      "roles": "coordinator",
+      "dob": "19/02/1991"
+    },
+    {
+      "username": "and",
+      "firstname": "Anderson",
+      "secondname": "Davidson",
+      "display_name": "Anders Davidson",
+      "address": {
+        "line1": "44 Sofake Road",
+        "line2": "",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS1 1PA",
+        "what3words": "some.what.words"
+      },
+      "roles": "rider",
+      "dob": "19/01/1978",
+      "patch_id": 4
+    },
+    {
+      "username": "kirbster",
+      "firstname": "Abdi",
+      "secondname": "Kirby",
+      "display_name": "Kirby",
+      "address": {
+        "line1": "8 Inbristol Road",
+        "line2": "",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS1 3ZR",
+        "what3words": "some.what.words"
+      },
+      "roles": "rider,coordinator",
+      "dob": "19/01/1994",
+      "patch_id": 1
+    },
+    {
+      "username": "kc",
+      "firstname": "Kieron",
+      "secondname": "Cullen",
+      "display_name": "Mr Kieron C",
+      "address": {
+        "line1": "52 Some Road",
+        "line2": "",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS6 1PP",
+        "what3words": "some.what.words"
+      },
+      "roles": "rider,coordinator",
+      "dob": "19/09/1984",
+      "patch_id": 3
+    },
+    {
+      "username": "kays",
+      "firstname": "Kayley",
+      "secondname": "Cardenas",
+      "display_name": "Kays",
+      "address": {
+        "line1": "120 Faker Road",
+        "line2": "",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS1 3YD",
+        "what3words": "some.what.words"
+      },
+      "roles": "rider",
+      "dob": "05/09/1977",
+      "patch_id": 2
+    }
+  ],
+  "savedlocations": [
+    {
+      "name": "Bristol Royal Infirmary",
+      "address": {
+        "line1": "Bristol Royal Infirmary",
+        "line2": "Marlborough Street",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS2 8HW",
+        "what3words": "some.what.words"
+      },
+      "listed": true,
+      "protected": true
+    },
+    {
+      "name": "Bristol Royal Infirmary - A&E",
+      "address": {
+        "ward": "Accident and Emergency",
+        "line1": "Bristol Royal Infirmary",
+        "line2": "Marlborough Street",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS2 8HW",
+        "what3words": "some.what.words"
+      },
+      "listed": true,
+      "protected": true
+    },
+    {
+      "name": "Southmead Hospital - Pathology",
+      "address": {
+        "ward": "Pathology",
+        "line1": "Southmead Hospital",
+        "line2": "Southmead Road",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS10 5NB",
+        "what3words": "some.what.words"
+      },
+      "listed": true,
+      "protected": true
+    },
+    {
+      "name": "Southmead Hospital - NICU",
+      "address": {
+        "ward": "Neonatal Intensive Care",
+        "line1": "Southmead Hospital",
+        "line2": "Southmead Road",
+        "town": "Bristol",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS10 5NB",
+        "what3words": "some.what.words"
+      },
+      "listed": true,
+      "protected": true
+    },
+    {
+      "name": "Callington Road Hospital - Aspen",
+      "address": {
+        "ward": "Aspen Unit",
+        "line1": "Callington Road Hospital",
+        "line2": "Marmalade Lane",
+        "town": "Brislington",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS4 5BJ",
+        "what3words": "some.what.words"
+      },
+      "listed": true,
+      "protected": true
+    },
+    {
+      "name": "Callington Road Hospital - Silverpine",
+      "address": {
+        "ward": "Silverpine Unit",
+        "line1": "Callington Road Hospital",
+        "line2": "Marmalade Lane",
+        "town": "Brislington",
+        "county": "Bristol",
+        "country": "UK",
+        "postcode": "BS4 5BJ",
+        "what3words": "some.what.words"
+      },
+      "listed": true,
+      "protected": true
+    },
+    {
+      "name": "Great Western Hospital - A&E",
+      "address": {
+        "ward": "Accident and Emergency",
+        "line1": "Great Western Hospital",
+        "line2": "Marlborough Road",
+        "town": "Swindon",
+        "county": "Swindon",
+        "country": "UK",
+        "postcode": "SN3 6BB",
+        "what3words": "some.what.words"
+      },
+      "listed": true,
+      "protected": true
+    }
+  ],
+  "priorities": [
+    {
+      "label": "Emergency"
+    },
+    {
+      "label": "Urgent"
+    },
+    {
+      "label": "Standard"
+    }
+  ],
+  "patches": [
+    {
+      "label": "North"
+    },
+    {
+      "label": "East"
+    },
+    {
+      "label": "West"
+    },
+    {
+      "label": "Relief"
+    }
+  ],
+  "deliverables": [
+    {
+      "label": "Sample"
+    },
+    {
+      "label": "Covid sample"
+    },
+    {
+      "label": "Document"
+    },
+    {
+      "label": "Milk"
+    },
+    {
+      "label": "Equipment"
+    },
+    {
+      "label": "Other"
+    }
+  ],
+  "vehicles": [
+    {
+      "manufacturer": "Yamaha",
+      "name": "Bike One",
+      "model": "FJR1300",
+      "date_of_manufacture": "01/10/2019",
+      "date_of_registration": "02/10/2019",
+      "registration_number": "FJ13 RRR"
+    },
+    {
+      "manufacturer": "Honda",
+      "name": "Bike Two",
+      "model": "CBR1100XX",
+      "date_of_manufacture": "10/10/2019",
+      "date_of_registration": "10/10/2019",
+      "registration_number": "AAA"
+    },
+    {
+      "manufacturer": "Yamaha",
+      "name": "Bike Three",
+      "model": "FJR1300",
+      "date_of_manufacture": "01/10/2019",
+      "date_of_registration": "02/10/2019",
+      "registration_number": "FJ13 RRR"
+    },
+    {
+      "manufacturer": "Honda",
+      "name": "Bike Four",
+      "model": "CBR1100XX",
+      "date_of_manufacture": "10/10/2019",
+      "date_of_registration": "10/10/2019",
+      "registration_number": "AAA"
+    }
+  ],
+  "http_request_types": [
+    {
+      "label": "POST"
+    },
+    {
+      "label": "PUT"
+    },
+    {
+      "label": "DELETE"
+    },
+    {
+      "label": "GET"
+    },
+    {
+      "label": "PATCH"
+    }
+  ],
+  "http_status_codes": [
+    {
+      "status": "100",
+      "status_description": "Continue",
+      "status_type": "Informational"
+    },
+    {
+      "status": "101",
+      "status_description": "Switching Protocols",
+      "status_type": "Informational"
+    },
+    {
+      "status": "200",
+      "status_description": "OK",
+      "status_type": "Successful"
+    },
+    {
+      "status": "201",
+      "status_description": "Created",
+      "status_type": "Successful"
+    },
+    {
+      "status": "202",
+      "status_description": "Accepted",
+      "status_type": "Successful"
+    },
+    {
+      "status": "203",
+      "status_description": "Non-Authoritative Information",
+      "status_type": "Successful"
+    },
+    {
+      "status": "204",
+      "status_description": "No Content",
+      "status_type": "Successful"
+    },
+    {
+      "status": "205",
+      "status_description": "Reset Content",
+      "status_type": "Successful"
+    },
+    {
+      "status": "206",
+      "status_description": "Partial Content",
+      "status_type": "Successful"
+    },
+    {
+      "status": "300",
+      "status_description": "Multiple Choices",
+      "status_type": "Redirection"
+    },
+    {
+      "status": "301",
+      "status_description": "Moved Permanently",
+      "status_type": "Redirection"
+    },
+    {
+      "status": "302",
+      "status_description": "Found",
+      "status_type": "Redirection"
+    },
+    {
+      "status": "303",
+      "status_description": "See Other",
+      "status_type": "Redirection"
+    },
+    {
+      "status": "304",
+      "status_description": "Not Modified",
+      "status_type": "Redirection"
+    },
+    {
+      "status": "305",
+      "status_description": "Use Proxy",
+      "status_type": "Redirection"
+    },
+    {
+      "status": "307",
+      "status_description": "Temporary Redirect",
+      "status_type": "Redirection"
+    },
+    {
+      "status": "400",
+      "status_description": "Bad Request",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "401",
+      "status_description": "Unauthorized",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "402",
+      "status_description": "Payment Required",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "403",
+      "status_description": "Forbidden",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "404",
+      "status_description": "Not Found",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "405",
+      "status_description": "Method Not Allowed",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "406",
+      "status_description": "Not Acceptable",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "407",
+      "status_description": "Proxy Authentication Required",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "408",
+      "status_description": "Request Timeout",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "409",
+      "status_description": "Conflict",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "410",
+      "status_description": "Gone",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "411",
+      "status_description": "Length Required",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "412",
+      "status_description": "Precondition Failed",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "413",
+      "status_description": "Request Entity Too Large",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "414",
+      "status_description": "Request-URI Too Long",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "415",
+      "status_description": "Unsupported Media Type",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "416",
+      "status_description": "Requested Range Not Satisfiable",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "417",
+      "status_description": "Expectation Failed",
+      "status_type": "Client Error"
+    },
+    {
+      "status": "500",
+      "status_description": "Internal Server Error",
+      "status_type": "Server Error"
+    },
+    {
+      "status": "501",
+      "status_description": "Not Implemented",
+      "status_type": "Server Error"
+    },
+    {
+      "status": "502",
+      "status_description": "Bad Gateway",
+      "status_type": "Server Error"
+    },
+    {
+      "status": "503",
+      "status_description": "Service Unavailable",
+      "status_type": "Server Error"
+    },
+    {
+      "status": "504",
+      "status_description": "Gateway Timeout",
+      "status_type": "Server Error"
+    },
+    {
+      "status": "505",
+      "status_description": "HTTP Version Not Supported",
+      "status_type": "Server Error"
+    }
+  ]
+}
