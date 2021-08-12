@@ -97,8 +97,10 @@ class AuthenticatedSocketConnection:
             query = user.tasks_as_coordinator
         elif role == "rider":
             query = user.tasks_as_rider
+        elif role == "all":
+            query = models.Task.query
         else:
-            query = union_all(user.tasks_as_rider, user.tasks_as_coordinator)
+            query = models.Task.query
 
         task_uuids_converted = [UUID(t) for t in task_uuids]
 
