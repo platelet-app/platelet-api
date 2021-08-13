@@ -13,7 +13,7 @@ fi
 
 read -s -p "Please set a password for the admin user: " pswd
 
-if [[ $2 -eq "db_local" ]];
+if [[ $2 == "db_local" ]];
 then
   if ! pg_isready -h "localhost";
   then
