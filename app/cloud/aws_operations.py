@@ -18,7 +18,7 @@ class AwsStore:
                                 aws_secret_access_key=self.aws_secret_access_key).resource('s3',
                                                                                            endpoint_url=self.endpoint)
 
-        self.s3_client = boto3.client("s3")
+        self.s3_client = boto3.client("s3", endpoint_url=self.endpoint)
         self.bucket_obj = self.s3.Bucket(name=bucket_name)
 
     def get_object(self, key):
