@@ -4,7 +4,17 @@ This is the API for Platelet. It makes use of Flask, RESTx, SQLALchemy and Marsh
 
 It is a REST API. Refer to api_routes.md or the generated Swagger documentation for more detailed documentation.
 
-## Setup on Ubuntu 20.04
+## Docker set up
+
+Run:
+
+`docker-compose up`
+
+to build and setup a docker instance.
+
+To prepopulate the database with some data, put a sql file named platelet_init.sql in the root directory.
+
+## Manual setup on Ubuntu 20.04
 ##### Install needed packages:
 `sudo apt install postgresql postgresql-server-dev-12 python3-venv python3-dev python3-wheel gcc`
 
@@ -42,13 +52,9 @@ host    all             all             127.0.0.1/32            trust
 ##### Run the setup script:
 `./setup.sh`
 
-Optionally input a json file with premade data to insert into the database.
+Optionally input a json file with premade data to insert into the database. You can also add a password to set for the admin user instead of setting it interactively.
 
-`./setup.sh dev_data.json`
-
-If you'd like to have the script set up a database locally to test with, add db_local:
-
-'./setup.sh dev_data.json db_local'
+`./setup.sh dev_data.json somepass`
 
 ## Run
 
