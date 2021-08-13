@@ -11,9 +11,14 @@ then
   fi
 fi
 
-read -s -p "Please set a password for the admin user: " pswd
+if [[ $2 ]]
+then
+  pswd="$2"
+else
+  read -s -p "Please set a password for the admin user: " pswd
+fi
 
-if [[ $2 == "db_local" ]];
+if [[ $3 == "db_local" ]];
 then
   if ! pg_isready -h "localhost";
   then
