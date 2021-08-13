@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+ web:
+  build:
+   context: .
+  ports:
+  - 5000:5000
+  volumes:
+  - ./:/app
+  - profilepics:/tmp/profilepics
+  environment:
+  - SQLALCHEMY_DATABASE_URI=postgres://postgres:mysecretpassword@postgresdb/postgres
+  - REDIS_URL=redis://redis/
+  - CLOUD_PLATFORM=aws
+  - AWS_ACCESS_KEY_ID=somekey
+  - AWS_SECRET_ACCESS_KEY=secretkey
+  - AWS_ENDPOINT=http://localstack:4566
+  - CLOUD_PROFILE_PICTURE_STORE_NAME=profilepics
+  - PROFILE_PROCESSING_DIRECTORY=/tmp/profilepics
+  - CORS_ENABLED=True
+  - CORS_ORIGIN=http://localhost:3000
+
+ redisworker:
+  depends_on:
+  - localstack
+  build:
+   dockerfile: DockerfileRedisWorker
+   context: .
+  environment:
+  - SQLALCHEMY_DATABASE_URI=postgres://postgres:mysecretpassword@postgresdb/postgres
+  - REDIS_URL=redis://redis/
+  - CLOUD_PLATFORM=aws
+  - AWS_ACCESS_KEY_ID=somekey
+  - AWS_SECRET_ACCESS_KEY=secretkey
+  - AWS_ENDPOINT=http://localstack:4566
+  - CLOUD_PROFILE_PICTURE_STORE_NAME=profilepics
+  - PROFILE_PROCESSING_DIRECTORY=/tmp/profilepics
+  volumes:
+  - ./:/app
+  - profilepics:/tmp/profilepics
+
+ postgresdb:
+  image: postgres
+  ports:
+  - 3306:3306
+  environment:
+  - POSTGRES_PASSWORD=mysecretpassword
+  volumes:
+  - postgresql:/var/lib/mysql
+  - postgresql_config:/etc/mysql
+  - ./platelet_init.sql:/docker-entrypoint-initdb.d/platelet_init.sql
+
+ redis:
+   image: redis
+   ports:
+   - 6379:6379
+
+ localstack:
+  image: localstack/localstack
+  ports:
+  - 4571:4571
+  environment:
+  - SERVICES=s3
+  volumes:
+  - ./init_localstack.sh:/docker-entrypoint-initaws.d/init_localstack.sh
+
+volumes:
+  postgresql:
+  postgresql_config:
+  profilepics:
+
