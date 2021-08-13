@@ -40,7 +40,7 @@ pendulum==2.1.2
 phonenumbers==8.12.17
 Pillow==8.2.0
 pluggy==0.13.1
-psycopg2==2.8.6
+psycopg2-binary==2.8.6
 py==1.10.0
 py-buzz==1.0.3
 PyJWT==1.7.1
