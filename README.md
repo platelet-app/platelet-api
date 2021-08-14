@@ -87,7 +87,7 @@ If specified, it will attempt to connect to another endpoint. This can be useful
 
 The access key id for the AWS account you are connecting to.
 
-###### SECRET_ACCESS_KEY
+###### AWS_SECRET_ACCESS_KEY
 
 The secret access key for the AWS account you are connecting to.
 
