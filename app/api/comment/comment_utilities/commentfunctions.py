@@ -2,11 +2,10 @@ import functools
 
 from flask_praetorian import utilities
 from app import models, schemas
-from app.api.functions.errors import forbidden_error
+from app.api.functions.errors import forbidden_error, not_found
 from app.exceptions import ObjectNotFoundError
-from flask import json, request
+from flask import json
 import hashlib
-from app.api.comment.comment_utilities.comment_socket_actions import ADD_COMMENT
 
 
 def comment_author_match_or_admin(func):
@@ -14,8 +13,12 @@ def comment_author_match_or_admin(func):
     def wrapper(self, _id):
         if 'admin' in utilities.current_rolenames():
             return func(self, _id)
-        comment_author = models.Comment.query.filter_by(uuid=_id).first().author_uuid
-        if utilities.current_user().uuid == comment_author:
+        try:
+            comment = get_comment_object(_id, with_deleted=True)
+        except ObjectNotFoundError:
+            return not_found(models.Objects.COMMENT, _id)
+        comment_author = comment.author
+        if comment_author and utilities.current_user().uuid == comment_author.uuid:
             return func(self, _id)
         else:
             return forbidden_error("Comment {} not owned by user: {}".format(_id, comment_author))
