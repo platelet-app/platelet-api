@@ -1,3 +1,7 @@
+Archived after platelet was moved to the Amplify platform.
+
+----
+
 # Platelet API
 
 This is the API for Platelet. It makes use of Flask, RESTx, SQLALchemy and Marshmallow along with other Flask plugins.
